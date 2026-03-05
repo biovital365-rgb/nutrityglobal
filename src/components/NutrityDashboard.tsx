@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { motion, AnimatePresence } from "motion/react";
 import {
     Activity,
@@ -39,7 +40,8 @@ import {
     Coffee,
     Apple,
     LogOut,
-    User
+    User,
+    Trash2
 } from "lucide-react";
 import { foodCatalog } from "../lib/food-data";
 import { micronutrientsData } from "../lib/micronutrients-data";
@@ -72,6 +74,17 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [chatMessages, setChatMessages] = useState<any[]>([]);
     const [inputMessage, setInputMessage] = useState("");
     const [isTyping, setIsTyping] = useState(false);
+    const chatEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        if (activeTab === "coach") {
+            scrollToBottom();
+        }
+    }, [chatMessages, activeTab]);
 
     const [showApptModal, setShowApptModal] = useState(false);
     const [showMeasureModal, setShowMeasureModal] = useState(false);
@@ -207,33 +220,63 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         }
     };
 
-    const handleSendMessage = () => {
-        if (!inputMessage.trim()) return;
-        const userMsg = { role: 'user', text: inputMessage };
+    const handleSendMessage = async () => {
+        if (!inputMessage.trim() || isTyping) return;
+
+        const msgText = inputMessage;
+        const userMsg = { role: 'user', text: msgText };
         setChatMessages(prev => [...prev, userMsg]);
         setInputMessage("");
         setIsTyping(true);
 
-        setTimeout(() => {
-            const lowerMsg = inputMessage.toLowerCase();
-            let response = "";
+        try {
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+            if (!apiKey) throw new Error("API Key de Gemini no encontrada.");
 
-            // Intelligent response based on user results
-            if (lowerMsg.includes("hola") || lowerMsg.includes("buenos días")) {
-                response = `¡Hola ${firstName}! Estoy listo para asistirte hoy. Veo que tu progreso en la fase de **${results.phase}** es constante con un score de **${results.remissionScore}%**. ¿Cómo puedo ayudarte con tu bio-métrica?`;
-            } else if (lowerMsg.includes("glucosa") || lowerMsg.includes("azúcar")) {
-                response = `Entiendo tu inquietud, ${firstName}. Sincronizando con tu plan de **${results.phase}**: mantener la glucosa bajo control es nuestra prioridad para alcanzar tu meta de **${results.meta}**. El pilar de **${results.pillars[0]?.title}** está diseñado específicamente para estabilizar estos picos. ¿Deseas registrar un valor ahora?`;
-            } else if (lowerMsg.includes("comer") || lowerMsg.includes("dieta") || lowerMsg.includes("hambre")) {
-                response = `Buen punto, ${firstName}. Recuerda que en tu plan de **Bio-Optimización**, priorizamos la densidad nutricional. Para tu perfil de **${results.phase}**, te recomiendo elegir alimentos de nuestro catálogo como **Tarwi** o **Quinoa Negra**, que tienen un índice glucémico mínimo.`;
-            } else if (lowerMsg.includes("insulina") || lowerMsg.includes("metabolismo")) {
-                response = `Interesante, ${firstName}. Tu Bio-Insight actual sugiere: "${results.insight}". Esto significa que debemos enfocarnos en la sensibilidad a la insulina a través de la nutrición andina de precisión.`;
-            } else {
-                response = `Excelente pregunta sobre salud metabólica, ${firstName}. Desde el enfoque de **Nutrity Global**, cada detalle cuenta. En el contexto de tu meta de **${results.meta}**, te sugiero revisar el catálogo de superalimentos para potenciar tu remisión celular.`;
-            }
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-            setChatMessages(prev => [...prev, { role: 'ai', text: response }]);
+            const systemPrompt = `Eres Nutrity Coach IA, un experto en remisión metabólica clínica y oncología integrativa.
+            Tu misión es guiar al usuario en su proceso de bio-optimización.
+            
+            DATOS DEL PACIENTE:
+            - Nombre: ${firstName}
+            - ID Sesión: ${user?.uid?.substring(0, 8)}
+            - Fase Actual: ${results.phase}
+            - Score de Remisión: ${results.remissionScore}%
+            - Objetivo Principal: ${results.meta}
+            - Bio-Insight Médico: ${results.insight}
+            
+            REGLAS DE COMUNICACIÓN:
+            1. Longitud: Tus respuestas deben tener entre 15 y 250 palabras. Sé informativo pero conciso.
+            2. Tono: Profesional, científico, basado en evidencia, pero profundamente motivador y empático.
+            3. Especialidad: Habla sobre sensibilidad a la insulina, autofagia, biogénesis mitocondrial y el impacto de los carbohidratos.
+            4. Recomendaciones: Si mencionas alimentos, prioriza los del catálogo: Tarwi, Quinoa Negra, Maca Negra, Yacón.
+            5. Estilo: Usa Markdown para resaltar términos importantes (ej. **Autofagia**).
+            
+            Responde de forma que el usuario se sienta empoderado y con claridad clínica.`;
+
+            const chat = model.startChat({
+                history: [
+                    { role: "user", parts: [{ text: systemPrompt }] },
+                    { role: "model", parts: [{ text: "Entendido. Estoy listo para asistir a " + firstName + " con rigor científico y motivación clínica. ¿Cuál es su consulta?" }] },
+                    ...chatMessages.map(m => ({
+                        role: m.role === 'user' ? 'user' : 'model',
+                        parts: [{ text: m.text }],
+                    })).slice(-6) // Mantener contexto reciente
+                ],
+            });
+
+            const result = await chat.sendMessage(msgText);
+            const responseText = result.response.text();
+
+            setChatMessages(prev => [...prev, { role: 'ai', text: responseText }]);
+        } catch (err) {
+            console.error("Gemini Error:", err);
+            setChatMessages(prev => [...prev, { role: 'ai', text: "Lo siento, Freddy. Hubo un problema de sincronía con la IA. ¿Podrías intentar de nuevo o verificar tu conexión?" }]);
+        } finally {
             setIsTyping(false);
-        }, 1200);
+        }
     };
 
     const navItems = [
@@ -418,6 +461,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                 </div>
                                             </div>
                                         </div>
+                                        <button
+                                            onClick={() => setChatMessages([])}
+                                            className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                            Limpiar Chat
+                                        </button>
                                     </div>
 
                                     <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide bg-slate-50/30">
@@ -450,6 +500,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                 </div>
                                             </div>
                                         )}
+                                        <div ref={chatEndRef} />
                                     </div>
 
                                     <div className="p-6 bg-white border-t border-nutrity-border">
