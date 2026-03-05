@@ -20,9 +20,10 @@ import {
 
 interface NutrityLandingProps {
     onStart: () => void;
+    onAuthClick: () => void;
 }
 
-export function NutrityLanding({ onStart }: NutrityLandingProps) {
+export function NutrityLanding({ onStart, onAuthClick }: NutrityLandingProps) {
     return (
         <div className="flex flex-col min-h-screen w-full bg-nutrity-bg text-nutrity-primary overflow-x-hidden">
             {/* Premium Navigation */}
@@ -190,7 +191,7 @@ export function NutrityLanding({ onStart }: NutrityLandingProps) {
                         <a href="#" className="hover:text-nutrity-accent">Privacidad</a>
                         <a href="#" className="hover:text-nutrity-accent">Términos</a>
                         <button
-                            onClick={onStart}
+                            onClick={onAuthClick}
                             className="bg-nutrity-accent/5 p-1.5 rounded-lg text-nutrity-accent/30 hover:text-nutrity-accent hover:bg-nutrity-accent/10 transition-all"
                             title="Master Access"
                         >
