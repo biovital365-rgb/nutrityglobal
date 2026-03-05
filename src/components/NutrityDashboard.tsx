@@ -123,11 +123,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 setCourses(courseData);
 
                 if (user?.uid) {
-                    const progress = await dbService.getLessonProgress(user.uid);
-                    const progressMap = progress.reduce((acc: any, curr: any) => ({
-                        ...acc,
-                        [curr.lessonId]: curr.completed
-                    }), {});
+                    const progressMap = await dbService.getLessonsProgress(user.uid);
                     setLessonProgress(progressMap);
                 }
             } catch (err) {
@@ -338,7 +334,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 <header className="h-20 bg-white border-b border-nutrity-border flex items-center justify-between px-8 z-20">
                     <div className="flex items-center gap-4">
                         <button className="lg:hidden p-2" onClick={() => setIsSidebarOpen(true)}><LayoutDashboard /></button>
-                        <h1 className="text-xl font-display font-bold text-nutrity-primary tracking-tight">Nutrity V7 - Bio-Panel Médico</h1>
+                        <h1 className="text-sm md:text-xl font-display font-bold text-nutrity-primary tracking-tight truncate max-w-[150px] md:max-w-none">Nutrity V7 - Bio-Panel Médico</h1>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="hidden md:flex flex-col text-right">
@@ -367,23 +363,23 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         {activeTab === "main" && (
                             <motion.div key="main" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                                 {/* Hero Card - Removing 'nutrity-card' to avoid baseline white override */}
-                                <div className="bg-nutrity-primary p-12 text-white rounded-[40px] relative overflow-hidden group shadow-2xl ring-1 ring-white/10">
+                                <div className="bg-nutrity-primary p-6 md:p-12 text-white rounded-[32px] md:rounded-[40px] relative overflow-hidden group shadow-2xl ring-1 ring-white/10">
                                     <div className="relative z-10 grid lg:grid-cols-2 gap-10 items-center">
                                         <div className="space-y-6">
                                             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10">
                                                 <Zap className="w-4 h-4 text-nutrity-accent" />
                                                 <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Fase de Remisión Activa</span>
                                             </div>
-                                            <h2 className="text-5xl font-display font-bold leading-[1.1] uppercase tracking-tighter">PROTOCOLO MAESTRO: {results.phase} 2025</h2>
-                                            <p className="text-xl text-white/60 font-medium max-w-md">Hemos calibrado tu ecosistema metabólico basado en tu perfil biológico para acelerar tu restauración celular.</p>
+                                            <h2 className="text-3xl md:text-5xl font-display font-bold leading-[1.1] uppercase tracking-tighter">PROTOCOLO MAESTRO: {results.phase} 2025</h2>
+                                            <p className="text-base md:text-xl text-white/60 font-medium max-w-md">Hemos calibrado tu ecosistema metabólico basado en tu perfil biológico para acelerar tu restauración celular.</p>
                                         </div>
                                         <div className="grid md:grid-cols-2 gap-8">
                                             {/* Results Grid - Dynamic from 'results' */}
                                             <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 flex flex-col justify-center items-center text-center">
                                                 <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Score de Remisión</p>
                                                 <div className="flex items-baseline gap-1">
-                                                    <h4 className="text-5xl font-black">{results.remissionScore}</h4>
-                                                    <span className="text-xl font-bold opacity-40">%</span>
+                                                    <h4 className="text-4xl md:text-5xl font-black">{results.remissionScore}</h4>
+                                                    <span className="text-lg md:text-xl font-bold opacity-40">%</span>
                                                 </div>
                                             </div>
                                             <div className="bg-nutrity-accent/20 backdrop-blur-xl border border-nutrity-accent/30 rounded-3xl p-6 flex flex-col justify-center">
@@ -448,13 +444,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         {activeTab === "coach" && (
                             <motion.div key="coach" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="h-full flex flex-col">
                                 <div className="nutrity-card flex-1 flex flex-col overflow-hidden bg-white shadow-xl shadow-slate-200/50">
-                                    <div className="p-8 border-b border-nutrity-border flex items-center justify-between bg-white/50 backdrop-blur-md">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-nutrity-accent flex items-center justify-center text-white shadow-lg shadow-nutrity-accent/20">
-                                                <Brain className="w-7 h-7" />
+                                    <div className="p-4 md:p-8 border-b border-nutrity-border flex flex-wrap items-center justify-between bg-white/50 backdrop-blur-md gap-4">
+                                        <div className="flex items-center gap-3 md:gap-4">
+                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-nutrity-accent flex items-center justify-center text-white shadow-lg shadow-nutrity-accent/20">
+                                                <Brain className="w-6 h-6 md:w-7 md:h-7" />
                                             </div>
                                             <div>
-                                                <h3 className="font-display font-bold text-xl">Nutrity Coach IA</h3>
+                                                <h3 className="font-display font-bold text-lg md:text-xl leading-none">Nutrity Coach IA</h3>
                                                 <div className="flex items-center gap-2">
                                                     <span className="w-2 h-2 bg-nutrity-success rounded-full animate-pulse"></span>
                                                     <p className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-[0.2em]">Sincronía Biológica Activa</p>
@@ -470,7 +466,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         </button>
                                     </div>
 
-                                    <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide bg-slate-50/30">
+                                    <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 scrollbar-hide bg-slate-50/30">
                                         {chatMessages.map((msg, i) => (
                                             <motion.div
                                                 key={i}
@@ -478,11 +474,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                 animate={{ opacity: 1, y: 0 }}
                                                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                             >
-                                                <div className={`max-w-[75%] p-5 rounded-2xl shadow-sm ${msg.role === 'user'
+                                                <div className={`max-w-[85%] md:max-w-[75%] p-4 md:p-5 rounded-2xl shadow-sm ${msg.role === 'user'
                                                     ? 'bg-nutrity-accent text-white rounded-br-none shadow-nutrity-accent/10'
                                                     : 'bg-white text-nutrity-primary border border-nutrity-border rounded-bl-none'
                                                     }`}>
-                                                    <p className="text-[13px] font-medium leading-relaxed whitespace-pre-line">{msg.text}</p>
+                                                    <p className="text-xs md:text-[13px] font-medium leading-relaxed whitespace-pre-line">{msg.text}</p>
                                                     {msg.role === 'ai' && (
                                                         <div className="mt-4 pt-4 border-t border-nutrity-border flex items-center gap-2 text-[8px] font-bold text-nutrity-accent uppercase tracking-[0.2em]">
                                                             <Zap className="w-3 h-3" /> Bio-Feedback Activo v4.0
@@ -1057,7 +1053,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 </div>
 
                 {/* Dashboard Footer with Admin Access */}
-                <footer className="px-8 py-6 border-t border-nutrity-border bg-white/50 backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                <footer className="px-4 md:px-8 py-4 md:py-6 border-t border-nutrity-border bg-white/50 backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
                     <div className="flex items-center gap-2 text-nutrity-gray-text opacity-40">
                         <Activity className="w-4 h-4" />
                         <span className="text-[10px] font-bold uppercase tracking-widest">&copy; 2025 Nutrity Global AI - Clinical Edition</span>
