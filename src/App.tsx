@@ -66,7 +66,11 @@ export default function App() {
   const handleAuthSuccess = (userData: any) => {
     setUser(userData);
     setShowAuthModal(false);
-    if (view === "auth") setView("landing");
+    if (results) {
+      setView("dashboard");
+    } else if (view === "auth") {
+      setView("landing");
+    }
   };
 
   const handleCompleteOnboarding = async (data: any) => {
@@ -77,7 +81,12 @@ export default function App() {
 
       // 1. Actualizar estado local inmediatamente
       setResults(processedResults);
-      setView("dashboard"); // Cambio de vista instantáneo
+
+      if (!user) {
+        setShowAuthModal(true);
+      } else {
+        setView("dashboard"); // Cambio de vista instantáneo
+      }
 
       // 2. Guardar en background (sin bloquear al usuario)
       if (user) {
@@ -206,7 +215,6 @@ export default function App() {
       doc.text(`• Diagnóstico de Perfil: ${conditionLabel}`, margin + 5, y);
       y += 6;
       doc.text(`• Objetivo Clínico: ${results.meta || 'Restauración de Sensibilidad a la Insulina'}`, margin + 5, y);
-      y += 6;
       doc.text(`• Score de Remisión Actual: ${results.remissionScore || '90'}%`, margin + 5, y);
 
       // 4. DIAGNÓSTICO IA MOLECULAR
@@ -225,6 +233,7 @@ export default function App() {
       y += (summaryLines.length * 6) + 10;
 
       // 5. PROTOCOLO DE MICRONUTRICIÓN
+      y += 10;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(13);
       doc.setTextColor(79, 70, 229);
@@ -238,9 +247,9 @@ export default function App() {
       if (micros.length > 0) {
         micros.forEach((m: any, idx: number) => {
           doc.setFont("helvetica", "bold");
-          doc.text(`${idx + 1}. ${m.name}:`, margin + 5, y);
+          doc.text(`${idx + 1}. ${m.name}: `, margin + 5, y);
           doc.setFont("helvetica", "normal");
-          doc.text(`${m.dose} - ${m.reason}`, margin + 50, y);
+          doc.text(`${m.dose} - ${m.reason} `, margin + 50, y);
           y += 6;
           if (y > 275) { doc.addPage(); y = 25; }
         });
@@ -265,7 +274,7 @@ export default function App() {
         "Ducha fría (30 seg al final) para activación de grasa parda."
       ];
       hackingSteps.forEach(step => {
-        doc.text(`- ${step}`, margin + 5, y);
+        doc.text(`- ${step} `, margin + 5, y);
         y += 7;
       });
 
@@ -281,7 +290,7 @@ export default function App() {
       const blobUrl = URL.createObjectURL(pdfBinary);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = `REPORTE-CLINICO-${patientName.replace(/\s+/g, '-')}.pdf`;
+      link.download = `REPORTE - CLINICO - ${patientName.replace(/\s+/g, '-')}.pdf`;
 
       // Force download logic
       document.body.appendChild(link);
@@ -306,7 +315,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-nutrity-bg text-nutrity-primary font-body">
       <main>
-        {view === "landing" && <NutrityLanding onStart={handleStartOnboarding} />}
+        {view === "landing" && <NutrityLanding onStart={handleStartOnboarding} onAuthClick={handleAuthClick} />}
         {view === "auth" && <Auth onAuthSuccess={handleAuthSuccess} onBack={() => setView("landing")} />}
         {view === "onboarding" && (
           <div className="relative">
