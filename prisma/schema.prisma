@@ -1,0 +1,144 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id              String         @id @default(uuid())
+  firebaseUid     String?        @unique // Link to Firebase Auth
+  email           String         @unique
+  name            String?
+  role            String         @default("USER") // ADMIN, COACH, USER
+  plan            String         @default("FREE") // FREE, BIO_PRO, ELITE
+  stripeCustomerId String?       @unique
+  subscriptionId   String?       @unique
+  organizationId  String?
+  organization    Organization?  @relation(fields: [organizationId], references: [id])
+  measurements    Measurement[]
+  appointments    Appointment[]
+  evaluations     Evaluation[]
+  enrollments     Enrollment[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Food {
+  id                String   @id @default(cuid())
+  name              String
+  scientificName    String
+  image             String
+  category          String
+  description       String
+  metabolicBenefits Json     // Array of strings
+  nutrients         Json     // { protein: string, fiber: string, sugar: string }
+  recipes           Json     // Array of { title: string, instructions: string[] }
+  createdAt         DateTime @default(now())
+}
+
+model Micronutrient {
+  id               String   @id @default(cuid())
+  name             String
+  symbol           String
+  category         String
+  function         String
+  metabolicImpact  String
+  sources          Json     // Array of strings
+  deficiencySigns  Json     // Array of strings
+  dailyDose        String
+  image            String?
+  createdAt         DateTime @default(now())
+}
+
+model Measurement {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  label     String   // Glucose, Weight, etc.
+  value     String
+  date      String   // ISO Date string
+  time      String?  // HH:mm
+  status    String?
+  timestamp DateTime @default(now())
+}
+
+model Appointment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  date      String   // ISO Date
+  time      String?
+  type      String   // Virtual, Lab, etc.
+  status    String   @default("SCHEDULED")
+  createdAt DateTime @default(now())
+}
+
+model Evaluation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  data      Json     // Onboarding answers
+  results   Json     // Generated plan
+  timestamp DateTime @default(now())
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  thumbnail   String
+  category    String       @default("Bienestar")
+  price       Float        @default(0)
+  paypalUrl   String?
+  currency    String       @default("USD")
+  isPublished Boolean      @default(true)
+  lessons     Lesson[]
+  enrollments Enrollment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  videoUrl    String?
+  duration    String?  // e.g., "15:30"
+  order       Int
+  isFree      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id])
+  enrolledAt DateTime @default(now())
+}
+
+model LessonProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
