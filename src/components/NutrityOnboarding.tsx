@@ -30,13 +30,18 @@ export function NutrityOnboarding({ onComplete, onBack }: OnboardingProps) {
     const totalSteps = 4;
 
     const handleNext = () => {
-        console.log("handleNext triggered, current step:", step);
+        console.log("CLICK handleNext | Current Step:", step, "| Data:", formData);
         if (step < totalSteps) {
-            setStep(step + 1);
+            setStep(prev => prev + 1);
         } else {
-            console.log("Onboarding completed with data:", formData);
+            console.log("COMPLETE! Onboarding finished, sending data to parent...");
             setIsSyncing(true);
-            onComplete(formData);
+            try {
+                onComplete(formData);
+            } catch (err) {
+                console.error("CRASH in onComplete:", err);
+                setIsSyncing(false);
+            }
         }
     };
 
@@ -129,7 +134,10 @@ export function NutrityOnboarding({ onComplete, onBack }: OnboardingProps) {
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
-                                            onClick={() => setFormData({ ...formData, condition: opt.id })}
+                                            onClick={() => {
+                                                console.log("ST-2: Selected Condition ->", opt.id);
+                                                setFormData({ ...formData, condition: opt.id });
+                                            }}
                                             className={`w-full text-left p-4 rounded-xl border-2 transition-all ${formData.condition === opt.id ? 'border-nutrity-accent bg-nutrity-accent/5' : 'border-nutrity-border hover:bg-nutrity-bg'}`}
                                         >
                                             <div className="flex justify-between items-center">
@@ -157,7 +165,10 @@ export function NutrityOnboarding({ onComplete, onBack }: OnboardingProps) {
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
-                                            onClick={() => setFormData({ ...formData, currentGlucose: opt.id })}
+                                            onClick={() => {
+                                                console.log("ST-3: Selected Glucose ->", opt.id);
+                                                setFormData({ ...formData, currentGlucose: opt.id });
+                                            }}
                                             className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all gap-2 ${formData.currentGlucose === opt.id ? 'border-nutrity-accent bg-nutrity-accent/5 text-nutrity-accent' : 'border-nutrity-border hover:bg-nutrity-bg text-nutrity-gray-text'}`}
                                         >
                                             <span className="text-sm font-bold">{opt.label}</span>
@@ -183,7 +194,10 @@ export function NutrityOnboarding({ onComplete, onBack }: OnboardingProps) {
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
-                                            onClick={() => setFormData({ ...formData, interest: opt.id })}
+                                            onClick={() => {
+                                                console.log("ST-4: Selected Interest ->", opt.id);
+                                                setFormData({ ...formData, interest: opt.id });
+                                            }}
                                             className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData.interest === opt.id ? 'border-nutrity-accent bg-nutrity-accent/5' : 'border-nutrity-border hover:bg-nutrity-bg'}`}
                                         >
                                             <span className="text-2xl">{opt.icon}</span>
