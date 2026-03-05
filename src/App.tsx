@@ -63,7 +63,7 @@ export default function App() {
   };
 
   const handleAuthClick = () => {
-    setView("auth");
+    setShowAuthModal(true);
   };
 
   const handleAuthSuccess = (userData: any) => {
@@ -352,7 +352,6 @@ export default function App() {
       {/* Auth Modal Overlay */}
       {showAuthModal && (
         <div className="fixed inset-0 z-[300] bg-nutrity-primary/40 backdrop-blur-md flex items-center justify-center p-4">
-          {console.log("RENDER: Rendering Auth Modal Overlay...")}
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg relative overflow-hidden ring-1 ring-black/5">
             <button onClick={() => setShowAuthModal(false)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-nutrity-bg transition-all z-10 text-nutrity-gray-text opacity-50">
               <X className="w-6 h-6" />
