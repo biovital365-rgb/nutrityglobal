@@ -13,6 +13,7 @@ import { jsPDF } from "jspdf";
 import { Download, X, CheckCircle2, LogOut } from "lucide-react";
 
 export default function App() {
+  // V7.2 Nature Biotech Edition - Build Trigger
   const [view, setView] = useState<"landing" | "onboarding" | "dashboard" | "detail" | "auth" | "history">("landing");
   const [results, setResults] = useState<any>(null);
   const [selectedPillar, setSelectedPillar] = useState<string>("");
