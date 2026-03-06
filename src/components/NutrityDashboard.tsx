@@ -176,6 +176,9 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         e.preventDefault();
         if (!user?.uid) { setShowApptModal(false); onRequireAuth(); return; }
 
+        // Optimistic close
+        setShowApptModal(false);
+
         try {
             await addDoc(collection(db, "appointments"), {
                 userId: user.uid,
@@ -186,16 +189,18 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 timestamp: serverTimestamp()
             });
             setNewAppt({ title: "", date: "", time: "", type: "Virtual" });
-            setShowApptModal(false);
         } catch (err) {
             console.error("Error adding appointment:", err);
-            alert("Error al agendar. Intenta de nuevo.");
+            alert("Error al agendar. Verifica tus permisos o conexión.");
         }
     };
 
     const handleAddMeasurement = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user?.uid) { setShowMeasureModal(false); onRequireAuth(); return; }
+
+        // Optimistic close
+        setShowMeasureModal(false);
 
         try {
             await addDoc(collection(db, "measurements"), {
@@ -208,11 +213,9 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 timestamp: serverTimestamp()
             });
             setNewMeasure({ ...newMeasure, value: "" });
-            setShowMeasureModal(false);
         } catch (err) {
             console.error("Error adding measurement:", err);
-            setShowMeasureModal(false);
-            alert("Error al guardar.");
+            alert("Error al guardar la medición médica.");
         }
     };
 
@@ -269,7 +272,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             setChatMessages(prev => [...prev, { role: 'ai', text: responseText }]);
         } catch (err) {
             console.error("Gemini Error:", err);
-            setChatMessages(prev => [...prev, { role: 'ai', text: "Lo siento, Freddy. Hubo un problema de sincronía con la IA. ¿Podrías intentar de nuevo o verificar tu conexión?" }]);
+            setChatMessages(prev => [...prev, { role: 'ai', text: `Lo siento${firstName ? ' ' + firstName : ''}, hubo un problema de sincronía con la IA. Es posible que falte la clave API VITE_GEMINI_API_KEY en Vercel. Por favor, verifica la configuración.` }]);
         } finally {
             setIsTyping(false);
         }
