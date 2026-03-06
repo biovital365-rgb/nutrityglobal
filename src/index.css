@@ -4,14 +4,15 @@
   --font-display: "Plus Jakarta Sans", "Outfit", sans-serif;
   --font-body: "Inter", sans-serif;
 
-  /* Nutrity Global "Clinical Tech" V3 Palette */
-  --color-nutrity-primary: hsl(222, 47%, 12%);
-  --color-nutrity-accent: hsl(250, 89%, 60%);
-  --color-nutrity-success: hsl(160, 84%, 39%);
-  --color-nutrity-bg: hsl(210, 40%, 98%);
-  --color-nutrity-surface: hsl(0, 0%, 100%);
-  --color-nutrity-gray-text: hsl(215, 25%, 40%);
-  --color-nutrity-border: hsl(214, 32%, 91%);
+  /* Nutrity Global "Nature Biotech" Palette - Derived from Image */
+  --color-nutrity-primary: hsl(175, 100%, 18%); /* Intense Dark Teal */
+  --color-nutrity-accent: hsl(76, 75%, 48%);   /* Vibrant Lime/Sage */
+  --color-nutrity-success: hsl(155, 65%, 42%);  /* Emerald Leaf */
+  --color-nutrity-bg: hsl(175, 30%, 98%);       /* Very Light Mint Mist */
+  --color-nutrity-surface: hsl(0, 0%, 100%);    /* Pure Surface */
+  --color-nutrity-gray-text: hsl(94, 15%, 42%); /* Sage Grey Text */
+  --color-nutrity-border: hsl(175, 20%, 92%);   /* Subtle Teal Border */
+  --color-nutrity-highlight: hsl(64, 100%, 50%); /* Bright Yellow Spike */
 
   --radius-xl: 16px;
   --radius-lg: 12px;
