@@ -319,10 +319,13 @@ export default function App() {
     <div className="min-h-screen bg-nutrity-bg text-nutrity-primary font-body">
       <main>
         {view === "landing" && <NutrityLanding onStart={handleStartOnboarding} onAuthClick={handleAuthClick} />}
-        {view === "auth" && <Auth onAuthSuccess={handleAuthSuccess} onBack={() => setView("landing")} />}
         {view === "onboarding" && (
           <div className="relative">
-            <NutrityOnboarding onComplete={handleCompleteOnboarding} onBack={() => setView("landing")} />
+            <NutrityOnboarding
+              onComplete={handleCompleteOnboarding}
+              onBack={() => setView("landing")}
+              onAuthClick={handleAuthClick}
+            />
             {(user?.email === 'biovital.365@gmail.com' || user?.profile?.role === 'ADMIN') && (
               <button
                 onClick={() => {

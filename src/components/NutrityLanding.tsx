@@ -192,10 +192,10 @@ export function NutrityLanding({ onStart, onAuthClick }: NutrityLandingProps) {
                         <a href="#" className="hover:text-nutrity-accent">Términos</a>
                         <button
                             onClick={onAuthClick}
-                            className="bg-nutrity-accent/5 p-1.5 rounded-lg text-nutrity-accent/30 hover:text-nutrity-accent hover:bg-nutrity-accent/10 transition-all"
-                            title="Master Access"
+                            className="bg-nutrity-accent/5 p-2 rounded-xl text-nutrity-accent/40 hover:text-nutrity-accent hover:bg-nutrity-accent/10 transition-all border border-nutrity-accent/10"
+                            title="Acceso Directo"
                         >
-                            <Shield className="w-3.5 h-3.5" />
+                            <Shield className="w-4 h-4" />
                         </button>
                     </div>
                 </div>

@@ -14,9 +14,10 @@ import {
 interface OnboardingProps {
     onComplete: (data: any) => void;
     onBack?: () => void;
+    onAuthClick?: () => void;
 }
 
-export function NutrityOnboarding({ onComplete, onBack }: OnboardingProps) {
+export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: OnboardingProps) {
     const [step, setStep] = useState(1);
     const [isSyncing, setIsSyncing] = useState(false);
     const [formData, setFormData] = useState({
@@ -235,10 +236,13 @@ export function NutrityOnboarding({ onComplete, onBack }: OnboardingProps) {
                 </motion.div>
             </AnimatePresence>
 
-            <div className="mt-10 flex items-center gap-2 text-[10px] font-bold text-nutrity-gray-text/40 uppercase tracking-widest text-center">
+            <button
+                onClick={onAuthClick}
+                className="mt-10 flex items-center gap-2 text-[10px] font-bold text-nutrity-gray-text/40 hover:text-nutrity-accent hover:bg-nutrity-accent/5 px-3 py-1.5 rounded-lg transition-all uppercase tracking-widest text-center"
+            >
                 <Shield className="w-3.5 h-3.5" />
                 Seguro Médico Encriptado AES-256
-            </div>
+            </button>
         </div>
     );
 }
