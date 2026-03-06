@@ -282,7 +282,15 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             setChatMessages(prev => [...prev, { role: 'ai', text: responseText }]);
         } catch (err) {
             console.error("Gemini Error:", err);
-            setChatMessages(prev => [...prev, { role: 'ai', text: `Lo siento${firstName ? ' ' + firstName : ''}, hubo un problema de sincronía con la IA. Es posible que falte la clave API VITE_GEMINI_API_KEY en Vercel. Por favor, verifica la configuración.` }]);
+            let errorMessage = `Lo siento${firstName ? ' ' + firstName : ''}, hubo un problema de sincronía con la IA.`;
+            if (err instanceof Error) {
+                if (err.message.includes('429') || err.message.includes('quota') || err.message.includes('400')) {
+                    errorMessage = `He alcanzado el límite de consultas por minuto de mi versión gratuita (${import.meta.env.VITE_GEMINI_API_KEY ? 'Llave detectada' : 'No llave'}). Por favor, espera un minuto antes de enviarme otra pregunta, ${firstName || 'usuario'}.`;
+                } else if (!import.meta.env.VITE_GEMINI_API_KEY) {
+                    errorMessage = `La clave VITE_GEMINI_API_KEY no se encontró en la nube.`;
+                }
+            }
+            setChatMessages(prev => [...prev, { role: 'ai', text: errorMessage }]);
         } finally {
             setIsTyping(false);
         }
