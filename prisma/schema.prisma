@@ -27,6 +27,12 @@ model User {
   subscriptionId   String?       @unique
   organizationId  String?
   organization    Organization?  @relation(fields: [organizationId], references: [id])
+  phone           String?
+  address         String?
+  age             String?
+  occupation      String?
+  maritalStatus   String?
+  socialMedia     String?
   measurements    Measurement[]
   appointments    Appointment[]
   evaluations     Evaluation[]

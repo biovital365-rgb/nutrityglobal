@@ -144,6 +144,18 @@ export const dbService = {
         return data
     },
 
+    async updateUserProfile(userId: string, profileData: Partial<any>) {
+        const { data, error } = await supabase
+            .from('User')
+            .update(profileData)
+            .eq('id', userId)
+            .select('*, organization:Organization(*)')
+            .single()
+
+        if (error) throw error
+        return data
+    },
+
     async syncUserProfile(firebaseUser: any, name?: string) {
         try {
             // 1. Verificar si ya existe por firebaseUid

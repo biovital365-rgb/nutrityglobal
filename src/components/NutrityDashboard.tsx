@@ -102,6 +102,45 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
     });
 
+    // Profile States
+    const [profileForm, setProfileForm] = useState({
+        name: user?.profile?.name || results?.name || "",
+        email: user?.profile?.email || user?.email || "",
+        phone: user?.profile?.phone || "",
+        address: user?.profile?.address || "",
+        age: user?.profile?.age || results?.age || "",
+        occupation: user?.profile?.occupation || "",
+        maritalStatus: user?.profile?.maritalStatus || "",
+        socialMedia: user?.profile?.socialMedia || ""
+    });
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [isProfileComplete, setIsProfileComplete] = useState(
+        !!(user?.profile?.phone && user?.profile?.address && user?.profile?.age)
+    );
+
+    useEffect(() => {
+        if (user?.uid && !isProfileComplete && activeTab !== "profile") {
+            setActiveTab("profile");
+        }
+    }, [isProfileComplete, activeTab, user?.uid]);
+
+    const handleSaveProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user?.profile?.id) return;
+        setIsSavingProfile(true);
+        try {
+            await dbService.updateUserProfile(user.profile.id, profileForm);
+            setIsProfileComplete(true);
+            alert("Perfil actualizado satisfactoriamente.");
+            if (activeTab === "profile") setActiveTab("main");
+        } catch (err) {
+            console.error("Error saving profile", err);
+            alert("Error al guardar el perfil.");
+        } finally {
+            setIsSavingProfile(false);
+        }
+    };
+
     // Supabase States
     const [foods, setFoods] = useState<FoodItem[]>([]);
     const [micros, setMicros] = useState<Micronutrient[]>([]);
@@ -297,17 +336,17 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     };
 
     const navItems = [
-        { id: "main", icon: LayoutDashboard, label: "Panel" },
-        { id: "agenda", icon: Calendar, label: "Agenda" },
-        { id: "coach", icon: Brain, label: "IA Coach" },
-        { id: "measurements", icon: Activity, label: "Mediciones" },
-        { id: "catalog", icon: Utensils, label: "Alimentos" },
-        { id: "micronutrients", icon: Zap, label: "Micronutrientes" },
-        { id: "academy", icon: BookOpen, label: "Academia" },
-        { id: "menu", icon: ClipboardCheck, label: "Menú" },
-        { id: "goals", icon: Target, label: "Metas" },
+        { id: "main", icon: LayoutDashboard, label: "Panel", disabled: !isProfileComplete },
+        { id: "agenda", icon: Calendar, label: "Agenda", disabled: !isProfileComplete },
+        { id: "coach", icon: Brain, label: "IA Coach", disabled: !isProfileComplete },
+        { id: "measurements", icon: Activity, label: "Mediciones", disabled: !isProfileComplete },
+        { id: "catalog", icon: Utensils, label: "Alimentos", disabled: !isProfileComplete },
+        { id: "micronutrients", icon: Zap, label: "Micronutrientes", disabled: !isProfileComplete },
+        { id: "academy", icon: BookOpen, label: "Academia", disabled: !isProfileComplete },
+        { id: "menu", icon: ClipboardCheck, label: "Menú", disabled: !isProfileComplete },
+        { id: "goals", icon: Target, label: "Metas", disabled: !isProfileComplete },
         { id: "profile", icon: User, label: "Perfil" },
-        { id: "subscription", icon: CreditCard, label: "Mi Plan" },
+        { id: "subscription", icon: CreditCard, label: "Mi Plan", disabled: !isProfileComplete },
         ...(user?.profile?.role === 'ADMIN' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com' ? [{ id: "organization", icon: Users, label: "Organización" }] : [])
     ];
 
@@ -1058,7 +1097,70 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                             </motion.div>
                         )}
 
-                        {!["main", "coach", "micronutrients", "measurements", "academy", "subscription", "organization", "catalog", "menu", "goals", "agenda"].includes(activeTab) && (
+                        {activeTab === "profile" && (
+                            <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                                <div className="space-y-1 mb-8">
+                                    <h2 className="text-3xl font-display font-bold">Perfil del Paciente</h2>
+                                    <p className="text-nutrity-gray-text text-sm">
+                                        {!isProfileComplete
+                                            ? "Por favor, completa todos tus datos personales obligatorios para continuar utilizando Nutrity Global."
+                                            : "Actualiza tus datos personales y de contacto aquí."}
+                                    </p>
+                                </div>
+                                <div className="nutrity-card p-6 md:p-8">
+                                    <form onSubmit={handleSaveProfile} className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Nombre Completo *</label>
+                                                <input type="text" required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.name} onChange={e => setProfileForm({ ...profileForm, name: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Correo Electrónico *</label>
+                                                <input type="email" required disabled className="w-full bg-gray-100 border border-nutrity-border rounded-xl px-4 py-3 font-medium opacity-70 cursor-not-allowed" value={profileForm.email} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Celular de Contacto *</label>
+                                                <input type="tel" required placeholder="+591 70000000" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.phone} onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Edad *</label>
+                                                <input type="number" required placeholder="Ej. 45" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.age} onChange={e => setProfileForm({ ...profileForm, age: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Dirección Completa *</label>
+                                                <input type="text" required placeholder="Calle, Nro, Zona, Ciudad" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.address} onChange={e => setProfileForm({ ...profileForm, address: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Ocupación / Profesión *</label>
+                                                <input type="text" required placeholder="Ingeniera, Docente, etc." className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.occupation} onChange={e => setProfileForm({ ...profileForm, occupation: e.target.value })} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Estado Civil *</label>
+                                                <select required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.maritalStatus} onChange={e => setProfileForm({ ...profileForm, maritalStatus: e.target.value })}>
+                                                    <option value="" disabled>Seleccionar estado</option>
+                                                    <option value="soltero">Soltero/a</option>
+                                                    <option value="casado">Casado/a</option>
+                                                    <option value="divorciado">Divorciado/a</option>
+                                                    <option value="viudo">Viudo/a</option>
+                                                    <option value="otro">Otro</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Redes Sociales / IG o Facebook (Opcional)</label>
+                                                <input type="text" placeholder="@usuario o link de perfil" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.socialMedia} onChange={e => setProfileForm({ ...profileForm, socialMedia: e.target.value })} />
+                                            </div>
+                                        </div>
+                                        <div className="pt-6 border-t border-nutrity-border flex justify-end">
+                                            <button disabled={isSavingProfile} type="submit" className="bg-nutrity-primary text-white px-10 py-4 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-nutrity-primary/20 hover:bg-nutrity-accent transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
+                                                {isSavingProfile ? "Guardando..." : "Guardar Perfil"}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {!["main", "coach", "micronutrients", "measurements", "academy", "subscription", "organization", "catalog", "menu", "goals", "agenda", "profile"].includes(activeTab) && (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center p-20 text-center space-y-6">
                                 <div className="w-20 h-20 bg-nutrity-bg rounded-3xl flex items-center justify-center text-nutrity-accent/20">
                                     <FlaskConical className="w-10 h-10" />
@@ -1191,19 +1293,21 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             {/* Mobile Bottom Navigation */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-nutrity-border z-40 px-6 py-4 flex justify-between items-center pb-safe box-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl">
                 {[
-                    { id: 'panel', icon: LayoutDashboard, label: 'Panel' },
+                    { id: 'main', icon: LayoutDashboard, label: 'Panel' },
                     { id: 'agenda', icon: Calendar, label: 'Agenda' },
                     { id: 'coach', icon: Brain, label: 'IA Coach' },
                     { id: 'menu', icon: Utensils, label: 'Menú' },
                     { id: 'profile', icon: User, label: 'Perfil' },
                 ].map((item) => {
                     const isActive = activeTab === item.id;
+                    const isDisabled = !isProfileComplete && item.id !== 'profile';
                     const Icon = item.icon;
                     return (
                         <button
                             key={item.id}
-                            onClick={() => setActiveTab(item.id)}
-                            className={`flex flex-col items-center gap-1.5 transition-all w-16 ${isActive ? 'text-nutrity-primary' : 'text-nutrity-gray-text opacity-60'}`}
+                            onClick={() => !isDisabled && setActiveTab(item.id)}
+                            disabled={isDisabled}
+                            className={`flex flex-col items-center gap-1.5 transition-all w-16 ${isActive ? 'text-nutrity-primary' : 'text-nutrity-gray-text opacity-60'} ${isDisabled ? "opacity-30 cursor-not-allowed" : ""}`}
                         >
                             <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-nutrity-accent/20 text-nutrity-accent' : ''}`}>
                                 <Icon className="w-6 h-6" />
