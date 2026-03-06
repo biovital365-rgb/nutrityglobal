@@ -176,6 +176,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         e.preventDefault();
         if (!user?.uid) { setShowApptModal(false); onRequireAuth(); return; }
 
+        if (!newAppt.title || !newAppt.date || !newAppt.time) {
+            alert("Por favor completa todos los campos.");
+            return;
+        }
+
         // Optimistic close
         setShowApptModal(false);
 
@@ -198,6 +203,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const handleAddMeasurement = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user?.uid) { setShowMeasureModal(false); onRequireAuth(); return; }
+
+        if (!newMeasure.value || !newMeasure.date || !newMeasure.time) {
+            alert("Por favor completa todos los campos de medición.");
+            return;
+        }
 
         // Optimistic close
         setShowMeasureModal(false);
@@ -233,7 +243,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             if (!apiKey) throw new Error("API Key de Gemini no encontrada.");
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
             const systemPrompt = `Eres Nutrity Coach IA, un experto en remisión metabólica clínica y oncología integrativa.
             Tu misión es guiar al usuario en su proceso de bio-optimización.
@@ -1108,16 +1118,16 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                             <form onSubmit={handleAddAppointment} className="space-y-6">
                                 <div className="space-y-1.5 font-medium">
                                     <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Asunto de la Cita</label>
-                                    <input type="text" required placeholder="Ej: Control Metabólico" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none font-bold placeholder:opacity-30" value={newAppt.title} onChange={(e) => setNewAppt({ ...newAppt, title: e.target.value })} />
+                                    <input type="text" placeholder="Ej: Control Metabólico" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none font-bold placeholder:opacity-30" value={newAppt.title} onChange={(e) => setNewAppt({ ...newAppt, title: e.target.value })} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Fecha (Manual)</label>
-                                        <input type="date" required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold" value={newAppt.date} onChange={(e) => setNewAppt({ ...newAppt, date: e.target.value })} />
+                                        <input type="date" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold" value={newAppt.date} onChange={(e) => setNewAppt({ ...newAppt, date: e.target.value })} />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Hora (Manual)</label>
-                                        <input type="time" required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold" value={newAppt.time} onChange={(e) => setNewAppt({ ...newAppt, time: e.target.value })} />
+                                        <input type="time" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold" value={newAppt.time} onChange={(e) => setNewAppt({ ...newAppt, time: e.target.value })} />
                                     </div>
                                 </div>
                                 <button type="submit" className="w-full bg-nutrity-primary text-white py-5 rounded-xl font-bold shadow-lg shadow-nutrity-accent/20 active:scale-95 transition-all text-sm uppercase tracking-widest mt-2">Confirmar Cita</button>
@@ -1151,16 +1161,16 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Valor Obtenido</label>
-                                    <input type="number" step="0.1" required placeholder={newMeasure.type === "Glucosa" ? "95 mg/dL" : "75 kg"} className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold text-2xl text-nutrity-accent" value={newMeasure.value} onChange={(e) => setNewMeasure({ ...newMeasure, value: e.target.value })} />
+                                    <input type="number" step="0.1" placeholder={newMeasure.type === "Glucosa" ? "95 mg/dL" : "75 kg"} className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold text-2xl text-nutrity-accent" value={newMeasure.value} onChange={(e) => setNewMeasure({ ...newMeasure, value: e.target.value })} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Fecha (Manual)</label>
-                                        <input type="date" required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 font-bold text-xs" value={newMeasure.date} onChange={(e) => setNewMeasure({ ...newMeasure, date: e.target.value })} />
+                                        <input type="date" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 font-bold text-xs" value={newMeasure.date} onChange={(e) => setNewMeasure({ ...newMeasure, date: e.target.value })} />
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Hora (Manual)</label>
-                                        <input type="time" required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 font-bold text-xs" value={newMeasure.time} onChange={(e) => setNewMeasure({ ...newMeasure, time: e.target.value })} />
+                                        <input type="time" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 font-bold text-xs" value={newMeasure.time} onChange={(e) => setNewMeasure({ ...newMeasure, time: e.target.value })} />
                                     </div>
                                 </div>
                                 <button type="submit" className="w-full bg-nutrity-primary text-white py-5 rounded-xl font-bold shadow-lg shadow-nutrity-accent/20 active:scale-95 transition-all text-sm uppercase tracking-widest mt-2">Guardar Medición</button>
