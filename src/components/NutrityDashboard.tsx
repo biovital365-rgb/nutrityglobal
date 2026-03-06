@@ -243,7 +243,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             if (!apiKey) throw new Error("API Key de Gemini no encontrada.");
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
             const systemPrompt = `Eres Nutrity Coach IA, un experto en remisión metabólica clínica y oncología integrativa.
             Tu misión es guiar al usuario en su proceso de bio-optimización.
@@ -314,7 +314,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     );
 
     return (
-        <div id="dashboard-container" className="flex h-screen bg-nutrity-bg text-nutrity-primary overflow-hidden font-body">
+        <div id="dashboard-container" className="flex h-screen bg-nutrity-bg text-nutrity-primary overflow-hidden font-body pb-[90px] md:pb-0">
             {/* Desktop Sidebar */}
             <aside className="hidden lg:flex flex-col w-64 bg-nutrity-primary text-white border-r border-white/5">
                 <div className="p-8">
@@ -1179,6 +1179,32 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Mobile Bottom Navigation */}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-nutrity-border z-40 px-6 py-4 flex justify-between items-center pb-safe box-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl">
+                {[
+                    { id: 'panel', icon: LayoutDashboard, label: 'Panel' },
+                    { id: 'agenda', icon: Calendar, label: 'Agenda' },
+                    { id: 'coach', icon: Brain, label: 'IA Coach' },
+                    { id: 'menu', icon: Utensils, label: 'Menú' },
+                    { id: 'profile', icon: User, label: 'Perfil' },
+                ].map((item) => {
+                    const isActive = activeTab === item.id;
+                    const Icon = item.icon;
+                    return (
+                        <button
+                            key={item.id}
+                            onClick={() => setActiveTab(item.id)}
+                            className={`flex flex-col items-center gap-1.5 transition-all w-16 ${isActive ? 'text-nutrity-primary' : 'text-nutrity-gray-text opacity-60'}`}
+                        >
+                            <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-nutrity-accent/20 text-nutrity-accent' : ''}`}>
+                                <Icon className="w-6 h-6" />
+                            </div>
+                            <span className="text-[9px] font-bold uppercase tracking-wide">{item.label}</span>
+                        </button>
+                    );
+                })}
+            </div>
         </div>
     );
 }
