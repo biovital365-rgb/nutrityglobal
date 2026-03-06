@@ -67,8 +67,7 @@ export const dbService = {
     async saveFood(food: Partial<FoodItem>) {
         const payload = {
             ...food,
-            id: food.id || `food_${Math.random().toString(36).substring(2, 11)}`,
-            updatedAt: new Date().toISOString()
+            id: food.id || `food_${Math.random().toString(36).substring(2, 11)}`
         };
 
         const { data, error } = await supabase
@@ -105,8 +104,7 @@ export const dbService = {
     async saveMicronutrient(micro: Partial<Micronutrient>) {
         const payload = {
             ...micro,
-            id: micro.id || `micro_${Math.random().toString(36).substring(2, 11)}`,
-            updatedAt: new Date().toISOString()
+            id: micro.id || `micro_${Math.random().toString(36).substring(2, 11)}`
         };
 
         const { data, error } = await supabase
