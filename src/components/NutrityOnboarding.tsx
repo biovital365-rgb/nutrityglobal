@@ -220,7 +220,7 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                             <button
                                 onClick={handleNext}
                                 disabled={(step === 1 && !formData.name) || (step === 4 && !formData.interest) || isSyncing}
-                                className="flex-1 bg-nutrity-accent text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-600 transition-all active:scale-[0.98] disabled:opacity-40"
+                                className="flex-1 bg-nutrity-accent text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-40"
                             >
                                 {isSyncing ? (
                                     <span className="animate-pulse">Sincronizando...</span>
