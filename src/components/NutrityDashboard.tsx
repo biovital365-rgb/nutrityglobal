@@ -604,8 +604,12 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                     {filteredMicros.map((micro) => (
                                         <div key={micro.id} className="nutrity-card p-8 hover:border-nutrity-accent transition-all group relative overflow-hidden">
                                             <div className="flex items-center justify-between mb-6">
-                                                <div className="w-12 h-12 rounded-xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent group-hover:scale-110 transition-transform">
-                                                    <Zap className="w-7 h-7" />
+                                                <div className="w-12 h-12 rounded-xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent group-hover:scale-110 transition-transform overflow-hidden">
+                                                    {micro.image ? (
+                                                        <img src={getDirectImageUrl(micro.image)} alt={micro.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <Zap className="w-7 h-7" />
+                                                    )}
                                                 </div>
                                                 <span className="px-3 py-1 bg-nutrity-bg border border-nutrity-border rounded-full text-[9px] font-bold text-nutrity-primary uppercase tracking-widest">{micro.category}</span>
                                             </div>
@@ -893,7 +897,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     {filteredFoods.map((food) => (
-                                        <div key={food.id} className="nutrity-card overflow-hidden group hover:border-nutrity-accent transition-all">
+                                        <div key={food.id} onClick={() => setSelectedFood(food)} className="nutrity-card overflow-hidden group hover:border-nutrity-accent transition-all cursor-pointer">
                                             <div className="h-40 relative">
                                                 <img src={getDirectImageUrl(food.image)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                                 <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[8px] font-bold text-nutrity-accent uppercase tracking-widest">{food.category}</div>
@@ -1285,6 +1289,105 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                 </div>
                                 <button type="submit" className="w-full bg-nutrity-primary text-white py-5 rounded-xl font-bold shadow-lg shadow-nutrity-accent/20 active:scale-95 transition-all text-sm uppercase tracking-widest mt-2">Guardar Medición</button>
                             </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {selectedFood && (
+                    <motion.div
+                        key="food-modal"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-nutrity-primary/60 backdrop-blur-md flex justify-end"
+                    >
+                        <motion.div
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="bg-white w-full max-w-lg h-full overflow-y-auto shadow-2xl relative flex flex-col"
+                        >
+                            <button onClick={() => setSelectedFood(null)} className="absolute top-6 right-6 p-2 rounded-full bg-white/50 backdrop-blur-md text-nutrity-primary hover:bg-white z-10 transition-all shadow-sm"><X className="w-5 h-5" /></button>
+
+                            <div className="h-64 md:h-80 relative shrink-0">
+                                <img src={getDirectImageUrl(selectedFood.image)} alt={selectedFood.name} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-nutrity-primary/90 via-nutrity-primary/40 to-transparent flex flex-col justify-end p-8">
+                                    <span className="px-3 py-1 bg-nutrity-accent text-white rounded-lg text-[10px] font-bold uppercase tracking-widest self-start mb-3">{selectedFood.category}</span>
+                                    <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{selectedFood.name}</h2>
+                                    <p className="text-white/70 italic text-sm">{selectedFood.scientificName}</p>
+                                </div>
+                            </div>
+
+                            <div className="p-8 space-y-8 flex-1 bg-slate-50">
+                                <section>
+                                    <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-nutrity-accent" /> Descripción Clínica
+                                    </h3>
+                                    <p className="text-nutrity-primary font-medium leading-relaxed text-sm md:text-base">{selectedFood.description}</p>
+                                </section>
+
+                                <section>
+                                    <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <Zap className="w-4 h-4 text-nutrity-accent" /> Beneficios Metabólicos
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedFood.metabolicBenefits.map((benefit, i) => (
+                                            <span key={i} className="px-3 py-1.5 bg-nutrity-success/10 text-nutrity-success text-xs font-bold rounded-lg border border-nutrity-success/20">
+                                                {benefit}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section>
+                                    <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <Activity className="w-4 h-4 text-nutrity-accent" /> Perfil Nutricional (Por 100g)
+                                    </h3>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className="bg-white p-4 rounded-xl border border-nutrity-border text-center shadow-sm">
+                                            <p className="text-lg md:text-xl font-bold text-indigo-500 mb-1">{selectedFood.nutrients.protein}</p>
+                                            <p className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest">Proteína</p>
+                                        </div>
+                                        <div className="bg-white p-4 rounded-xl border border-nutrity-border text-center shadow-sm">
+                                            <p className="text-lg md:text-xl font-bold text-nutrity-success mb-1">{selectedFood.nutrients.fiber}</p>
+                                            <p className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest">Fibra</p>
+                                        </div>
+                                        <div className="bg-white p-4 rounded-xl border border-nutrity-border text-center shadow-sm">
+                                            <p className="text-lg md:text-xl font-bold text-amber-500 mb-1">{selectedFood.nutrients.sugar}</p>
+                                            <p className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest">Azúcar</p>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {selectedFood.recipes && selectedFood.recipes.length > 0 && (
+                                    <section>
+                                        <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <ChefHat className="w-4 h-4 text-nutrity-accent" /> Recetas Recomendadas ({selectedFood.recipes.length})
+                                        </h3>
+                                        <div className="space-y-4">
+                                            {selectedFood.recipes.map((recipe, idx) => (
+                                                <div key={idx} className="bg-white p-5 rounded-2xl border border-nutrity-border shadow-sm">
+                                                    <h4 className="font-bold text-nutrity-primary mb-3 flex items-center gap-2">
+                                                        <span className="w-6 h-6 rounded-full bg-nutrity-accent/20 text-nutrity-accent flex items-center justify-center text-[10px]">{idx + 1}</span>
+                                                        {recipe.title}
+                                                    </h4>
+                                                    <ol className="space-y-2">
+                                                        {recipe.instructions.map((inst, i) => (
+                                                            <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
+                                                                <span className="text-nutrity-accent/50 font-bold mt-0.5">•</span>
+                                                                <span>{inst}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ol>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
+
+                                <div className="pb-8"></div>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
