@@ -1291,31 +1291,44 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             </AnimatePresence>
 
             {/* Mobile Bottom Navigation */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-nutrity-border z-40 px-6 py-4 flex justify-between items-center pb-safe box-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl">
-                {[
-                    { id: 'main', icon: LayoutDashboard, label: 'Panel' },
-                    { id: 'agenda', icon: Calendar, label: 'Agenda' },
-                    { id: 'coach', icon: Brain, label: 'IA Coach' },
-                    { id: 'menu', icon: Utensils, label: 'Menú' },
-                    { id: 'profile', icon: User, label: 'Perfil' },
-                ].map((item) => {
-                    const isActive = activeTab === item.id;
-                    const isDisabled = !isProfileComplete && item.id !== 'profile';
-                    const Icon = item.icon;
-                    return (
-                        <button
-                            key={item.id}
-                            onClick={() => !isDisabled && setActiveTab(item.id)}
-                            disabled={isDisabled}
-                            className={`flex flex-col items-center gap-1.5 transition-all w-16 ${isActive ? 'text-nutrity-primary' : 'text-nutrity-gray-text opacity-60'} ${isDisabled ? "opacity-30 cursor-not-allowed" : ""}`}
-                        >
-                            <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-nutrity-accent/20 text-nutrity-accent' : ''}`}>
-                                <Icon className="w-6 h-6" />
-                            </div>
-                            <span className="text-[9px] font-bold uppercase tracking-wide">{item.label}</span>
-                        </button>
-                    );
-                })}
+            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-nutrity-border z-40 pb-safe box-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory hide-scroll-indicator">
+                    {[
+                        { id: 'main', icon: LayoutDashboard, label: 'Panel' },
+                        { id: 'agenda', icon: Calendar, label: 'Agenda' },
+                        { id: 'coach', icon: Brain, label: 'IA Coach' },
+                        { id: 'measurements', icon: Activity, label: 'Mediciones' },
+                        { id: 'catalog', icon: Utensils, label: 'Alimentos' },
+                        { id: 'micronutrients', icon: Zap, label: 'Micro' },
+                        { id: 'academy', icon: BookOpen, label: 'Academia' },
+                        { id: 'menu', icon: ClipboardCheck, label: 'Menú' },
+                        { id: 'goals', icon: Target, label: 'Metas' },
+                        { id: 'profile', icon: User, label: 'Perfil' },
+                    ].map((item) => {
+                        const isActive = activeTab === item.id;
+                        const isDisabled = !isProfileComplete && item.id !== 'profile';
+                        const Icon = item.icon;
+                        return (
+                            <button
+                                key={item.id}
+                                onClick={() => !isDisabled && setActiveTab(item.id)}
+                                disabled={isDisabled}
+                                className={`flex flex-col items-center gap-1.5 transition-all outline-none shrink-0 snap-center w-16 ${isActive ? 'text-nutrity-primary' : 'text-nutrity-gray-text opacity-60'} ${isDisabled ? "opacity-30 cursor-not-allowed" : ""}`}
+                            >
+                                <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-nutrity-accent/20 text-nutrity-accent' : ''}`}>
+                                    <Icon className="w-6 h-6" />
+                                </div>
+                                <span className="text-[9px] font-bold uppercase tracking-wide truncate max-w-full text-center">{item.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+                {/* CSS to hide scrollbar explicitly for older browsers if needed */}
+                <style dangerouslySetInnerHTML={{
+                    __html: `
+                    .hide-scroll-indicator::-webkit-scrollbar { display: none; }
+                    .hide-scroll-indicator { -ms-overflow-style: none; scrollbar-width: none; }
+                `}} />
             </div>
         </div>
     );
