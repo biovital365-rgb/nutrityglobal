@@ -143,11 +143,13 @@ export const dbService = {
     },
 
     async updateUserProfile(userId: string, profileData: Partial<any>) {
+        // Strip email to prevent issues
+        const { email, ...safeData } = profileData;
         const { data, error } = await supabase
             .from('User')
-            .update(profileData)
+            .update(safeData)
             .eq('id', userId)
-            .select('*, organization:Organization(*)')
+            .select()
             .single()
 
         if (error) throw error
