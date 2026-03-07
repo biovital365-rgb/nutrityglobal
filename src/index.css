@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -5,14 +6,22 @@
   --font-body: "Inter", sans-serif;
 
   /* Nutrity Global "Nature Biotech" Palette - Derived from Image */
-  --color-nutrity-primary: hsl(175, 100%, 18%); /* Intense Dark Teal */
-  --color-nutrity-accent: hsl(76, 75%, 48%);   /* Vibrant Lime/Sage */
-  --color-nutrity-success: hsl(155, 65%, 42%);  /* Emerald Leaf */
-  --color-nutrity-bg: hsl(175, 30%, 98%);       /* Very Light Mint Mist */
-  --color-nutrity-surface: hsl(0, 0%, 100%);    /* Pure Surface */
-  --color-nutrity-gray-text: hsl(94, 15%, 42%); /* Sage Grey Text */
-  --color-nutrity-border: hsl(175, 20%, 92%);   /* Subtle Teal Border */
-  --color-nutrity-highlight: hsl(64, 100%, 50%); /* Bright Yellow Spike */
+  --color-nutrity-primary: hsl(175, 100%, 18%);
+  /* Intense Dark Teal */
+  --color-nutrity-accent: hsl(76, 75%, 48%);
+  /* Vibrant Lime/Sage */
+  --color-nutrity-success: hsl(155, 65%, 42%);
+  /* Emerald Leaf */
+  --color-nutrity-bg: hsl(175, 30%, 98%);
+  /* Very Light Mint Mist */
+  --color-nutrity-surface: hsl(0, 0%, 100%);
+  /* Pure Surface */
+  --color-nutrity-gray-text: hsl(94, 15%, 42%);
+  /* Sage Grey Text */
+  --color-nutrity-border: hsl(175, 20%, 92%);
+  /* Subtle Teal Border */
+  --color-nutrity-highlight: hsl(64, 100%, 50%);
+  /* Bright Yellow Spike */
 
   --radius-xl: 16px;
   --radius-lg: 12px;
@@ -20,8 +29,6 @@
 }
 
 @layer base {
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
-
   body {
     @apply antialiased bg-nutrity-bg text-nutrity-primary font-body;
     min-height: 100dvh;
