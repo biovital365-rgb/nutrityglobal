@@ -49,6 +49,7 @@ import { weeklyMenuData } from "../lib/menu-data";
 import { auth, db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { useNutrityData } from '../hooks/useNutrityData';
+import { dbService } from '../lib/db-service';
 
 interface NutrityDashboardProps {
     results: any;
