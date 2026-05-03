@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 // Interfaces correspondientes a los modelos de Prisma
 export interface FoodItem {
     id: string
+    organizationId?: string
     name: string
     scientificName: string
     image: string
@@ -19,6 +20,7 @@ export interface FoodItem {
 
 export interface Micronutrient {
     id: string
+    organizationId?: string
     name: string
     symbol: string
     category: string
@@ -32,6 +34,7 @@ export interface Micronutrient {
 
 export interface Course {
     id: string
+    organizationId?: string
     title: string
     description: string
     thumbnail: string
@@ -54,19 +57,24 @@ export interface Lesson {
 
 export const dbService = {
     // Alimentos
-    async getFoods() {
-        const { data, error } = await supabase
-            .from('Food')
-            .select('*')
-            .order('name', { ascending: true })
+    async getFoods(organizationId?: string) {
+        let query = supabase.from('Food').select('*')
+        
+        if (organizationId) {
+            query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
+        } else {
+            query = query.is('organizationId', null)
+        }
 
+        const { data, error } = await query.order('name', { ascending: true })
         if (error) throw error
         return data as FoodItem[]
     },
 
-    async saveFood(food: Partial<FoodItem>) {
+    async saveFood(food: Partial<FoodItem>, organizationId?: string) {
         const payload = {
             ...food,
+            organizationId: food.organizationId || organizationId,
             id: food.id || `food_${Math.random().toString(36).substring(2, 11)}`
         };
 
@@ -85,25 +93,29 @@ export const dbService = {
             .from('Food')
             .delete()
             .eq('id', id)
-
         if (error) throw error
         return true
     },
 
     // Micronutrientes
-    async getMicronutrients() {
-        const { data, error } = await supabase
-            .from('Micronutrient')
-            .select('*')
-            .order('name', { ascending: true })
+    async getMicronutrients(organizationId?: string) {
+        let query = supabase.from('Micronutrient').select('*')
+        
+        if (organizationId) {
+            query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
+        } else {
+            query = query.is('organizationId', null)
+        }
 
+        const { data, error } = await query.order('name', { ascending: true })
         if (error) throw error
         return data as Micronutrient[]
     },
 
-    async saveMicronutrient(micro: Partial<Micronutrient>) {
+    async saveMicronutrient(micro: Partial<Micronutrient>, organizationId?: string) {
         const payload = {
             ...micro,
+            organizationId: micro.organizationId || organizationId,
             id: micro.id || `micro_${Math.random().toString(36).substring(2, 11)}`
         };
 
@@ -115,16 +127,6 @@ export const dbService = {
 
         if (error) throw error
         return data as Micronutrient
-    },
-
-    async deleteMicronutrient(id: string) {
-        const { error } = await supabase
-            .from('Micronutrient')
-            .delete()
-            .eq('id', id)
-
-        if (error) throw error
-        return true
     },
 
     // Perfil de Usuario (SaaS)
@@ -143,13 +145,12 @@ export const dbService = {
     },
 
     async updateUserProfile(userId: string, profileData: Partial<any>) {
-        // Strip email to prevent issues
         const { email, ...safeData } = profileData;
         const { data, error } = await supabase
             .from('User')
             .update(safeData)
             .eq('id', userId)
-            .select()
+            .select('*, organization:Organization(*)')
             .single()
 
         if (error) throw error
@@ -158,19 +159,16 @@ export const dbService = {
 
     async syncUserProfile(firebaseUser: any, name?: string) {
         try {
-            // 1. Verificar si ya existe por firebaseUid
             let profile = await this.getUserProfile(firebaseUser.uid)
 
             if (!profile) {
-                // 2. Fallback: buscar por email (para usuarios creados manualmente/seed)
                 const { data: emailProfile } = await supabase
                     .from('User')
-                    .select('*, organization:Organization(*)')
+                    .select()
                     .eq('email', firebaseUser.email)
                     .maybeSingle()
 
                 if (emailProfile) {
-                    // Actualizar con el firebaseUid
                     const { data: updated } = await supabase
                         .from('User')
                         .update({ firebaseUid: firebaseUser.uid })
@@ -179,15 +177,17 @@ export const dbService = {
                         .single()
                     profile = updated
                 } else {
-                    // 3. Crear nuevo si no existe
+                    const id = crypto.randomUUID(); // Generar UUID para el nuevo usuario
                     const { data: created } = await supabase
                         .from('User')
                         .insert({
+                            id,
                             firebaseUid: firebaseUser.uid,
                             email: firebaseUser.email,
                             name: name || firebaseUser.displayName,
                             role: 'USER',
-                            plan: 'FREE'
+                            plan: 'FREE',
+                            updatedAt: new Date().toISOString()
                         })
                         .select('*, organization:Organization(*)')
                         .single()
@@ -202,11 +202,14 @@ export const dbService = {
     },
 
     // Evaluaciones
-    async saveEvaluation(userId: string, data: any, results: any) {
+    async saveEvaluation(userId: string, organizationId: string | undefined, data: any, results: any) {
+        const id = `eval_${Math.random().toString(36).substring(2, 11)}`;
         const { data: saved, error } = await supabase
             .from('Evaluation')
             .insert({
+                id,
                 userId,
+                organizationId,
                 data,
                 results
             })
@@ -217,11 +220,14 @@ export const dbService = {
         return saved
     },
 
-    async getLatestEvaluation(userId: string) {
-        const { data, error } = await supabase
-            .from('Evaluation')
-            .select('*')
-            .eq('userId', userId)
+    async getLatestEvaluation(userId: string, organizationId?: string) {
+        let query = supabase.from('Evaluation').select('*').eq('userId', userId)
+        
+        if (organizationId) {
+            query = query.eq('organizationId', organizationId)
+        }
+
+        const { data, error } = await query
             .order('timestamp', { ascending: false })
             .limit(1)
             .maybeSingle()
@@ -230,24 +236,48 @@ export const dbService = {
         return data
     },
 
-    // Mediciones (Migración gradual desde Firebase en el futuro)
-    async getMeasurements(userId: string) {
+    // Mediciones
+    async getMeasurements(userId: string, organizationId?: string) {
+        let query = supabase.from('Measurement').select('*').eq('userId', userId)
+        
+        if (organizationId) {
+            query = query.eq('organizationId', organizationId)
+        }
+
+        const { data, error } = await query.order('timestamp', { ascending: false })
+
+        if (error) throw error
+        return data
+    },
+
+    async saveMeasurement(userId: string, organizationId: string | undefined, measurement: any) {
+        const id = measurement.id || `meas_${Math.random().toString(36).substring(2, 11)}`;
         const { data, error } = await supabase
             .from('Measurement')
-            .select('*')
-            .eq('userId', userId)
-            .order('timestamp', { ascending: false })
+            .insert({
+                ...measurement,
+                id,
+                userId,
+                organizationId
+            })
+            .select()
+            .single()
 
         if (error) throw error
         return data
     },
 
     // --- Módulo de Academia (SaaS) ---
-    async getCourses() {
-        const { data, error } = await supabase
-            .from('Course')
-            .select('*')
-            .order('createdAt', { ascending: false })
+    async getCourses(organizationId?: string) {
+        let query = supabase.from('Course').select('*')
+        
+        if (organizationId) {
+            query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
+        } else {
+            query = query.is('organizationId', null)
+        }
+
+        const { data, error } = await query.order('createdAt', { ascending: false })
 
         if (error) throw error
         return data as Course[]
@@ -264,9 +294,10 @@ export const dbService = {
         return data as Course
     },
 
-    async saveCourse(course: Partial<Course>) {
+    async saveCourse(course: Partial<Course>, organizationId?: string) {
         const payload = {
             ...course,
+            organizationId: course.organizationId || organizationId,
             id: course.id || `course_${Math.random().toString(36).substring(2, 11)}`,
             updatedAt: new Date().toISOString()
         };
@@ -317,5 +348,35 @@ export const dbService = {
             progress[item.lessonId] = item.completed;
         });
         return progress;
+    },
+
+    // Citas (Nuevo soporte multi-tenant en Supabase)
+    async getAppointments(userId: string, organizationId?: string) {
+        let query = supabase.from('Appointment').select('*').eq('userId', userId)
+        
+        if (organizationId) {
+            query = query.eq('organizationId', organizationId)
+        }
+
+        const { data, error } = await query.order('date', { ascending: true })
+        if (error) throw error
+        return data
+    },
+
+    async saveAppointment(userId: string, organizationId: string | undefined, appointment: any) {
+        const id = appointment.id || `appt_${Math.random().toString(36).substring(2, 11)}`;
+        const { data, error } = await supabase
+            .from('Appointment')
+            .insert({
+                ...appointment,
+                id,
+                userId,
+                organizationId
+            })
+            .select()
+            .single()
+
+        if (error) throw error
+        return data
     }
 }
