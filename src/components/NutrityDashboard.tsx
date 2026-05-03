@@ -48,10 +48,7 @@ import { micronutrientsData } from "../lib/micronutrients-data";
 import { weeklyMenuData } from "../lib/menu-data";
 import { auth, db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot } from "firebase/firestore";
-import { dbService, FoodItem, Micronutrient, Course, Lesson } from "../lib/db-service";
-import { PricingTable } from "./PricingTable";
-import { AdminPanel } from "./AdminPanel";
-import { getDirectImageUrl } from "../lib/utils";
+import { useNutrityData } from '../hooks/useNutrityData';
 
 interface NutrityDashboardProps {
     results: any;
@@ -68,9 +65,18 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const firstName = results.name ? results.name.split(' ')[0] : "Freddy";
 
-    // --- State for Features ---
-    const [appointments, setAppointments] = useState<any[]>([]);
-    const [measurements, setMeasurements] = useState<any[]>([]);
+    // Contexto Multi-tenant
+    const organizationId = user?.profile?.organizationId;
+    
+    // Centralized Data Hook (SaaS Isolation)
+    const { 
+        measurements, 
+        appointments, 
+        isDataLoading, 
+        saveMeasurement, 
+        saveAppointment 
+    } = useNutrityData(user?.uid, organizationId);
+
     const [chatMessages, setChatMessages] = useState<any[]>([]);
     const [inputMessage, setInputMessage] = useState("");
     const [isTyping, setIsTyping] = useState(false);
@@ -152,10 +158,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     useEffect(() => {
         const loadSupabaseData = async () => {
             try {
+                // Inyectamos organizationId para filtrado multi-tenant
                 const [foodData, microData, courseData] = await Promise.all([
-                    dbService.getFoods(),
-                    dbService.getMicronutrients(),
-                    dbService.getCourses()
+                    dbService.getFoods(organizationId),
+                    dbService.getMicronutrients(organizationId),
+                    dbService.getCourses(organizationId)
                 ]);
                 setFoods(foodData.length > 0 ? foodData : foodCatalog);
                 setMicros(microData.length > 0 ? microData : micronutrientsData as any);
@@ -174,7 +181,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             }
         };
         loadSupabaseData();
-    }, [user?.id]);
+    }, [user?.id, organizationId]);
 
     useEffect(() => {
         setChatMessages([
@@ -185,31 +192,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         ]);
     }, [results.name, results.phase]);
 
-    useEffect(() => {
-        if (!user?.uid) return;
-
-        const mQuery = query(collection(db, "measurements"), where("userId", "==", user.uid));
-        const mUnsub = onSnapshot(mQuery, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                .sort((a: any, b: any) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-            setMeasurements(data.length > 0 ? data : [
-                { id: 'def1', label: "Glucosa", value: "94 mg/dL", date: "2025-02-27", time: "08:15", status: "Óptimo" },
-                { id: 'def2', label: "Peso", value: "78.5 kg", date: "2025-02-27", time: "07:30", status: "-0.5kg" }
-            ]);
-        });
-
-        const aQuery = query(collection(db, "appointments"), where("userId", "==", user.uid));
-        const aUnsub = onSnapshot(aQuery, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-                .sort((a: any, b: any) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-            setAppointments(data.length > 0 ? data : [
-                { id: 'def1', date: "Mañana, 09:00 AM", title: "Cita con Especialista", type: "Virtual" },
-                { id: 'def2', date: "Lunes 10 Mar, 08:00 AM", title: "Control de Glucosa", type: "Lab" }
-            ]);
-        });
-
-        return () => { mUnsub(); aUnsub(); };
-    }, [user]);
+    // Las mediciones y citas ahora se cargan automáticamente vía useNutrityData
 
     const handleAddAppointment = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -224,13 +207,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         setShowApptModal(false);
 
         try {
-            await addDoc(collection(db, "appointments"), {
-                userId: user.uid,
+            await saveAppointment({
                 title: newAppt.title,
                 date: newAppt.date,
                 time: newAppt.time,
-                type: newAppt.type,
-                timestamp: serverTimestamp()
+                type: newAppt.type
             });
             setNewAppt({ title: "", date: "", time: "", type: "Virtual" });
         } catch (err) {
@@ -252,14 +233,12 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         setShowMeasureModal(false);
 
         try {
-            await addDoc(collection(db, "measurements"), {
-                userId: user.uid,
+            await saveMeasurement({
                 label: newMeasure.type,
                 value: newMeasure.value + (newMeasure.type === "Glucosa" ? " mg/dL" : " kg"),
                 date: newMeasure.date,
                 time: newMeasure.time,
-                status: "Registrado",
-                timestamp: serverTimestamp()
+                status: "Registrado"
             });
             setNewMeasure({ ...newMeasure, value: "" });
         } catch (err) {

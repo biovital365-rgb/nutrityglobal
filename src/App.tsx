@@ -36,9 +36,15 @@ export default function App() {
 
         if (firebaseUser?.uid && !results) {
           try {
+            // Priority: Filter by Organization if profile has it, else by userId
+            const constraints = [where("userId", "==", firebaseUser.uid)];
+            if (p?.organizationId) {
+                constraints.push(where("organizationId", "==", p.organizationId));
+            }
+            
             const q = query(
               collection(db, "evaluations"),
-              where("userId", "==", firebaseUser.uid),
+              ...constraints,
               orderBy("timestamp", "desc"),
               limit(1)
             );
@@ -96,6 +102,7 @@ export default function App() {
       if (user) {
         addDoc(collection(db, "evaluations"), {
           userId: user.uid,
+          organizationId: profile?.organizationId || null,
           ...data,
           results: processedResults,
           timestamp: serverTimestamp()
@@ -124,9 +131,14 @@ export default function App() {
     const loadLastEvaluation = async () => {
       if (!user?.uid || results) return;
       try {
+        const constraints = [where("userId", "==", user.uid)];
+        if (profile?.organizationId) {
+            constraints.push(where("organizationId", "==", profile.organizationId));
+        }
+
         const q = query(
           collection(db, "evaluations"),
-          where("userId", "==", user.uid),
+          ...constraints,
           orderBy("timestamp", "desc"),
           limit(1)
         );

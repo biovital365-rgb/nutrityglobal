@@ -178,10 +178,11 @@ export function AdminPanel({ user }: AdminPanelProps) {
     useEffect(() => {
         const loadAll = async () => {
             try {
+                const orgId = user?.profile?.organizationId;
                 const [foodData, microData, courseData] = await Promise.all([
-                    dbService.getFoods(),
-                    dbService.getMicronutrients(),
-                    dbService.getCourses(),
+                    dbService.getFoods(orgId),
+                    dbService.getMicronutrients(orgId),
+                    dbService.getCourses(orgId),
                 ]);
                 setFoods(foodData);
                 setMicros(microData);
@@ -199,7 +200,8 @@ export function AdminPanel({ user }: AdminPanelProps) {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const saved = await dbService.saveFood(editingFood);
+            const orgId = user?.profile?.organizationId;
+            const saved = await dbService.saveFood(editingFood, orgId);
             setFoods(prev => {
                 const exists = prev.find(f => f.id === saved.id);
                 return exists ? prev.map(f => f.id === saved.id ? saved : f) : [...prev, saved];
@@ -218,7 +220,8 @@ export function AdminPanel({ user }: AdminPanelProps) {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const saved = await dbService.saveMicronutrient(editingMicro);
+            const orgId = user?.profile?.organizationId;
+            const saved = await dbService.saveMicronutrient(editingMicro, orgId);
             setMicros(prev => {
                 const exists = prev.find(m => m.id === saved.id);
                 return exists ? prev.map(m => m.id === saved.id ? saved : m) : [...prev, saved];
@@ -237,7 +240,8 @@ export function AdminPanel({ user }: AdminPanelProps) {
         e.preventDefault();
         setIsSaving(true);
         try {
-            const saved = await dbService.saveCourse(editingCourse);
+            const orgId = user?.profile?.organizationId;
+            const saved = await dbService.saveCourse(editingCourse, orgId);
             setCourses(prev => {
                 const exists = prev.find(c => c.id === saved.id);
                 return exists ? prev.map(c => c.id === saved.id ? saved : c) : [...prev, saved];

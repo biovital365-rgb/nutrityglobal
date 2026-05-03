@@ -10,10 +10,17 @@ datasource db {
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  users     User[]
-  createdAt DateTime @default(now())
+  id           String        @id @default(cuid())
+  name         String
+  users        User[]
+  measurements Measurement[]
+  appointments Appointment[]
+  evaluations  Evaluation[]
+  enrollments  Enrollment[]
+  courses      Course[]
+  foods        Food[]
+  micros       Micronutrient[]
+  createdAt    DateTime      @default(now())
 }
 
 model User {
@@ -42,79 +49,91 @@ model User {
 }
 
 model Food {
-  id                String   @id @default(cuid())
+  id                String        @id @default(cuid())
+  organizationId    String?
+  organization      Organization? @relation(fields: [organizationId], references: [id])
   name              String
   scientificName    String
   image             String
   category          String
   description       String
-  metabolicBenefits Json     // Array of strings
-  nutrients         Json     // { protein: string, fiber: string, sugar: string }
-  recipes           Json     // Array of { title: string, instructions: string[] }
-  createdAt         DateTime @default(now())
+  metabolicBenefits Json          // Array of strings
+  nutrients         Json          // { protein: string, fiber: string, sugar: string }
+  recipes           Json          // Array of { title: string, instructions: string[] }
+  createdAt         DateTime      @default(now())
 }
 
 model Micronutrient {
-  id               String   @id @default(cuid())
+  id               String        @id @default(cuid())
+  organizationId   String?
+  organization     Organization? @relation(fields: [organizationId], references: [id])
   name             String
   symbol           String
   category         String
   function         String
   metabolicImpact  String
-  sources          Json     // Array of strings
-  deficiencySigns  Json     // Array of strings
+  sources          Json          // Array of strings
+  deficiencySigns  Json          // Array of strings
   dailyDose        String
   image            String?
-  createdAt         DateTime @default(now())
+  createdAt        DateTime      @default(now())
 }
 
 model Measurement {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  label     String   // Glucose, Weight, etc.
-  value     String
-  date      String   // ISO Date string
-  time      String?  // HH:mm
-  status    String?
-  timestamp DateTime @default(now())
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  label          String // Glucose, Weight, etc.
+  value          String
+  date           String // ISO Date string
+  time           String? // HH:mm
+  status         String?
+  timestamp      DateTime      @default(now())
 }
 
 model Appointment {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  title     String
-  date      String   // ISO Date
-  time      String?
-  type      String   // Virtual, Lab, etc.
-  status    String   @default("SCHEDULED")
-  createdAt DateTime @default(now())
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  title          String
+  date           String // ISO Date
+  time           String?
+  type           String // Virtual, Lab, etc.
+  status         String        @default("SCHEDULED")
+  createdAt      DateTime      @default(now())
 }
 
 model Evaluation {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  data      Json     // Onboarding answers
-  results   Json     // Generated plan
-  timestamp DateTime @default(now())
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  data           Json // Onboarding answers
+  results        Json // Generated plan
+  timestamp      DateTime      @default(now())
 }
 
 model Course {
-  id          String       @id @default(cuid())
-  title       String
-  description String
-  thumbnail   String
-  category    String       @default("Bienestar")
-  price       Float        @default(0)
-  paypalUrl   String?
-  currency    String       @default("USD")
-  isPublished Boolean      @default(true)
-  lessons     Lesson[]
-  enrollments Enrollment[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String        @id @default(cuid())
+  organizationId String? // Optional for global courses
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  title          String
+  description    String
+  thumbnail      String
+  category       String        @default("Bienestar")
+  price          Float         @default(0)
+  paypalUrl      String?
+  currency       String        @default("USD")
+  isPublished    Boolean       @default(true)
+  lessons        Lesson[]
+  enrollments    Enrollment[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model Lesson {
@@ -131,12 +150,14 @@ model Lesson {
 }
 
 model Enrollment {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id])
-  enrolledAt DateTime @default(now())
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  courseId       String
+  course         Course        @relation(fields: [courseId], references: [id])
+  enrolledAt     DateTime      @default(now())
 }
 
 model LessonProgress {
