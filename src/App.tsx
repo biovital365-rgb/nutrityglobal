@@ -66,7 +66,11 @@ export default function App() {
   }, [results]);
 
   const handleStartOnboarding = () => {
-    setView("onboarding");
+    if (!user) {
+        setShowAuthModal(true);
+    } else {
+        setView("onboarding");
+    }
   };
 
   const handleAuthClick = () => {
@@ -78,8 +82,8 @@ export default function App() {
     setShowAuthModal(false);
     if (results) {
       setView("dashboard");
-    } else if (view === "auth") {
-      setView("landing");
+    } else {
+      setView("onboarding");
     }
   };
 

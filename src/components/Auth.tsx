@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Mail, User, Lock, ArrowRight, Zap, ShieldCheck, Activity, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 import { auth } from '../lib/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { dbService } from '../lib/db-service';
 
 interface AuthProps {
@@ -17,6 +17,23 @@ export function Auth({ onAuthSuccess, onBack }: AuthProps) {
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    const handleResetPassword = async () => {
+        if (!email) {
+            setError('Por favor, ingresa tu correo para recuperar la contraseña.');
+            return;
+        }
+        setLoading(true);
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert('Correo de recuperación enviado. Revisa tu bandeja de entrada.');
+        } catch (err: any) {
+            console.error(err);
+            setError('Error al enviar correo de recuperación.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,6 +61,8 @@ export function Auth({ onAuthSuccess, onBack }: AuthProps) {
                 setError('Credenciales incorrectas.');
             } else if (err.code === 'auth/email-already-in-use') {
                 setError('Este correo ya está registrado.');
+            } else if (err.code === 'auth/invalid-credential') {
+                setError('Contraseña o correo inválidos.');
             } else {
                 setError('Error en la autenticación. Revisa tus datos.');
             }
@@ -120,6 +139,17 @@ export function Auth({ onAuthSuccess, onBack }: AuthProps) {
                                     required
                                 />
                             </div>
+                            {isLogin && (
+                                <div className="text-right">
+                                    <button
+                                        type="button"
+                                        onClick={handleResetPassword}
+                                        className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest hover:underline"
+                                    >
+                                        ¿Olvidaste tu contraseña?
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {error && (
