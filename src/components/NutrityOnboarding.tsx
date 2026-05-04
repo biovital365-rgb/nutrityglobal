@@ -23,12 +23,18 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
     const [formData, setFormData] = useState({
         name: "",
         age: "",
+        weight: "",
+        height: "",
         condition: "resistance",
         currentGlucose: "normal",
+        sleepQuality: "fair",
+        stressLevel: "moderate",
+        activityLevel: "moderate",
+        digestiveHealth: "optimal",
         interest: ""
     });
 
-    const totalSteps = 4;
+    const totalSteps = 6;
 
     const handleNext = () => {
         console.log("CLICK handleNext | Current Step:", step, "| Data:", formData);
@@ -51,10 +57,12 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
     };
 
     const steps = [
-        { title: "Perfil Inicial", icon: Activity },
-        { title: "Salud Metabólica", icon: Heart },
-        { title: "Niveles Glucosa", icon: Zap },
-        { title: "Personalización", icon: Brain }
+        { title: "Perfil", icon: Activity },
+        { title: "Biometría", icon: Shield },
+        { title: "Metabolismo", icon: Heart },
+        { title: "Glucosa", icon: Zap },
+        { title: "Integral", icon: Brain },
+        { title: "Bio-Plan", icon: Activity }
     ];
 
     return (
@@ -66,16 +74,16 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                 </div>
                 <div>
                     <h2 className="text-xl font-display font-bold leading-none">Nutrity</h2>
-                    <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest leading-none">Global AI Evaluation</span>
+                    <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest leading-none">Holistic AI Evaluation</span>
                 </div>
             </div>
 
             {/* Stepper Indicator */}
-            <div className="w-full max-w-sm flex items-center gap-2 mb-8">
+            <div className="w-full max-w-md flex items-center gap-2 mb-8">
                 {steps.map((s, idx) => (
                     <div key={idx} className="flex-1 flex flex-col gap-1.5">
                         <div className={`h-1 rounded-full transition-all duration-500 ${idx + 1 <= step ? 'bg-nutrity-accent' : 'bg-nutrity-border'}`} />
-                        <span className={`text-[8px] font-bold uppercase tracking-widest text-center transition-colors ${idx + 1 === step ? 'text-nutrity-accent' : 'text-nutrity-gray-text opacity-40'}`}>{s.title.split(' ')[0]}</span>
+                        <span className={`text-[8px] font-bold uppercase tracking-[0.2em] text-center transition-colors ${idx + 1 === step ? 'text-nutrity-accent' : 'text-nutrity-gray-text opacity-40'}`}>{s.title}</span>
                     </div>
                 ))}
             </div>
@@ -93,12 +101,12 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                         {step === 1 && (
                             <div className="space-y-6">
                                 <div className="space-y-1">
-                                    <h3 className="text-2xl font-display font-bold">Bienvenido a Nutrity.</h3>
-                                    <p className="text-nutrity-gray-text text-sm">Comencemos configurando tu perfil básico para el motor de IA.</p>
+                                    <h3 className="text-2xl font-display font-bold">Identidad Bio-Digital.</h3>
+                                    <p className="text-nutrity-gray-text text-sm">Comencemos con tu perfil básico para el motor de IA.</p>
                                 </div>
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text">Tu Nombre Completo</label>
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text">Nombre Completo</label>
                                         <input
                                             type="text"
                                             placeholder="Ej: Freddy Yungas"
@@ -111,7 +119,7 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text">Edad</label>
                                         <input
                                             type="number"
-                                            placeholder="Ej: 55"
+                                            placeholder="Ej: 45"
                                             className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-5 py-4 focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent outline-none font-medium transition-all"
                                             value={formData.age}
                                             onChange={(e) => setFormData({ ...formData, age: e.target.value })}
@@ -124,21 +132,49 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                         {step === 2 && (
                             <div className="space-y-6">
                                 <div className="space-y-1">
+                                    <h3 className="text-2xl font-display font-bold">Medidas Antropométricas.</h3>
+                                    <p className="text-nutrity-gray-text text-sm">Estos datos permiten calcular tu tasa metabólica basal.</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text">Peso (kg)</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Ej: 75"
+                                            className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-5 py-4 focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent outline-none font-medium transition-all"
+                                            value={formData.weight}
+                                            onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text">Altura (cm)</label>
+                                        <input
+                                            type="number"
+                                            placeholder="Ej: 175"
+                                            className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-5 py-4 focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent outline-none font-medium transition-all"
+                                            value={formData.height}
+                                            onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 3 && (
+                            <div className="space-y-6">
+                                <div className="space-y-1">
                                     <h3 className="text-2xl font-display font-bold">Estado Metabólico.</h3>
                                     <p className="text-nutrity-gray-text text-sm">¿Cuál es tu diagnóstico médico actual?</p>
                                 </div>
                                 <div className="grid grid-cols-1 gap-3">
                                     {[
-                                        { id: "prevention", title: "Bienestar & Longevidad", desc: "Quiero prevenir y optimizar mi metabolismo." },
-                                        { id: "resistance", title: "Resistencia Insulínica", desc: "Tengo síntomas de fatiga o pre-diabetes." },
+                                        { id: "prevention", title: "Optimización & Longevidad", desc: "Quiero prevenir y mejorar mi rendimiento biológico." },
+                                        { id: "resistance", title: "Resistencia Insulínica", desc: "Fatiga, niebla mental o pre-diabetes detectada." },
                                         { id: "diabetes", title: "Remisión de Diabetes", desc: "Diagnóstico confirmado de Diabetes Tipo 2." }
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
-                                            onClick={() => {
-                                                console.log("ST-2: Selected Condition ->", opt.id);
-                                                setFormData({ ...formData, condition: opt.id });
-                                            }}
+                                            onClick={() => setFormData({ ...formData, condition: opt.id })}
                                             className={`w-full text-left p-4 rounded-xl border-2 transition-all ${formData.condition === opt.id ? 'border-nutrity-accent bg-nutrity-accent/5' : 'border-nutrity-border hover:bg-nutrity-bg'}`}
                                         >
                                             <div className="flex justify-between items-center">
@@ -152,11 +188,11 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                             </div>
                         )}
 
-                        {step === 3 && (
+                        {step === 4 && (
                             <div className="space-y-6">
                                 <div className="space-y-1">
                                     <h3 className="text-2xl font-display font-bold">Lectura de Glucosa.</h3>
-                                    <p className="text-nutrity-gray-text text-sm">¿Cómo ha estado tu glucosa en ayunas esta semana?</p>
+                                    <p className="text-nutrity-gray-text text-sm">¿Cómo ha estado tu glucosa en ayunas recientemente?</p>
                                 </div>
                                 <div className="grid grid-cols-3 gap-3">
                                     {[
@@ -166,10 +202,7 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
-                                            onClick={() => {
-                                                console.log("ST-3: Selected Glucose ->", opt.id);
-                                                setFormData({ ...formData, currentGlucose: opt.id });
-                                            }}
+                                            onClick={() => setFormData({ ...formData, currentGlucose: opt.id })}
                                             className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all gap-2 ${formData.currentGlucose === opt.id ? 'border-nutrity-accent bg-nutrity-accent/5 text-nutrity-accent' : 'border-nutrity-border hover:bg-nutrity-bg text-nutrity-gray-text'}`}
                                         >
                                             <span className="text-sm font-bold">{opt.label}</span>
@@ -180,7 +213,60 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                             </div>
                         )}
 
-                        {step === 4 && (
+                        {step === 5 && (
+                            <div className="space-y-6">
+                                <div className="space-y-1">
+                                    <h3 className="text-2xl font-display font-bold">Entorno & Estilo de Vida.</h3>
+                                    <p className="text-nutrity-gray-text text-sm">La salud integral depende de factores no nutricionales.</p>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text">Calidad del Sueño</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {['poor', 'fair', 'good'].map((q) => (
+                                                <button
+                                                    key={q}
+                                                    onClick={() => setFormData({ ...formData, sleepQuality: q })}
+                                                    className={`py-2 px-1 rounded-lg border-2 text-[10px] font-bold uppercase tracking-wider transition-all ${formData.sleepQuality === q ? 'border-nutrity-accent bg-nutrity-accent/5 text-nutrity-accent' : 'border-nutrity-border text-nutrity-gray-text'}`}
+                                                >
+                                                    {q === 'poor' ? 'Insuficiente' : q === 'fair' ? 'Regular' : 'Reparador'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text">Nivel de Estrés</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {['low', 'moderate', 'high'].map((s) => (
+                                                <button
+                                                    key={s}
+                                                    onClick={() => setFormData({ ...formData, stressLevel: s })}
+                                                    className={`py-2 px-1 rounded-lg border-2 text-[10px] font-bold uppercase tracking-wider transition-all ${formData.stressLevel === s ? 'border-nutrity-accent bg-nutrity-accent/5 text-nutrity-accent' : 'border-nutrity-border text-nutrity-gray-text'}`}
+                                                >
+                                                    {s === 'low' ? 'Bajo' : s === 'moderate' ? 'Moderado' : 'Alto'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text">Actividad Física</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {['sedentary', 'moderate', 'active'].map((a) => (
+                                                <button
+                                                    key={a}
+                                                    onClick={() => setFormData({ ...formData, activityLevel: a })}
+                                                    className={`py-2 px-1 rounded-lg border-2 text-[10px] font-bold uppercase tracking-wider transition-all ${formData.activityLevel === a ? 'border-nutrity-accent bg-nutrity-accent/5 text-nutrity-accent' : 'border-nutrity-border text-nutrity-gray-text'}`}
+                                                >
+                                                    {a === 'sedentary' ? 'Sedentario' : a === 'moderate' ? 'Moderado' : 'Activo'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 6 && (
                             <div className="space-y-6">
                                 <div className="space-y-1">
                                     <h3 className="text-2xl font-display font-bold">Bio-Optimización.</h3>
@@ -195,10 +281,7 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
-                                            onClick={() => {
-                                                console.log("ST-4: Selected Interest ->", opt.id);
-                                                setFormData({ ...formData, interest: opt.id });
-                                            }}
+                                            onClick={() => setFormData({ ...formData, interest: opt.id })}
                                             className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${formData.interest === opt.id ? 'border-nutrity-accent bg-nutrity-accent/5' : 'border-nutrity-border hover:bg-nutrity-bg'}`}
                                         >
                                             <span className="text-2xl">{opt.icon}</span>
@@ -219,7 +302,7 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                             </button>
                             <button
                                 onClick={handleNext}
-                                disabled={(step === 1 && !formData.name) || (step === 4 && !formData.interest) || isSyncing}
+                                disabled={(step === 1 && !formData.name) || (step === 2 && (!formData.weight || !formData.height)) || (step === 6 && !formData.interest) || isSyncing}
                                 className="flex-1 bg-nutrity-accent text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-40"
                             >
                                 {isSyncing ? (

@@ -88,7 +88,18 @@ export default function App() {
                 name: p?.name || "Admin", 
                 condition: "prevention", 
                 phase: "Activación",
-                pillars: [{ title: "Metabolismo" }, { title: "Nutrición" }, { title: "Descanso" }, { title: "Movimiento" }]
+                pillars: [
+                    { title: "Metabolismo", desc: "Optimización de la flexibilidad metabólica y sensibilidad a la insulina." }, 
+                    { title: "Nutrición", desc: "Protocolo basado en superalimentos andinos y control de carga glucémica." }, 
+                    { title: "Descanso", desc: "Higiene del sueño para regular el cortisol y la hormona del crecimiento." }, 
+                    { title: "Movimiento", desc: "Entrenamiento de fuerza y zona 2 para mejorar el transporte de glucosa." }
+                ],
+                holisticStats: [
+                    { label: "Vitalidad", value: 85 },
+                    { label: "Metabolismo", value: 78 },
+                    { label: "Regeneración", value: 92 },
+                    { label: "Equilibrio", value: 88 }
+                ]
             });
             setView("dashboard");
           } else {

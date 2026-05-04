@@ -1,15 +1,17 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
-import { PrismaPg } from '@prisma/adapter-pg'
-import pg from 'pg'
 import { foodCatalog } from '../src/lib/food-data'
 import { micronutrientsData } from '../src/lib/micronutrients-data'
 
-// Configuración del adaptador para Prisma 7 + PostgreSQL
-const connectionString = process.env.DATABASE_URL
-const pool = new pg.Pool({ connectionString })
-const adapter = new PrismaPg(pool)
-const prisma = new PrismaClient({ adapter } as any)
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    }
+  }
+})
+
+
 
 async function main() {
     console.log('🌱 Sembrando base de datos Nutrity Global en SUPABASE (PostgreSQL) con Adaptador...')
@@ -155,6 +157,6 @@ main()
         process.exit(1)
     })
     .finally(async () => {
-        await pool.end()
         await prisma.$disconnect()
     })
+
