@@ -214,6 +214,15 @@ export const dbService = {
         return data
     },
 
+    async deleteUser(userId: string) {
+        const { error } = await supabase
+            .from('User')
+            .delete()
+            .eq('id', userId)
+        if (error) throw error
+        return true
+    },
+
     async syncUserProfile(firebaseUser: any, name?: string) {
         try {
             let profile = await this.getUserProfile(firebaseUser.uid)
@@ -447,11 +456,9 @@ export const dbService = {
     // Citas (Nuevo soporte multi-tenant en Supabase)
     async getAppointments(userId: string, organizationId?: string) {
         let query = supabase.from('Appointment').select('*').eq('userId', userId)
-        
         if (organizationId) {
             query = query.eq('organizationId', organizationId)
         }
-
         const { data, error } = await query.order('date', { ascending: true })
         if (error) throw error
         return data
@@ -469,11 +476,69 @@ export const dbService = {
             })
             .select()
             .single()
+        if (error) throw error
+        return data
+    },
+    async getAllAppointments(organizationId?: string) {
+        let query = supabase.from('Appointment').select('*, user:User(name, email)')
+        if (organizationId) {
+            query = query.eq('organizationId', organizationId)
+        }
+        const { data, error } = await query.order('date', { ascending: false })
+        if (error) throw error
+        return data
+    },
+
+    async updateAppointment(id: string, updates: any) {
+        const { data, error } = await supabase
+            .from('Appointment')
+            .update({ ...updates, updatedAt: new Date().toISOString() })
+            .eq('id', id)
+            .select()
+            .single()
+        if (error) throw error
+        return data
+    },
+
+    async deleteAppointment(id: string) {
+        const { error } = await supabase
+            .from('Appointment')
+            .delete()
+            .eq('id', id)
+        if (error) throw error
+        return true
+    },
+
+    // --- Módulo de Reportes PDF ---
+    async logPDFReport(userId: string, organizationId: string | undefined, status: 'GENERATED' | 'DOWNLOADED' | 'ERROR', errorMessage?: string) {
+        const id = crypto.randomUUID();
+        const { data, error } = await supabase
+            .from('PDFReportLog')
+            .insert({
+                id,
+                userId,
+                organizationId: organizationId || null,
+                status,
+                errorMessage,
+                timestamp: new Date().toISOString()
+            })
+            .select()
+            .single()
 
         if (error) {
-            console.error('saveAppointment error:', error);
-            throw error;
+            console.error('logPDFReport error:', error);
+            // No bloqueamos el flujo principal si falla el log
         }
+        return data
+    },
+
+    async getPDFReports(organizationId?: string) {
+        let query = supabase.from('PDFReportLog').select('*, user:User(name, email)')
+        if (organizationId) {
+            query = query.eq('organizationId', organizationId)
+        }
+        const { data, error } = await query.order('timestamp', { ascending: false })
+        if (error) throw error
         return data
     }
 }
