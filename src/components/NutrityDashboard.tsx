@@ -50,6 +50,7 @@ import { auth, db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { useNutrityData } from '../hooks/useNutrityData';
 import { dbService } from '../lib/db-service';
+import { getDirectImageUrl } from '../lib/utils';
 
 interface NutrityDashboardProps {
     results: any;
