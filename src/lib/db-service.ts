@@ -177,6 +177,10 @@ export const dbService = {
                         .single()
                     profile = updated
                 } else {
+                    // Detectar SuperAdmins por email y asignarles el rol correcto
+                    const superAdminEmails = ['biovital.365@gmail.com', 'biovital.360@gmail.com', 'admin@nutrity.global'];
+                    const isAdmin = superAdminEmails.includes((firebaseUser.email || '').toLowerCase());
+
                     const id = crypto.randomUUID(); // Generar UUID para el nuevo usuario
                     const { data: created } = await supabase
                         .from('User')
@@ -185,8 +189,8 @@ export const dbService = {
                             firebaseUid: firebaseUser.uid,
                             email: firebaseUser.email,
                             name: name || firebaseUser.displayName,
-                            role: 'USER',
-                            plan: 'FREE',
+                            role: isAdmin ? 'ADMIN' : 'USER',
+                            plan: isAdmin ? 'ELITE' : 'FREE',
                             updatedAt: new Date().toISOString()
                         })
                         .select('*, organization:Organization(*)')
@@ -194,6 +198,23 @@ export const dbService = {
                     profile = created
                 }
             }
+
+            // Si el perfil ya existe pero el email es SuperAdmin y no tiene rol ADMIN,
+            // actualizarlo. Protege contra registros antiguos con rol incorrecto.
+            if (profile) {
+                const superAdminEmails = ['biovital.365@gmail.com', 'biovital.360@gmail.com', 'admin@nutrity.global'];
+                const isAdmin = superAdminEmails.includes((profile.email || '').toLowerCase());
+                if (isAdmin && profile.role !== 'ADMIN') {
+                    const { data: upgraded } = await supabase
+                        .from('User')
+                        .update({ role: 'ADMIN', plan: 'ELITE', updatedAt: new Date().toISOString() })
+                        .eq('id', profile.id)
+                        .select('*, organization:Organization(*)')
+                        .single()
+                    profile = upgraded
+                }
+            }
+
             return profile
         } catch (err) {
             console.error('Sync profile error:', err)
