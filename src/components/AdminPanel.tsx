@@ -21,6 +21,8 @@ import {
 import { dbService, FoodItem, Micronutrient, Course, Lesson } from "../lib/db-service";
 import { weeklyMenuData, DayMeal } from "../lib/menu-data";
 import { getDirectImageUrl } from "../lib/utils";
+import { foodCatalog } from "../lib/food-data";
+import { micronutrientsData } from "../lib/micronutrients-data";
 
 // ─── Types ──────────────────────────────────────────────────────────────
 interface AdminPanelProps {
@@ -195,6 +197,36 @@ export function AdminPanel({ user }: AdminPanelProps) {
         loadAll();
     }, [notify]);
 
+    // ─── Seed Database con datos locales ──────────────────────────────
+    const handleSeedDatabase = async () => {
+        if (!confirm(`¿Sembrar ${foodCatalog.length} alimentos y ${micronutrientsData.length} micronutrientes en Supabase? Esta acción no se puede deshacer si ya hay datos.`)) return;
+        setIsSaving(true);
+        try {
+            const orgId = user?.profile?.organizationId;
+            // Insertar alimentos en lotes
+            for (const food of foodCatalog) {
+                await dbService.saveFood({ ...food, organizationId: orgId }, orgId).catch(() => null); // Ignorar duplicados
+            }
+            // Insertar micronutrientes en lotes
+            for (const micro of micronutrientsData) {
+                await dbService.saveMicronutrient({ ...(micro as any), organizationId: orgId }, orgId).catch(() => null);
+            }
+            // Recargar datos
+            const [foodData, microData] = await Promise.all([
+                dbService.getFoods(orgId),
+                dbService.getMicronutrients(orgId),
+            ]);
+            setFoods(foodData);
+            setMicros(microData);
+            notify("success", `✅ Sembrados ${foodData.length} alimentos y ${microData.length} micronutrientes`);
+        } catch (err) {
+            console.error("Seed error:", err);
+            notify("error", "Error al sembrar datos");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     // ─── FOOD CRUD ────────────────────────────────────────────────────
     const handleSaveFood = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -320,6 +352,17 @@ export function AdminPanel({ user }: AdminPanelProps) {
                     <p className="text-nutrity-gray-text text-sm">Gestión completa del catálogo y contenido de {user?.profile?.organization?.name || "Nutrity Global"}.</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {/* Botón de siembra de datos — visible cuando tablas están vacías */}
+                    {(foods.length === 0 || micros.length === 0) && (
+                        <button
+                            onClick={handleSeedDatabase}
+                            disabled={isSaving}
+                            className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all disabled:opacity-50"
+                        >
+                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                            Sembrar Catálogo
+                        </button>
+                    )}
                     <div className="bg-nutrity-accent/10 px-4 py-2 rounded-xl flex items-center gap-3 border border-nutrity-accent/20">
                         <Shield className="w-5 h-5 text-nutrity-accent" />
                         <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">Admin Global</span>
