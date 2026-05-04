@@ -178,13 +178,13 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                                 <div className="absolute top-0 right-0 p-8">
                                     <Heart className="w-12 h-12 text-[#60a5fa] opacity-20" />
                                 </div>
-                                <h5 className="text-3xl font-black mb-8 leading-tight">Optimización Celular mediante <br /><span className="text-[#60a5fa]">Superalimentos Andinos</span></h5>
+                                <h5 className="text-3xl font-black mb-8 leading-tight">Optimización mediante <br /><span className="text-[#60a5fa]">{results.pillars?.[0]?.title || "Superalimentos"}</span></h5>
                                 <div className="space-y-6 text-xl leading-relaxed font-medium text-white/90 italic">
                                     <p>
-                                        "Basado en su historial metabólico, su prioridad número uno es la sensibilización del receptor de insulina. El **Tarwi (Chocho)** no es solo un alimento, es un agente farmacológico natural que debe ser administrado 15-20 minutos antes de cualquier comida que contenga carbohidratos complejos."
+                                        "{results.pillars?.[0]?.desc || "Cargando protocolo personalizado..."}"
                                     </p>
                                     <p>
-                                        "Hemos detectado picos de cortisol matutinos. Se recomienda iniciar la caminata regenerativa de 15 minutos en ayunas, seguida inmediatamente por 200ml de infusión de Muña tibia para estabilizar el pH digestivo."
+                                        "Tu segundo pilar de acción es: **{results.pillars?.[1]?.title || "Enfoque metabólico"}**. {results.pillars?.[1]?.desc || "Estamos optimizando tu seguimiento."}"
                                     </p>
                                 </div>
                             </div>

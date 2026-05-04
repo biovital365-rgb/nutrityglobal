@@ -192,6 +192,28 @@ export const dbService = {
         return data
     },
 
+    // Admin: Gestión de Usuarios
+    async getAllUsers(organizationId?: string) {
+        let query = supabase.from('User').select('*, organization:Organization(*)')
+        if (organizationId) {
+            query = query.eq('organizationId', organizationId)
+        }
+        const { data, error } = await query.order('name', { ascending: true })
+        if (error) throw error
+        return data
+    },
+
+    async updateUserStatus(userId: string, status: 'ACTIVE' | 'BLOCKED' | 'OBSERVED') {
+        const { data, error } = await supabase
+            .from('User')
+            .update({ status, updatedAt: new Date().toISOString() })
+            .eq('id', userId)
+            .select()
+            .single()
+        if (error) throw error
+        return data
+    },
+
     async syncUserProfile(firebaseUser: any, name?: string) {
         try {
             let profile = await this.getUserProfile(firebaseUser.uid)
