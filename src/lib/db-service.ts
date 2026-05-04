@@ -75,19 +75,31 @@ export const dbService = {
     },
 
     async saveFood(food: Partial<FoodItem>, organizationId?: string) {
+        // Siempre generar un UUID v4 válido para el id. Los IDs locales ("1", "2", food_xxx)
+        // no son compatibles con el esquema cuid de Supabase.
         const payload = {
-            ...food,
-            organizationId: food.organizationId || organizationId,
-            id: food.id || `food_${Math.random().toString(36).substring(2, 11)}`
+            name: food.name || '',
+            scientificName: food.scientificName || '',
+            image: food.image || '',
+            category: food.category || '',
+            description: food.description || '',
+            metabolicBenefits: food.metabolicBenefits || [],
+            nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
+            recipes: food.recipes || [],
+            organizationId: food.organizationId || organizationId || null,
+            id: food.id && food.id.length > 20 ? food.id : crypto.randomUUID(),
         };
 
         const { data, error } = await supabase
             .from('Food')
-            .upsert(payload)
+            .upsert(payload, { onConflict: 'id' })
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('saveFood error:', error, 'payload id:', payload.id)
+            throw error
+        }
         return data as FoodItem
     },
 
@@ -119,18 +131,29 @@ export const dbService = {
 
     async saveMicronutrient(micro: Partial<Micronutrient>, organizationId?: string) {
         const payload = {
-            ...micro,
-            organizationId: micro.organizationId || organizationId,
-            id: micro.id || `micro_${Math.random().toString(36).substring(2, 11)}`
+            name: micro.name || '',
+            symbol: micro.symbol || '',
+            category: micro.category || '',
+            function: (micro as any).function || '',
+            metabolicImpact: micro.metabolicImpact || '',
+            sources: micro.sources || [],
+            deficiencySigns: micro.deficiencySigns || [],
+            dailyDose: micro.dailyDose || '',
+            image: micro.image || null,
+            organizationId: micro.organizationId || organizationId || null,
+            id: micro.id && micro.id.length > 20 ? micro.id : crypto.randomUUID(),
         };
 
         const { data, error } = await supabase
             .from('Micronutrient')
-            .upsert(payload)
+            .upsert(payload, { onConflict: 'id' })
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('saveMicronutrient error:', error, 'payload id:', payload.id)
+            throw error
+        }
         return data as Micronutrient
     },
 
@@ -229,20 +252,23 @@ export const dbService = {
 
     // Evaluaciones
     async saveEvaluation(userId: string, organizationId: string | undefined, data: any, results: any) {
-        const id = `eval_${Math.random().toString(36).substring(2, 11)}`;
+        const id = crypto.randomUUID();
         const { data: saved, error } = await supabase
             .from('Evaluation')
             .insert({
                 id,
                 userId,
-                organizationId,
+                organizationId: organizationId || null,
                 data,
                 results
             })
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('saveEvaluation error:', error);
+            throw error;
+        }
         return saved
     },
 
@@ -277,19 +303,22 @@ export const dbService = {
     },
 
     async saveMeasurement(userId: string, organizationId: string | undefined, measurement: any) {
-        const id = measurement.id || `meas_${Math.random().toString(36).substring(2, 11)}`;
+        const id = measurement.id && measurement.id.length > 20 ? measurement.id : crypto.randomUUID();
         const { data, error } = await supabase
             .from('Measurement')
             .insert({
                 ...measurement,
                 id,
                 userId,
-                organizationId
+                organizationId: organizationId || null
             })
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('saveMeasurement error:', error);
+            throw error;
+        }
         return data
     },
 
@@ -325,8 +354,8 @@ export const dbService = {
     async saveCourse(course: Partial<Course>, organizationId?: string) {
         const payload = {
             ...course,
-            organizationId: course.organizationId || organizationId,
-            id: course.id || `course_${Math.random().toString(36).substring(2, 11)}`,
+            organizationId: course.organizationId || organizationId || null,
+            id: course.id && course.id.length > 20 ? course.id : crypto.randomUUID(),
             updatedAt: new Date().toISOString()
         };
 
@@ -336,7 +365,10 @@ export const dbService = {
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('saveCourse error:', error);
+            throw error;
+        }
         return data as Course
     },
 
@@ -392,19 +424,22 @@ export const dbService = {
     },
 
     async saveAppointment(userId: string, organizationId: string | undefined, appointment: any) {
-        const id = appointment.id || `appt_${Math.random().toString(36).substring(2, 11)}`;
+        const id = appointment.id && appointment.id.length > 20 ? appointment.id : crypto.randomUUID();
         const { data, error } = await supabase
             .from('Appointment')
             .insert({
                 ...appointment,
                 id,
                 userId,
-                organizationId
+                organizationId: organizationId || null
             })
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('saveAppointment error:', error);
+            throw error;
+        }
         return data
     }
 }
