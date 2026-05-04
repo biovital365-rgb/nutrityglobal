@@ -116,35 +116,58 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                     </section>
 
                     <section className="grid grid-cols-2 gap-10 flex-1">
-                        <div className="space-y-8">
-                            <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Proyección de Glucosa (90 días)</h5>
-                            <div className="h-64 flex items-end gap-3 bg-white p-10 rounded-[40px] border border-[hsla(136,19%,29%,0.05)] shadow-lg">
-                                {results.trendData?.map((h: number, i: number) => (
-                                    <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                                        <div
-                                            style={{ height: `${h}%` }}
-                                            className={`w-full rounded-lg transition-all ${i === 8 ? "bg-[#60a5fa]" : "bg-[hsla(136,19%,29%,0.1)]"}`}
-                                        ></div>
-                                        <span className="text-[8px] font-bold opacity-20">M{i + 1}</span>
-                                    </div>
-                                ))}
+                        <div className="space-y-12">
+                            <div>
+                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Proyección de Glucosa (90 días)</h5>
+                                <div className="h-48 flex items-end gap-3 bg-white p-8 rounded-[40px] border border-[hsla(136,19%,29%,0.05)] shadow-lg mb-4">
+                                    {results.trendData?.map((h: number, i: number) => (
+                                        <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                                            <div
+                                                style={{ height: `${h}%` }}
+                                                className={`w-full rounded-lg transition-all ${i === 8 ? "bg-[#60a5fa]" : "bg-[hsla(136,19%,29%,0.1)]"}`}
+                                            ></div>
+                                            <span className="text-[8px] font-bold opacity-20">M{i + 1}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-[hsla(136,19%,29%,0.6)] leading-relaxed font-bold">
+                                    * Proyección basada en algoritmo de IA predictivo.
+                                </p>
                             </div>
-                            <p className="text-xs text-[hsla(136,19%,29%,0.6)] leading-relaxed font-bold">
-                                * Se observa una curva de estabilización en la semana 12 tras completar la fase de choque con el Protocolo Tarwi.
-                            </p>
+
+                            {/* New Holistic Stats Section in PDF */}
+                            <div>
+                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Análisis Bio-Integral</h5>
+                                <div className="grid grid-cols-2 gap-6">
+                                    {results.holisticStats?.map((stat: any, index: number) => (
+                                        <div key={index} className="space-y-2">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-[#3d5a44]">{stat.label}</span>
+                                                <span className="text-[10px] font-black text-[#60a5fa]">{stat.value}%</span>
+                                            </div>
+                                            <div className="h-1.5 bg-[hsla(136,19%,29%,0.05)] rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full ${stat.color === 'bg-blue-500' ? 'bg-[#60a5fa]' : 'bg-[#3d5a44]'}`} 
+                                                    style={{ width: `${stat.value}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="space-y-8">
-                            <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Pillares de Intervención</h5>
+                            <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Pilares de Intervención</h5>
                             <div className="space-y-4">
                                 {(results.pillars || []).map((pillar: any, i: number) => (
                                     <div key={i} className="flex items-center gap-6 p-6 bg-white rounded-[30px] border border-[hsla(136,19%,29%,0.05)] shadow-sm">
-                                        <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0">
-                                            <Leaf className="w-6 h-6 text-[#3d5a44]/30" />
+                                        <div className={`w-12 h-12 ${pillar.color} rounded-2xl flex items-center justify-center shrink-0`}>
+                                            <Activity className="w-6 h-6 text-white" />
                                         </div>
                                         <div>
                                             <h6 className="font-black text-sm uppercase tracking-wider">{pillar.title}</h6>
-                                            <p className="text-[11px] opacity-40 font-medium leading-tight">{pillar.desc}</p>
+                                            <p className="text-[11px] opacity-60 font-medium leading-tight">{pillar.desc}</p>
                                         </div>
                                     </div>
                                 ))}
