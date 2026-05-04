@@ -136,13 +136,22 @@ export default function App() {
 
       // 2. Guardar en background (sin bloquear al usuario)
       if (user) {
+        // Guardar en Firestore (Compatibilidad)
         addDoc(collection(db, "evaluations"), {
           userId: user.uid,
           organizationId: profile?.organizationId || null,
           ...data,
           results: processedResults,
           timestamp: serverTimestamp()
-        }).catch(err => console.error("Background save failed:", err));
+        }).catch(err => console.error("Firestore save failed:", err));
+
+        // Guardar en Supabase (Nueva Fuente de Verdad)
+        dbService.saveEvaluation(
+          user.uid, 
+          profile?.organizationId, 
+          data, 
+          processedResults
+        ).catch(err => console.error("Supabase save failed:", err));
       }
     } catch (err) {
       console.error("Critical error in onboarding completion:", err);

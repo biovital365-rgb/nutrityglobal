@@ -17,6 +17,7 @@ import {
     Users,
     Shield,
     Settings,
+    Activity,
 } from "lucide-react";
 import { dbService, FoodItem, Micronutrient, Course, Lesson } from "../lib/db-service";
 import { weeklyMenuData, DayMeal } from "../lib/menu-data";
@@ -40,7 +41,7 @@ interface AdminPanelProps {
     };
 }
 
-type AdminSection = "foods" | "micronutrients" | "menu" | "courses";
+type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm";
 
 // ─── Empty templates for new entities ───────────────────────────────────
 const emptyFood: Partial<FoodItem> = {
@@ -157,6 +158,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [foods, setFoods] = useState<FoodItem[]>([]);
     const [micros, setMicros] = useState<Micronutrient[]>([]);
     const [courses, setCourses] = useState<Course[]>([]);
+    const [users, setUsers] = useState<any[]>([]);
     const [menuDays, setMenuDays] = useState<Record<string, DayMeal>>(weeklyMenuData);
 
     // Modal states
@@ -181,14 +183,16 @@ export function AdminPanel({ user }: AdminPanelProps) {
         const loadAll = async () => {
             try {
                 const orgId = user?.profile?.organizationId;
-                const [foodData, microData, courseData] = await Promise.all([
+                const [foodData, microData, courseData, userData] = await Promise.all([
                     dbService.getFoods(orgId),
                     dbService.getMicronutrients(orgId),
                     dbService.getCourses(orgId),
+                    dbService.getAllUsers(orgId),
                 ]);
                 setFoods(foodData);
                 setMicros(microData);
                 setCourses(courseData);
+                setUsers(userData);
             } catch (err) {
                 console.error("Admin data load error:", err);
                 notify("error", "Error al cargar datos");
@@ -330,18 +334,39 @@ export function AdminPanel({ user }: AdminPanelProps) {
         }
     };
 
+    // ─── USER MANAGEMENT ──────────────────────────────────────────────
+    const handleUpdateUserStatus = async (userId: string, status: 'ACTIVE' | 'BLOCKED' | 'OBSERVED') => {
+        setIsSaving(true);
+        try {
+            const updated = await dbService.updateUserStatus(userId, status);
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: updated.status } : u));
+            notify("success", `Estado de usuario actualizado a ${status}`);
+        } catch (err) {
+            console.error("Error updating user status:", err);
+            notify("error", "Error al actualizar estado");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     // ─── Section nav config ───────────────────────────────────────────
     const sections: { id: AdminSection; icon: typeof Utensils; label: string; count: number }[] = [
         { id: "foods", icon: Utensils, label: "Alimentos", count: foods.length },
         { id: "micronutrients", icon: Zap, label: "Micronutrientes", count: micros.length },
         { id: "menu", icon: ClipboardCheck, label: "Menú Semanal", count: Object.keys(menuDays).length },
         { id: "courses", icon: BookOpen, label: "Cursos", count: courses.length },
+        { id: "users", icon: Users, label: "Usuarios", count: users.length },
+        { id: "crm", icon: Settings, label: "CRM Automático", count: users.length },
     ];
 
     // ─── Filtered data ────────────────────────────────────────────────
     const filteredFoods = foods.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()) || f.category.toLowerCase().includes(searchTerm.toLowerCase()));
     const filteredMicros = micros.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.category.toLowerCase().includes(searchTerm.toLowerCase()));
     const filteredCourses = courses.filter(c => c.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredUsers = users.filter(u => 
+        (u.name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (u.email || "").toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <motion.div key="admin-panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
@@ -407,13 +432,14 @@ export function AdminPanel({ user }: AdminPanelProps) {
                             case "micronutrients": setEditingMicro(emptyMicro); setShowMicroModal(true); break;
                             case "courses": setEditingCourse(emptyCourse); setShowCourseModal(true); break;
                             case "menu": break; // menu edits per day
+                            case "users": alert("Para añadir usuarios, utiliza el flujo de registro o invitación."); break;
                         }
                     }}
-                    className={`flex items-center gap-3 px-6 py-3.5 rounded-xl text-sm font-bold transition-all shadow-lg ${section === "menu"
+                    className={`flex items-center gap-3 px-6 py-3.5 rounded-xl text-sm font-bold transition-all shadow-lg ${section === "menu" || section === "crm" || section === "users"
                         ? "bg-nutrity-primary/30 text-nutrity-primary/50 cursor-not-allowed"
                         : "bg-nutrity-accent text-white shadow-nutrity-accent/20 hover:scale-105 active:scale-95"
                         }`}
-                    disabled={section === "menu"}
+                    disabled={section === "menu" || section === "crm" || section === "users"}
                 >
                     <PlusCircle className="w-5 h-5" />
                     Nuevo {section === "foods" ? "Alimento" : section === "micronutrients" ? "Micronutriente" : section === "courses" ? "Curso" : ""}
@@ -630,6 +656,151 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                         )}
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {section === "users" && (
+                    <motion.div key="users-table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <div className="nutrity-card bg-white overflow-hidden shadow-xl shadow-slate-200/50">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">
+                                            <th className="py-4 px-6">Usuario</th>
+                                            <th className="py-4 px-6">Email / Contacto</th>
+                                            <th className="py-4 px-6">Estado</th>
+                                            <th className="py-4 px-6">Plan</th>
+                                            <th className="py-4 px-6">Registrado</th>
+                                            <th className="py-4 px-6 text-right">Gestionar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-nutrity-border">
+                                        {filteredUsers.map((u) => (
+                                            <tr key={u.id} className="hover:bg-slate-50 transition-colors group">
+                                                <td className="py-4 px-6">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-nutrity-primary/10 flex items-center justify-center text-nutrity-primary font-bold text-xs">
+                                                            {u.name?.charAt(0) || "U"}
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-bold text-sm block">{u.name || "Sin nombre"}</span>
+                                                            <p className="text-[10px] text-nutrity-gray-text">{u.role || "PATIENT"}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="text-xs font-medium block">{u.email}</span>
+                                                    <p className="text-[10px] text-nutrity-gray-text">{u.phone || "Sin celular"}</p>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <select 
+                                                        value={u.status || 'ACTIVE'}
+                                                        onChange={(e) => handleUpdateUserStatus(u.id, e.target.value as any)}
+                                                        className={`text-[9px] font-bold px-2 py-1 rounded-lg outline-none border transition-all ${
+                                                            u.status === 'BLOCKED' ? 'bg-red-50 text-red-600 border-red-100' :
+                                                            u.status === 'OBSERVED' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                            'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                        }`}
+                                                    >
+                                                        <option value="ACTIVE">ACTIVO</option>
+                                                        <option value="BLOCKED">BLOQUEADO</option>
+                                                        <option value="OBSERVED">OBSERVADO</option>
+                                                    </select>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className="px-2.5 py-1 bg-nutrity-primary/5 text-nutrity-primary text-[9px] font-bold rounded-lg uppercase tracking-wider">{u.plan || "FREEMIUM"}</span>
+                                                </td>
+                                                <td className="py-4 px-6 text-[11px] text-nutrity-gray-text">
+                                                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"}
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button 
+                                                            onClick={() => alert(`Enviando alerta a ${u.name}...`)}
+                                                            className="p-2 rounded-lg bg-nutrity-accent/10 text-nutrity-accent hover:bg-nutrity-accent hover:text-white transition-all"
+                                                            title="Enviar Alerta"
+                                                        >
+                                                            <Zap className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {filteredUsers.length === 0 && (
+                                            <tr><td colSpan={6} className="py-16 text-center text-nutrity-gray-text text-sm">Sin usuarios encontrados</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {section === "crm" && (
+                    <motion.div key="crm-dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="nutrity-card p-8 space-y-4">
+                                <div className="w-12 h-12 rounded-2xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent">
+                                    <Users className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold">{users.length}</h3>
+                                    <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Total Usuarios</p>
+                                </div>
+                            </div>
+                            <div className="nutrity-card p-8 space-y-4">
+                                <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600">
+                                    <Shield className="w-6 h-6" />
+                                00:00:00
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold">{users.filter(u => u.status === 'BLOCKED').length}</h3>
+                                    <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Bloqueados</p>
+                                </div>
+                            </div>
+                            <div className="nutrity-card p-8 space-y-4">
+                                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <Zap className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-bold">{users.filter(u => u.status === 'ACTIVE').length}</h3>
+                                    <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Activos</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="nutrity-card bg-white mt-8 p-8">
+                            <h3 className="font-bold mb-6 flex items-center gap-2">
+                                <Settings className="w-5 h-5 text-nutrity-accent" />
+                                Automatizaciones CRM Activas
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-nutrity-border">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-nutrity-success/10 flex items-center justify-center text-nutrity-success">
+                                            <Zap className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold">Recordatorio WhatsApp (24h antes)</p>
+                                            <p className="text-[10px] text-nutrity-gray-text">Envía mensaje automático a citas programadas</p>
+                                        </div>
+                                    </div>
+                                    <span className="px-3 py-1 bg-nutrity-success text-white text-[9px] font-bold rounded-full uppercase tracking-widest">Activo</span>
+                                </div>
+                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-nutrity-border">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent">
+                                            <Activity className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold">Alerta de Inactividad (7 días)</p>
+                                            <p className="text-[10px] text-nutrity-gray-text">Notifica al asesor si el usuario no registra glucosa</p>
+                                        </div>
+                                    </div>
+                                    <span className="px-3 py-1 bg-nutrity-accent text-white text-[9px] font-bold rounded-full uppercase tracking-widest">Activo</span>
+                                </div>
                             </div>
                         </div>
                     </motion.div>

@@ -66,6 +66,31 @@ interface NutrityDashboardProps {
 export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, onRequireAuth, onLogout, isGeneratingPDF }: NutrityDashboardProps) {
     const [activeTab, setActiveTab] = useState("main");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    if (user?.profile?.status === 'BLOCKED') {
+        return (
+            <div className="min-h-screen bg-nutrity-bg flex items-center justify-center p-6">
+                <div className="nutrity-card p-12 max-w-lg text-center space-y-6 animate-in fade-in zoom-in duration-500">
+                    <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Shield className="w-10 h-10" />
+                    </div>
+                    <h2 className="text-3xl font-display font-bold text-nutrity-primary">Acceso Restringido</h2>
+                    <p className="text-nutrity-gray-text font-medium leading-relaxed">
+                        Tu cuenta ha sido bloqueada temporalmente por infracciones a los términos de servicio, falta de pago o por estar en estado de observación administrativa.
+                    </p>
+                    <div className="pt-4 space-y-4">
+                        <p className="text-sm text-nutrity-gray-text opacity-70">Por favor, contacta con tu asesor o soporte para regularizar tu situación.</p>
+                        <button 
+                            onClick={onLogout} 
+                            className="bg-nutrity-primary text-white px-10 py-4 rounded-xl font-bold uppercase tracking-widest transition-all hover:bg-nutrity-accent shadow-lg shadow-nutrity-primary/20 active:scale-95"
+                        >
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     const firstName = results.name ? results.name.split(' ')[0] : "Freddy";
 
     // Contexto Multi-tenant
@@ -127,11 +152,48 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         !!(user?.profile?.phone && user?.profile?.address && user?.profile?.age)
     );
 
+    const [useSpecialDiet, setUseSpecialDiet] = useState(false);
+
     useEffect(() => {
         if (user?.uid && !isProfileComplete && activeTab !== "profile") {
             setActiveTab("profile");
         }
     }, [isProfileComplete, activeTab, user?.uid]);
+
+    const handleAutoControl = async () => {
+        if (!user?.uid) { onRequireAuth(); return; }
+        
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + 15);
+        const dateStr = nextDate.toISOString().split('T')[0];
+        
+        const appt = {
+            title: "Control Metabólico Automático",
+            date: dateStr,
+            time: "09:00",
+            type: "Virtual",
+            status: "PROGRAMADA"
+        };
+
+        try {
+            await saveAppointment(appt);
+            
+            // Mensaje de WhatsApp de seguimiento
+            const message = `Hola Nutrity Global, he programado mi próximo control metabólico para el día ${dateStr} a las 09:00 AM. Quedo atento a la confirmación.`;
+            const phone = "51900000000"; // Placeholder - En producción esto debería venir del admin de la org
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+            
+            alert(`✅ Próximo control programado para el ${dateStr}.\n\nSe ha enviado un mensaje de seguimiento por WhatsApp. Si necesitas cambiar la fecha, puedes hacerlo desde la pestaña de Agenda.`);
+        } catch (err) {
+            console.error("Error al programar cita automática:", err);
+            alert("No se pudo programar el control automáticamente.");
+        }
+    };
+
+    const handlePlanNutricional = () => {
+        setUseSpecialDiet(true);
+        setActiveTab("menu");
+    };
 
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -277,11 +339,15 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             - Objetivo Principal: ${results.meta}
             - Bio-Insight Médico: ${results.insight}
             
+            CATÁLOGO DISPONIBLE (Úsalos en tus recomendaciones):
+            - Alimentos: ${foods.map(f => f.name).join(', ')}
+            - Micronutrientes: ${micros.map(m => m.name).join(', ')}
+            
             REGLAS DE COMUNICACIÓN:
             1. Longitud: Tus respuestas deben tener entre 15 y 250 palabras. Sé informativo pero conciso.
             2. Tono: Profesional, científico, basado en evidencia, pero profundamente motivador y empático.
             3. Especialidad: Habla sobre sensibilidad a la insulina, autofagia, biogénesis mitocondrial y el impacto de los carbohidratos.
-            4. Recomendaciones: Si mencionas alimentos, prioriza los del catálogo: Tarwi, Quinoa Negra, Maca Negra, Yacón.
+            4. Recomendaciones: Prioriza SIEMPRE los alimentos y micronutrientes del catálogo listado arriba.
             5. Estilo: Usa Markdown para resaltar términos importantes (ej. **Autofagia**).
             
             Responde de forma que el usuario se sienta empoderado y con claridad clínica.`;
@@ -449,24 +515,24 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
                                 {/* Quick Actions Row */}
                                 <div className="grid md:grid-cols-3 gap-6">
-                                    <div className="nutrity-card p-6 flex items-center gap-6">
-                                        <div className="w-14 h-14 rounded-2xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent shrink-0">
+                                    <div className="nutrity-card p-6 flex items-center gap-6 cursor-pointer hover:border-nutrity-accent transition-all group" onClick={handleAutoControl}>
+                                        <div className="w-14 h-14 rounded-2xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent shrink-0 group-hover:bg-nutrity-accent group-hover:text-white transition-all">
                                             <Calendar className="w-7 h-7" />
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Próximo Control</p>
-                                            <h4 className="font-bold text-sm mt-0.5">{appointments[0]?.title || "Evaluación semanal"}</h4>
-                                            <p className="text-[10px] font-bold text-nutrity-accent mt-1 bg-nutrity-accent/10 inline-block px-2 py-0.5 rounded-full">Mañana 09:00 AM</p>
+                                            <h4 className="font-bold text-sm mt-0.5">{appointments[0]?.date || "Programar ahora"}</h4>
+                                            <p className="text-[10px] font-bold text-nutrity-accent mt-1 bg-nutrity-accent/10 inline-block px-2 py-0.5 rounded-full">Auto-Programación</p>
                                         </div>
                                     </div>
-                                    <div className="nutrity-card p-6 flex items-center gap-6">
-                                        <div className="w-14 h-14 rounded-2xl bg-nutrity-success/10 flex items-center justify-center text-nutrity-success shrink-0">
+                                    <div className="nutrity-card p-6 flex items-center gap-6 cursor-pointer hover:border-nutrity-success transition-all group" onClick={handlePlanNutricional}>
+                                        <div className="w-14 h-14 rounded-2xl bg-nutrity-success/10 flex items-center justify-center text-nutrity-success shrink-0 group-hover:bg-nutrity-success group-hover:text-white transition-all">
                                             <Utensils className="w-7 h-7" />
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Plan Nutricional</p>
-                                            <h4 className="font-bold text-sm mt-0.5">Gestión de Macros</h4>
-                                            <p className="text-[10px] font-bold text-nutrity-gray-text mt-1 opacity-50">Proteína alta & Fibra</p>
+                                            <h4 className="font-bold text-sm mt-0.5">Dieta Especial AI</h4>
+                                            <p className="text-[10px] font-bold text-nutrity-success mt-1 opacity-50">Prescripción de Precisión</p>
                                         </div>
                                     </div>
                                     <div className="nutrity-card p-6 flex items-center gap-6 cursor-pointer hover:border-nutrity-accent transition-all group" onClick={() => setShowMeasureModal(true)}>
