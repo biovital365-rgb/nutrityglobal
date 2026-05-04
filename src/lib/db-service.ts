@@ -61,14 +61,17 @@ export const dbService = {
         let query = supabase.from('Food').select('*')
         
         if (organizationId) {
+            // Incluir registros globales (null) Y del tenant
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
-        } else {
-            query = query.is('organizationId', null)
         }
+        // Sin filtro: devuelve todos los alimentos disponibles
 
         const { data, error } = await query.order('name', { ascending: true })
-        if (error) throw error
-        return data as FoodItem[]
+        if (error) {
+            console.error('getFoods error:', error)
+            return []
+        }
+        return (data || []) as FoodItem[]
     },
 
     async saveFood(food: Partial<FoodItem>, organizationId?: string) {
@@ -103,13 +106,15 @@ export const dbService = {
         
         if (organizationId) {
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
-        } else {
-            query = query.is('organizationId', null)
         }
+        // Sin filtro: devuelve todos los micronutrientes disponibles
 
         const { data, error } = await query.order('name', { ascending: true })
-        if (error) throw error
-        return data as Micronutrient[]
+        if (error) {
+            console.error('getMicronutrients error:', error)
+            return []
+        }
+        return (data || []) as Micronutrient[]
     },
 
     async saveMicronutrient(micro: Partial<Micronutrient>, organizationId?: string) {
@@ -294,14 +299,16 @@ export const dbService = {
         
         if (organizationId) {
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
-        } else {
-            query = query.is('organizationId', null)
         }
+        // Sin filtro: devuelve todos los cursos disponibles
 
         const { data, error } = await query.order('createdAt', { ascending: false })
 
-        if (error) throw error
-        return data as Course[]
+        if (error) {
+            console.error('getCourses error:', error)
+            return []
+        }
+        return (data || []) as Course[]
     },
 
     async getCourseWithLessons(courseId: string) {
