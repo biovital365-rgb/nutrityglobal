@@ -37,29 +37,52 @@ export default function App() {
 
         // Buscar evaluación anterior en Firestore
         try {
+          const superAdminEmails = ['biovital.365@gmail.com', 'biovital.360@gmail.com', 'admin@nutrity.global'];
+          const isSuperAdmin = superAdminEmails.includes((firebaseUser.email || '').toLowerCase()) || p?.role === 'ADMIN';
+
           const constraints = [where("userId", "==", firebaseUser.uid)];
-          if (p?.organizationId) {
-              constraints.push(where("organizationId", "==", p.organizationId));
-          }
-          const q = query(
+          // Intentar cargar con filtro de organización primero
+          let q = query(
             collection(db, "evaluations"),
             ...constraints,
             orderBy("timestamp", "desc"),
             limit(1)
           );
-          const querySnapshot = await getDocs(q);
+          
+          let querySnapshot = await getDocs(q);
+          
+          if (querySnapshot.empty && p?.organizationId) {
+              // Si no hay resultados con userId solo, probar con organizationId (algunos registros antiguos)
+              const qOrg = query(
+                  collection(db, "evaluations"),
+                  where("organizationId", "==", p.organizationId),
+                  orderBy("timestamp", "desc"),
+                  limit(1)
+              );
+              querySnapshot = await getDocs(qOrg);
+          }
+
           if (!querySnapshot.empty) {
             // Usuario tiene evaluación previa → ir al dashboard directamente
             const latestData = querySnapshot.docs[0].data();
             setResults(latestData.results);
             setView("dashboard");
+          } else if (isSuperAdmin) {
+            // Es ADMIN pero no tiene evaluación → Ir a dashboard (con datos vacíos o dummy)
+            setResults({ name: p?.name || "Admin", condition: "prevention", phase: "Activación" });
+            setView("dashboard");
           } else {
-            // Usuario nuevo o sin evaluación → ir al onboarding
+            // Usuario nuevo regular sin evaluación → ir al onboarding
             setView("onboarding");
           }
         } catch (err) {
           console.error("Error loading previous results:", err);
-          setView("onboarding"); // Fallback seguro
+          // Si falla la query (ej. por índices), pero es admin, dejar pasar
+          if (p?.role === 'ADMIN' || firebaseUser.email === 'biovital.365@gmail.com') {
+              setView("dashboard");
+          } else {
+              setView("onboarding");
+          }
         }
       } else {
         setProfile(null);
