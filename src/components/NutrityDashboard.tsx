@@ -51,6 +51,7 @@ import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot 
 import { useNutrityData } from '../hooks/useNutrityData';
 import { dbService } from '../lib/db-service';
 import { getDirectImageUrl } from '../lib/utils';
+import { AdminPanel } from './AdminPanel';
 
 interface NutrityDashboardProps {
     results: any;
