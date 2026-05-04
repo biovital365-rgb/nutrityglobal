@@ -198,7 +198,7 @@ export function Auth({ onAuthSuccess, onBack }: AuthProps) {
                 <button
                     onClick={() => {
                         setEmail('biovital.365@gmail.com');
-                        setPassword('BioVital54321');
+                        setPassword('NutriAdmin2026#365');
                         // Optional: automatically trigger submit after a short delay
                         setTimeout(() => {
                             const form = document.querySelector('form');
