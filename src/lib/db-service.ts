@@ -230,7 +230,12 @@ export const dbService = {
             // Si el perfil ya existe pero el email es SuperAdmin y no tiene rol ADMIN,
             // actualizarlo. Protege contra registros antiguos con rol incorrecto.
             if (profile) {
-                const superAdminEmails = ['biovital.365@gmail.com', 'biovital.360@gmail.com', 'admin@nutrity.global'];
+                const superAdminEmails = [
+                    'biovital.365@gmail.com', 
+                    'biovital.360@gmail.com', 
+                    'admin@nutrity.global',
+                    'apexdigital70@gmail.com'
+                ];
                 const isAdmin = superAdminEmails.includes((profile.email || '').toLowerCase());
                 if (isAdmin && profile.role !== 'ADMIN') {
                     const { data: upgraded } = await supabase

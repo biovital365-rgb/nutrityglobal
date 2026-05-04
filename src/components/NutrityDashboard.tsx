@@ -190,10 +190,10 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         setChatMessages([
             {
                 role: 'ai',
-                text: `¡Hola ${firstName}! Bienvenido a tu ecosistema de precisión metabólica. \n\nSoy tu Coach con IA y estoy sincronizado con tu plan de **${results.phase}**. \n\nHe analizado tus bio-marcadores recientes y veo que tu pilar de **${results.pillars[0]?.title}** es la prioridad hoy. ¿Deseas registrar una nueva medición o tienes alguna duda sobre tu dieta?`
+                text: `¡Hola ${firstName}! Bienvenido a tu ecosistema de precisión metabólica. \n\nSoy tu Coach con IA y estoy sincronizado con tu plan de **${results?.phase || 'Activación'}**. \n\nHe analizado tus bio-marcadores recientes y veo que tu pilar de **${results?.pillars?.[0]?.title || 'Metabolismo'}** es la prioridad hoy. ¿Deseas registrar una nueva medición o tienes alguna duda sobre tu dieta?`
             }
         ]);
-    }, [results.name, results.phase]);
+    }, [results?.name, results?.phase]);
 
     // Las mediciones y citas ahora se cargan automáticamente vía useNutrityData
 
