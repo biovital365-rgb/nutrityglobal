@@ -295,12 +295,20 @@ export const dbService = {
 
     // Evaluaciones
     async saveEvaluation(userId: string, organizationId: string | undefined, data: any, results: any) {
+        // userId puede ser el ID interno de Supabase o el firebaseUid
+        // Buscamos el ID interno si es necesario para mantener la integridad referencial
+        let internalId = userId;
+        if (userId.length > 20) { // Probable firebaseUid
+            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
+            if (user) internalId = user.id;
+        }
+
         const id = crypto.randomUUID();
         const { data: saved, error } = await supabase
             .from('Evaluation')
             .insert({
                 id,
-                userId,
+                userId: internalId,
                 organizationId: organizationId || null,
                 data,
                 results
@@ -316,16 +324,24 @@ export const dbService = {
     },
 
     async getLatestEvaluation(userId: string, organizationId?: string) {
-        let query = supabase.from('Evaluation').select('*').eq('userId', userId)
-        
-        if (organizationId) {
-            query = query.eq('organizationId', organizationId)
-        }
-
-        const { data, error } = await query
+        // Intentar buscar por ID exacto primero, luego por firebaseUid si no hay resultados
+        let { data, error } = await supabase.from('Evaluation').select('*').eq('userId', userId)
             .order('timestamp', { ascending: false })
             .limit(1)
             .maybeSingle()
+        
+        if (!data && userId.length > 20) {
+            // Intentar buscar el ID interno via firebaseUid
+            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
+            if (user) {
+                const { data: dataByInternal, error: errorByInternal } = await supabase.from('Evaluation').select('*').eq('userId', user.id)
+                    .order('timestamp', { ascending: false })
+                    .limit(1)
+                    .maybeSingle()
+                data = dataByInternal;
+                error = errorByInternal;
+            }
+        }
 
         if (error) throw error
         return data
@@ -333,7 +349,13 @@ export const dbService = {
 
     // Mediciones
     async getMeasurements(userId: string, organizationId?: string) {
-        let query = supabase.from('Measurement').select('*').eq('userId', userId)
+        let internalId = userId;
+        if (userId.length > 20) {
+            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
+            if (user) internalId = user.id;
+        }
+
+        let query = supabase.from('Measurement').select('*').eq('userId', internalId)
         
         if (organizationId) {
             query = query.eq('organizationId', organizationId)
@@ -346,13 +368,19 @@ export const dbService = {
     },
 
     async saveMeasurement(userId: string, organizationId: string | undefined, measurement: any) {
+        let internalId = userId;
+        if (userId.length > 20) {
+            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
+            if (user) internalId = user.id;
+        }
+
         const id = measurement.id && measurement.id.length > 20 ? measurement.id : crypto.randomUUID();
         const { data, error } = await supabase
             .from('Measurement')
             .insert({
                 ...measurement,
                 id,
-                userId,
+                userId: internalId,
                 organizationId: organizationId || null
             })
             .select()
@@ -455,7 +483,13 @@ export const dbService = {
 
     // Citas (Nuevo soporte multi-tenant en Supabase)
     async getAppointments(userId: string, organizationId?: string) {
-        let query = supabase.from('Appointment').select('*').eq('userId', userId)
+        let internalId = userId;
+        if (userId.length > 20) {
+            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
+            if (user) internalId = user.id;
+        }
+
+        let query = supabase.from('Appointment').select('*').eq('userId', internalId)
         if (organizationId) {
             query = query.eq('organizationId', organizationId)
         }
@@ -465,13 +499,19 @@ export const dbService = {
     },
 
     async saveAppointment(userId: string, organizationId: string | undefined, appointment: any) {
+        let internalId = userId;
+        if (userId.length > 20) {
+            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
+            if (user) internalId = user.id;
+        }
+
         const id = appointment.id && appointment.id.length > 20 ? appointment.id : crypto.randomUUID();
         const { data, error } = await supabase
             .from('Appointment')
             .insert({
                 ...appointment,
                 id,
-                userId,
+                userId: internalId,
                 organizationId: organizationId || null
             })
             .select()
