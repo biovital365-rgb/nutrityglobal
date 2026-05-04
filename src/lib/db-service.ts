@@ -75,9 +75,8 @@ export const dbService = {
     },
 
     async saveFood(food: Partial<FoodItem>, organizationId?: string) {
-        // Siempre generar un UUID v4 válido para el id. Los IDs locales ("1", "2", food_xxx)
-        // no son compatibles con el esquema cuid de Supabase.
-        const payload = {
+        // Omitir campos nulos para evitar errores si la columna no existe en el esquema actual
+        const payload: any = {
             name: food.name || '',
             scientificName: food.scientificName || '',
             image: food.image || '',
@@ -86,19 +85,23 @@ export const dbService = {
             metabolicBenefits: food.metabolicBenefits || [],
             nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
             recipes: food.recipes || [],
-            organizationId: food.organizationId || organizationId || null,
             id: food.id && food.id.length > 20 ? food.id : crypto.randomUUID(),
         };
 
+        const finalOrgId = food.organizationId || organizationId;
+        if (finalOrgId) {
+            payload.organizationId = finalOrgId;
+        }
+
         const { data, error } = await supabase
             .from('Food')
-            .upsert(payload, { onConflict: 'id' })
+            .upsert(payload)
             .select()
             .single()
 
         if (error) {
-            console.error('saveFood error:', error, 'payload id:', payload.id)
-            throw error
+            console.error('saveFood error:', error, 'Payload:', payload);
+            throw error;
         }
         return data as FoodItem
     },
@@ -130,7 +133,7 @@ export const dbService = {
     },
 
     async saveMicronutrient(micro: Partial<Micronutrient>, organizationId?: string) {
-        const payload = {
+        const payload: any = {
             name: micro.name || '',
             symbol: micro.symbol || '',
             category: micro.category || '',
@@ -140,19 +143,23 @@ export const dbService = {
             deficiencySigns: micro.deficiencySigns || [],
             dailyDose: micro.dailyDose || '',
             image: micro.image || null,
-            organizationId: micro.organizationId || organizationId || null,
             id: micro.id && micro.id.length > 20 ? micro.id : crypto.randomUUID(),
         };
 
+        const finalOrgId = micro.organizationId || organizationId;
+        if (finalOrgId) {
+            payload.organizationId = finalOrgId;
+        }
+
         const { data, error } = await supabase
             .from('Micronutrient')
-            .upsert(payload, { onConflict: 'id' })
+            .upsert(payload)
             .select()
             .single()
 
         if (error) {
-            console.error('saveMicronutrient error:', error, 'payload id:', payload.id)
-            throw error
+            console.error('saveMicronutrient error:', error, 'Payload:', payload);
+            throw error;
         }
         return data as Micronutrient
     },
