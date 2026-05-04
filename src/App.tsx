@@ -37,7 +37,7 @@ export default function App() {
 
         // Buscar evaluación anterior en Firestore
         try {
-          const superAdminEmails = ['biovital.365@gmail.com', 'biovital.360@gmail.com', 'admin@nutrity.global'];
+          const superAdminEmails = ['biovital.365@gmail.com', 'biovital.360@gmail.com', 'admin@nutrity.global', 'apexdigital70@gmail.com'];
           const isSuperAdmin = superAdminEmails.includes((firebaseUser.email || '').toLowerCase()) || p?.role === 'ADMIN';
 
           const constraints = [where("userId", "==", firebaseUser.uid)];
@@ -68,8 +68,13 @@ export default function App() {
             setResults(latestData.results);
             setView("dashboard");
           } else if (isSuperAdmin) {
-            // Es ADMIN pero no tiene evaluación → Ir a dashboard (con datos vacíos o dummy)
-            setResults({ name: p?.name || "Admin", condition: "prevention", phase: "Activación" });
+            // Es ADMIN pero no tiene evaluación → Ir a dashboard (con objeto estructurado)
+            setResults({ 
+                name: p?.name || "Admin", 
+                condition: "prevention", 
+                phase: "Activación",
+                pillars: [{ title: "Metabolismo" }, { title: "Nutrición" }, { title: "Descanso" }, { title: "Movimiento" }]
+            });
             setView("dashboard");
           } else {
             // Usuario nuevo regular sin evaluación → ir al onboarding
