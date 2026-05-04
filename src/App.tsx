@@ -21,6 +21,7 @@ export default function App() {
   const [profile, setProfile] = useState<any>(null); // Supabase Profile
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isRestoringSession, setIsRestoringSession] = useState(true); // Evita flash de landing antes de cargar sesión
 
   useEffect(() => {
     console.log("DEBUG: showAuthModal state changed to ->", showAuthModal);
@@ -34,36 +35,40 @@ export default function App() {
         const p = await dbService.syncUserProfile(firebaseUser);
         setProfile(p);
 
-        if (firebaseUser?.uid && !results) {
-          try {
-            // Priority: Filter by Organization if profile has it, else by userId
-            const constraints = [where("userId", "==", firebaseUser.uid)];
-            if (p?.organizationId) {
-                constraints.push(where("organizationId", "==", p.organizationId));
-            }
-            
-            const q = query(
-              collection(db, "evaluations"),
-              ...constraints,
-              orderBy("timestamp", "desc"),
-              limit(1)
-            );
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-              const latestData = querySnapshot.docs[0].data();
-              setResults(latestData.results);
-              setView("dashboard");
-            }
-          } catch (err) {
-            console.error("Error loading previous results:", err);
+        // Buscar evaluación anterior en Firestore
+        try {
+          const constraints = [where("userId", "==", firebaseUser.uid)];
+          if (p?.organizationId) {
+              constraints.push(where("organizationId", "==", p.organizationId));
           }
+          const q = query(
+            collection(db, "evaluations"),
+            ...constraints,
+            orderBy("timestamp", "desc"),
+            limit(1)
+          );
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            // Usuario tiene evaluación previa → ir al dashboard directamente
+            const latestData = querySnapshot.docs[0].data();
+            setResults(latestData.results);
+            setView("dashboard");
+          } else {
+            // Usuario nuevo o sin evaluación → ir al onboarding
+            setView("onboarding");
+          }
+        } catch (err) {
+          console.error("Error loading previous results:", err);
+          setView("onboarding"); // Fallback seguro
         }
       } else {
         setProfile(null);
+        setView("landing");
       }
+      setIsRestoringSession(false);
     });
     return () => unsubscribe();
-  }, [results]);
+  }, []); // Sin dependencia de 'results' para no crear bucles
 
   const handleStartOnboarding = () => {
     if (!user) {
@@ -80,11 +85,10 @@ export default function App() {
   const handleAuthSuccess = (userData: any) => {
     setUser(userData);
     setShowAuthModal(false);
-    if (results) {
-      setView("dashboard");
-    } else {
-      setView("onboarding");
-    }
+    // No redirigimos aqui: onAuthStateChanged detecta la sesión,
+    // carga resultados y redirige al dashboard o onboarding según corresponda.
+    // Solo mostramos una pantalla de carga temporal.
+    setIsRestoringSession(true);
   };
 
   const handleCompleteOnboarding = async (data: any) => {
@@ -335,7 +339,17 @@ export default function App() {
   return (
     <div className="min-h-screen bg-nutrity-bg text-nutrity-primary font-body">
       <main>
-        {view === "landing" && <NutrityLanding onStart={handleStartOnboarding} onAuthClick={handleAuthClick} />}
+        {/* Pantalla de carga mientras Firebase verifica la sesión */}
+        {isRestoringSession ? (
+          <div className="min-h-screen flex items-center justify-center bg-nutrity-bg">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-nutrity-accent border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest">Cargando sesión...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {view === "landing" && <NutrityLanding onStart={handleStartOnboarding} onAuthClick={handleAuthClick} />}
         {view === "onboarding" && (
           <div className="relative">
             <NutrityOnboarding
@@ -366,6 +380,8 @@ export default function App() {
             onLogout={handleLogout}
             isGeneratingPDF={isGeneratingPDF}
           />
+        )}
+          </>
         )}
       </main>
 
