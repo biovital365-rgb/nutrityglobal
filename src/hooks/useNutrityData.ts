@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { db, auth } from '../lib/firebase';
+import { db } from '../lib/firebase';
 import { collection, query, where, onSnapshot, serverTimestamp, addDoc } from 'firebase/firestore';
 import { dbService, FoodItem, Micronutrient, Course } from '../lib/db-service';
 
-export function useNutrityData(user: any) {
+// Acepta uid y organizationId por separado para compatibilidad con NutrityDashboard
+export function useNutrityData(uid: string | undefined, organizationId: string | undefined) {
     const [appointments, setAppointments] = useState<any[]>([]);
     const [measurements, setMeasurements] = useState<any[]>([]);
     const [foods, setFoods] = useState<FoodItem[]>([]);
     const [micros, setMicros] = useState<Micronutrient[]>([]);
     const [courses, setCourses] = useState<Course[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    const organizationId = user?.profile?.organizationId;
+    const [isDataLoading, setIsDataLoading] = useState(true);
 
     // 1. Cargar Datos de Catálogo (Supabase)
     const loadCatalogs = useCallback(async () => {
@@ -31,12 +30,11 @@ export function useNutrityData(user: any) {
 
     // 2. Suscribirse a Datos de Usuario (Firestore - Realtime)
     useEffect(() => {
-        if (!user?.uid) return;
+        if (!uid) return;
 
-        // Filtro de Organización para Firestore
-        const baseFilter = organizationId 
-            ? where('organizationId', '==', organizationId) 
-            : where('userId', '==', user.uid); // Fallback to userId if no org (legacy)
+        const baseFilter = organizationId
+            ? where('organizationId', '==', organizationId)
+            : where('userId', '==', uid);
 
         const mQuery = query(collection(db, 'measurements'), baseFilter);
         const aQuery = query(collection(db, 'appointments'), baseFilter);
@@ -51,27 +49,27 @@ export function useNutrityData(user: any) {
             setAppointments(data);
         });
 
-        loadCatalogs().finally(() => setLoading(false));
+        loadCatalogs().finally(() => setIsDataLoading(false));
 
         return () => { mUnsub(); aUnsub(); };
-    }, [user?.uid, organizationId, loadCatalogs]);
+    }, [uid, organizationId, loadCatalogs]);
 
-    // 3. Acciones de Escritura Protegidas
-    const addAppointment = async (appt: any) => {
-        if (!user?.uid) throw new Error('Auth required');
+    // 3. Acciones de Escritura Protegidas (nombres alineados con Dashboard)
+    const saveAppointment = async (appt: any) => {
+        if (!uid) throw new Error('Auth required');
         return addDoc(collection(db, 'appointments'), {
             ...appt,
-            userId: user.uid,
+            userId: uid,
             organizationId,
             timestamp: serverTimestamp()
         });
     };
 
-    const addMeasurement = async (measure: any) => {
-        if (!user?.uid) throw new Error('Auth required');
+    const saveMeasurement = async (measure: any) => {
+        if (!uid) throw new Error('Auth required');
         return addDoc(collection(db, 'measurements'), {
             ...measure,
-            userId: user.uid,
+            userId: uid,
             organizationId,
             timestamp: serverTimestamp()
         });
@@ -83,9 +81,9 @@ export function useNutrityData(user: any) {
         foods,
         micros,
         courses,
-        loading,
-        addAppointment,
-        addMeasurement,
+        isDataLoading,
+        saveAppointment,
+        saveMeasurement,
         refreshCatalogs: loadCatalogs
     };
 }
