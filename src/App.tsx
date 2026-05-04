@@ -62,6 +62,21 @@ export default function App() {
               querySnapshot = await getDocs(qOrg);
           }
 
+          // Fallback a Supabase si no hay nada en Firestore
+          if (querySnapshot.empty) {
+            try {
+              const supabaseEval = await dbService.getLatestEvaluation(firebaseUser.uid, p?.organizationId);
+              if (supabaseEval) {
+                setResults(supabaseEval.results);
+                setView("dashboard");
+                setIsRestoringSession(false);
+                return;
+              }
+            } catch (supaErr) {
+              console.error("Supabase evaluation fallback error:", supaErr);
+            }
+          }
+
           if (!querySnapshot.empty) {
             // Usuario tiene evaluación previa → ir al dashboard directamente
             const latestData = querySnapshot.docs[0].data();

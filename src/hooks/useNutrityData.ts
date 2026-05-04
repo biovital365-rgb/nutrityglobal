@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot, serverTimestamp, addDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, serverTimestamp, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { dbService, FoodItem, Micronutrient, Course } from '../lib/db-service';
 
 // Acepta uid y organizationId por separado para compatibilidad con NutrityDashboard
@@ -75,6 +75,21 @@ export function useNutrityData(uid: string | undefined, organizationId: string |
         });
     };
 
+    const updateAppointment = async (id: string, updates: any) => {
+        if (!uid) throw new Error('Auth required');
+        const docRef = doc(db, 'appointments', id);
+        return updateDoc(docRef, {
+            ...updates,
+            updatedAt: serverTimestamp()
+        });
+    };
+
+    const deleteAppointment = async (id: string) => {
+        if (!uid) throw new Error('Auth required');
+        const docRef = doc(db, 'appointments', id);
+        return deleteDoc(docRef);
+    };
+
     return {
         appointments,
         measurements,
@@ -84,6 +99,8 @@ export function useNutrityData(uid: string | undefined, organizationId: string |
         isDataLoading,
         saveAppointment,
         saveMeasurement,
+        updateAppointment,
+        deleteAppointment,
         refreshCatalogs: loadCatalogs
     };
 }

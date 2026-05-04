@@ -41,7 +41,8 @@ import {
     Apple,
     LogOut,
     User,
-    Trash2
+    Trash2,
+    Pencil
 } from "lucide-react";
 import { foodCatalog } from "../lib/food-data";
 import { micronutrientsData } from "../lib/micronutrients-data";
@@ -102,7 +103,9 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         appointments, 
         isDataLoading, 
         saveMeasurement, 
-        saveAppointment 
+        saveAppointment,
+        updateAppointment,
+        deleteAppointment 
     } = useNutrityData(user?.uid, organizationId);
 
     const [chatMessages, setChatMessages] = useState<any[]>([]);
@@ -135,6 +138,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         date: new Date().toISOString().split('T')[0],
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
     });
+    const [editingApptId, setEditingApptId] = useState<string | null>(null);
 
     // Profile States
     const [profileForm, setProfileForm] = useState({
@@ -272,17 +276,49 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         setShowApptModal(false);
 
         try {
-            await saveAppointment({
-                title: newAppt.title,
-                date: newAppt.date,
-                time: newAppt.time,
-                type: newAppt.type
-            });
+            if (editingApptId) {
+                await updateAppointment(editingApptId, {
+                    title: newAppt.title,
+                    date: newAppt.date,
+                    time: newAppt.time,
+                    type: newAppt.type
+                });
+                alert("✅ Cita actualizada.");
+            } else {
+                await saveAppointment({
+                    title: newAppt.title,
+                    date: newAppt.date,
+                    time: newAppt.time,
+                    type: newAppt.type
+                });
+            }
             setNewAppt({ title: "", date: "", time: "", type: "Virtual" });
+            setEditingApptId(null);
         } catch (err) {
-            console.error("Error adding appointment:", err);
-            alert("Error al agendar. Verifica tus permisos o conexión.");
+            console.error("Error saving appointment:", err);
+            alert("Error al procesar la cita.");
         }
+    };
+
+    const handleDeleteAppointment = async (id: string) => {
+        if (!confirm("¿Estás seguro de que deseas eliminar esta cita?")) return;
+        try {
+            await deleteAppointment(id);
+        } catch (err) {
+            console.error("Error deleting appointment:", err);
+            alert("No se pudo eliminar la cita.");
+        }
+    };
+
+    const startEditAppointment = (appt: any) => {
+        setNewAppt({
+            title: appt.title,
+            date: appt.date,
+            time: appt.time || "",
+            type: appt.type || "Virtual"
+        });
+        setEditingApptId(appt.id);
+        setShowApptModal(true);
     };
 
     const handleAddMeasurement = async (e: React.FormEvent) => {
@@ -326,7 +362,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             if (!apiKey) throw new Error("API Key de Gemini no encontrada.");
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
             const systemPrompt = `Eres Nutrity Coach IA, un experto en remisión metabólica clínica y oncología integrativa.
             Tu misión es guiar al usuario en su proceso de bio-optimización.
@@ -1122,6 +1158,14 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                 <div className="w-12 h-12 rounded-xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent group-hover:scale-110 transition-transform">
                                                     <Calendar className="w-7 h-7" />
                                                 </div>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => startEditAppointment(appt)} className="p-2 hover:bg-slate-100 rounded-lg text-nutrity-primary transition-colors" title="Editar">
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => handleDeleteAppointment(appt.id)} className="p-2 hover:bg-red-50 rounded-lg text-rose-500 transition-colors" title="Eliminar">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                                 <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${appt.type === 'Virtual' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'
                                                     }`}>
                                                     {appt.type || 'Presencial'}
@@ -1274,8 +1318,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         className="fixed inset-0 z-[200] bg-nutrity-primary/60 backdrop-blur-md flex items-center justify-center p-6"
                     >
                         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white w-full max-w-md rounded-2xl p-10 shadow-2xl relative border border-white/20">
-                            <button onClick={() => setShowApptModal(false)} className="absolute top-8 right-8 p-2 rounded-full hover:bg-nutrity-bg text-nutrity-gray-text opacity-50"><X className="w-5 h-5" /></button>
-                            <h3 className="text-2xl font-display font-bold mb-1">Agendar Nueva Cita</h3>
+                            <button onClick={() => { setShowApptModal(false); setEditingApptId(null); }} className="absolute top-8 right-8 p-2 rounded-full hover:bg-nutrity-bg text-nutrity-gray-text opacity-50"><X className="w-5 h-5" /></button>
+                            <h3 className="text-2xl font-display font-bold mb-1">{editingApptId ? "Editar Cita" : "Agendar Nueva Cita"}</h3>
                             <p className="text-sm text-nutrity-gray-text mb-8 font-medium">Organiza tu seguimiento médico inteligente</p>
                             <form onSubmit={handleAddAppointment} className="space-y-6">
                                 <div className="space-y-1.5 font-medium">
@@ -1292,7 +1336,9 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <input type="time" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold" value={newAppt.time} onChange={(e) => setNewAppt({ ...newAppt, time: e.target.value })} />
                                     </div>
                                 </div>
-                                <button type="submit" className="w-full bg-nutrity-primary text-white py-5 rounded-xl font-bold shadow-lg shadow-nutrity-accent/20 active:scale-95 transition-all text-sm uppercase tracking-widest mt-2">Confirmar Cita</button>
+                                <button type="submit" className="w-full bg-nutrity-primary text-white py-5 rounded-xl font-bold shadow-lg shadow-nutrity-accent/20 active:scale-95 transition-all text-sm uppercase tracking-widest mt-2">
+                                    {editingApptId ? "Guardar Cambios" : "Confirmar Cita"}
+                                </button>
                             </form>
                         </motion.div>
                     </motion.div>

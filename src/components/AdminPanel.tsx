@@ -18,6 +18,8 @@ import {
     Shield,
     Settings,
     Activity,
+    Calendar,
+    FileText,
 } from "lucide-react";
 import { dbService, FoodItem, Micronutrient, Course, Lesson } from "../lib/db-service";
 import { weeklyMenuData, DayMeal } from "../lib/menu-data";
@@ -41,7 +43,7 @@ interface AdminPanelProps {
     };
 }
 
-type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm";
+type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm" | "calendar" | "reports";
 
 // ─── Empty templates for new entities ───────────────────────────────────
 const emptyFood: Partial<FoodItem> = {
@@ -159,6 +161,8 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [micros, setMicros] = useState<Micronutrient[]>([]);
     const [courses, setCourses] = useState<Course[]>([]);
     const [users, setUsers] = useState<any[]>([]);
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [pdfReports, setPdfReports] = useState<any[]>([]);
     const [menuDays, setMenuDays] = useState<Record<string, DayMeal>>(weeklyMenuData);
 
     // Modal states
@@ -170,6 +174,10 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [editingCourse, setEditingCourse] = useState<Partial<Course>>(emptyCourse);
     const [showMenuModal, setShowMenuModal] = useState(false);
     const [editingMenuDay, setEditingMenuDay] = useState<{ day: string; meal: DayMeal }>({ day: "", meal: { breakfast: "", lunch: "", dinner: "", snack: "", metabolicGoal: "" } });
+    const [showApptModal, setShowApptModal] = useState(false);
+    const [editingAppt, setEditingAppt] = useState<any>(null);
+    const [showUserModal, setShowUserModal] = useState(false);
+    const [editingUser, setEditingUser] = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<{ type: AdminSection; id: string; name: string } | null>(null);
 
     // ─── Notification helper ──────────────────────────────────────────
@@ -183,23 +191,27 @@ export function AdminPanel({ user }: AdminPanelProps) {
         const loadAll = async () => {
             try {
                 const orgId = user?.profile?.organizationId;
-                const [foodData, microData, courseData, userData] = await Promise.all([
+                const [foodData, microData, courseData, userData, appointmentData, reportData] = await Promise.all([
                     dbService.getFoods(orgId),
                     dbService.getMicronutrients(orgId),
                     dbService.getCourses(orgId),
                     dbService.getAllUsers(orgId),
+                    dbService.getAllAppointments(orgId),
+                    dbService.getPDFReports(orgId)
                 ]);
                 setFoods(foodData);
                 setMicros(microData);
                 setCourses(courseData);
                 setUsers(userData);
+                setAppointments(appointmentData);
+                setPdfReports(reportData);
             } catch (err) {
                 console.error("Admin data load error:", err);
                 notify("error", "Error al cargar datos");
             }
         };
         loadAll();
-    }, [notify]);
+    }, [notify, user?.profile?.organizationId]);
 
     // ─── Seed Database con datos locales ──────────────────────────────
     const handleSeedDatabase = async () => {
@@ -305,24 +317,71 @@ export function AdminPanel({ user }: AdminPanelProps) {
         } finally { setIsSaving(false); }
     };
 
+    const handleSaveUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingUser) return;
+        setIsSaving(true);
+        try {
+            const { id, ...data } = editingUser;
+            await dbService.updateUserProfile(id, data);
+            
+            // Recargar usuarios
+            const orgId = user?.profile?.organizationId;
+            const updated = await dbService.getAllUsers(orgId);
+            setUsers(updated);
+            
+            notify("success", "Usuario actualizado correctamente.");
+            setShowUserModal(false);
+        } catch (err) {
+            console.error("Error updating user:", err);
+            notify("error", "Error al actualizar el usuario.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // ─── APPOINTMENT SAVE ──────────────────────────────────────────────
+    const handleSaveAppointment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingAppt) return;
+        setIsSaving(true);
+        try {
+            await dbService.updateAppointment(editingAppt.id, {
+                title: editingAppt.title,
+                date: editingAppt.date,
+                time: editingAppt.time,
+                type: editingAppt.type
+            });
+            const orgId = user?.profile?.organizationId;
+            const updated = await dbService.getAllAppointments(orgId);
+            setAppointments(updated);
+            notify("success", "Cita actualizada correctamente.");
+            setShowApptModal(false);
+        } catch (err) {
+            console.error("Error updating appointment:", err);
+            notify("error", "Error al actualizar la cita.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     // ─── DELETE HANDLER ───────────────────────────────────────────────
     const handleDelete = async () => {
         if (!deleteTarget) return;
         setIsSaving(true);
         try {
-            switch (deleteTarget.type) {
-                case "foods":
-                    await dbService.deleteFood(deleteTarget.id);
-                    setFoods(prev => prev.filter(f => f.id !== deleteTarget.id));
-                    break;
-                case "micronutrients":
-                    await dbService.deleteMicronutrient(deleteTarget.id);
-                    setMicros(prev => prev.filter(m => m.id !== deleteTarget.id));
-                    break;
-                case "courses":
-                    await dbService.deleteCourse(deleteTarget.id);
-                    setCourses(prev => prev.filter(c => c.id !== deleteTarget.id));
-                    break;
+            if (deleteTarget.type === "foods") {
+                await dbService.deleteFood(deleteTarget.id);
+                setFoods(foods.filter(f => f.id !== deleteTarget.id));
+            } else if (deleteTarget.type === "micronutrients") {
+                await dbService.deleteMicronutrient(deleteTarget.id);
+                setMicros(micros.filter(m => m.id !== deleteTarget.id));
+            } else if (deleteTarget.type === "courses") {
+                await dbService.deleteCourse(deleteTarget.id);
+                setCourses(courses.filter(c => c.id !== deleteTarget.id));
+            } else if (deleteTarget.type === "calendar") {
+                await dbService.deleteAppointment(deleteTarget.id);
+                setAppointments(appointments.filter(a => a.id !== deleteTarget.id));
             }
             notify("success", `"${deleteTarget.name}" eliminado`);
         } catch (err) {
@@ -356,6 +415,8 @@ export function AdminPanel({ user }: AdminPanelProps) {
         { id: "menu", icon: ClipboardCheck, label: "Menú Semanal", count: Object.keys(menuDays).length },
         { id: "courses", icon: BookOpen, label: "Cursos", count: courses.length },
         { id: "users", icon: Users, label: "Usuarios", count: users.length },
+        { id: "calendar", icon: Calendar, label: "Calendario", count: appointments.length },
+        { id: "reports", icon: FileText, label: "Reportes PDF", count: pdfReports.length },
         { id: "crm", icon: Settings, label: "CRM Automático", count: users.length },
     ];
 
@@ -435,11 +496,11 @@ export function AdminPanel({ user }: AdminPanelProps) {
                             case "users": alert("Para añadir usuarios, utiliza el flujo de registro o invitación."); break;
                         }
                     }}
-                    className={`flex items-center gap-3 px-6 py-3.5 rounded-xl text-sm font-bold transition-all shadow-lg ${section === "menu" || section === "crm" || section === "users"
+                    className={`flex items-center gap-3 px-6 py-3.5 rounded-xl text-sm font-bold transition-all shadow-lg ${section === "menu" || section === "crm" || section === "users" || section === "calendar" || section === "reports"
                         ? "bg-nutrity-primary/30 text-nutrity-primary/50 cursor-not-allowed"
                         : "bg-nutrity-accent text-white shadow-nutrity-accent/20 hover:scale-105 active:scale-95"
                         }`}
-                    disabled={section === "menu" || section === "crm" || section === "users"}
+                    disabled={section === "menu" || section === "crm" || section === "users" || section === "calendar" || section === "reports"}
                 >
                     <PlusCircle className="w-5 h-5" />
                     Nuevo {section === "foods" ? "Alimento" : section === "micronutrients" ? "Micronutriente" : section === "courses" ? "Curso" : ""}
@@ -718,8 +779,22 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                                 <td className="py-4 px-6">
                                                     <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button 
-                                                            onClick={() => alert(`Enviando alerta a ${u.name}...`)}
+                                                            onClick={() => { setEditingUser(u); setShowUserModal(true); }}
                                                             className="p-2 rounded-lg bg-nutrity-accent/10 text-nutrity-accent hover:bg-nutrity-accent hover:text-white transition-all"
+                                                            title="Editar Usuario"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => setDeleteTarget({ type: "users", id: u.id, name: u.name || u.email })}
+                                                            className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-600 hover:text-white transition-all"
+                                                            title="Borrar Usuario"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => alert(`Enviando alerta a ${u.name || u.email}...`)}
+                                                            className="p-2 rounded-lg bg-nutrity-primary/10 text-nutrity-primary hover:bg-nutrity-primary hover:text-white transition-all"
                                                             title="Enviar Alerta"
                                                         >
                                                             <Zap className="w-4 h-4" />
@@ -753,7 +828,6 @@ export function AdminPanel({ user }: AdminPanelProps) {
                             <div className="nutrity-card p-8 space-y-4">
                                 <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600">
                                     <Shield className="w-6 h-6" />
-                                00:00:00
                                 </div>
                                 <div>
                                     <h3 className="text-2xl font-bold">{users.filter(u => u.status === 'BLOCKED').length}</h3>
@@ -801,6 +875,121 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                     </div>
                                     <span className="px-3 py-1 bg-nutrity-accent text-white text-[9px] font-bold rounded-full uppercase tracking-widest">Activo</span>
                                 </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {section === "calendar" && (
+                    <motion.div key="calendar-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <div className="nutrity-card bg-white overflow-hidden shadow-xl shadow-slate-200/50">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">
+                                            <th className="py-4 px-6">Paciente</th>
+                                            <th className="py-4 px-6">Fecha</th>
+                                            <th className="py-4 px-6">Hora</th>
+                                            <th className="py-4 px-6">Motivo</th>
+                                            <th className="py-4 px-6">Estado</th>
+                                            <th className="py-4 px-6 text-right">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-nutrity-border">
+                                        {appointments.map((app) => (
+                                            <tr key={app.id} className="hover:bg-slate-50 transition-colors group">
+                                                <td className="py-4 px-6">
+                                                    <span className="font-bold text-sm block">{app.user?.name || "Usuario"}</span>
+                                                    <p className="text-[10px] text-nutrity-gray-text">{app.user?.email}</p>
+                                                </td>
+                                                <td className="py-4 px-6 text-sm font-medium">
+                                                    {new Date(app.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                </td>
+                                                <td className="py-4 px-6 text-sm font-bold text-nutrity-accent">
+                                                    {app.time}
+                                                </td>
+                                                <td className="py-4 px-6 text-xs text-nutrity-primary/80">
+                                                    {app.title || "Control de Rutina"}
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider ${
+                                                        new Date(app.date) < new Date() ? 'bg-slate-100 text-slate-500' : 'bg-emerald-50 text-emerald-600'
+                                                    }`}>
+                                                        {new Date(app.date) < new Date() ? 'Completada' : 'Pendiente'}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-6 text-right">
+                                                    <div className="flex justify-end gap-2">
+                                                        <button 
+                                                            onClick={() => { setEditingAppt(app); setShowApptModal(true); }} 
+                                                            className="p-2 text-nutrity-gray-text hover:text-nutrity-accent transition-colors"
+                                                            title="Editar Cita"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => setDeleteTarget({ type: "calendar", id: app.id, name: `Cita de ${app.user?.name || 'Paciente'}` })} 
+                                                            className="p-2 text-nutrity-gray-text hover:text-rose-500 transition-colors"
+                                                            title="Eliminar Cita"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {appointments.length === 0 && (
+                                            <tr><td colSpan={6} className="py-16 text-center text-nutrity-gray-text text-sm">No hay citas programadas</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {section === "reports" && (
+                    <motion.div key="reports-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <div className="nutrity-card bg-white overflow-hidden shadow-xl shadow-slate-200/50">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">
+                                            <th className="py-4 px-6">Usuario</th>
+                                            <th className="py-4 px-6">Estado</th>
+                                            <th className="py-4 px-6">Fecha y Hora</th>
+                                            <th className="py-4 px-6">Detalles</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-nutrity-border">
+                                        {pdfReports.map((log) => (
+                                            <tr key={log.id} className="hover:bg-slate-50 transition-colors group">
+                                                <td className="py-4 px-6">
+                                                    <span className="font-bold text-sm block">{log.user?.name || "Usuario"}</span>
+                                                    <p className="text-[10px] text-nutrity-gray-text">{log.user?.email}</p>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <span className={`px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border ${
+                                                        log.status === 'DOWNLOADED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                        log.status === 'ERROR' ? 'bg-red-50 text-red-600 border-red-100' :
+                                                        'bg-blue-50 text-blue-600 border-blue-100'
+                                                    }`}>
+                                                        {log.status}
+                                                    </span>
+                                                </td>
+                                                <td className="py-4 px-6 text-[11px] text-nutrity-gray-text">
+                                                    {new Date(log.timestamp).toLocaleString()}
+                                                </td>
+                                                <td className="py-4 px-6 text-xs text-nutrity-primary/60">
+                                                    {log.errorMessage || "Procesado correctamente"}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {pdfReports.length === 0 && (
+                                            <tr><td colSpan={4} className="py-16 text-center text-nutrity-gray-text text-sm">No hay registros de reportes</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </motion.div>
@@ -996,7 +1185,96 @@ export function AdminPanel({ user }: AdminPanelProps) {
                     </motion.div>
                 )}
 
-                {/* ─── Delete Confirmation ─── */}
+                {/* ─── User Modal ─── */}
+                {showUserModal && editingUser && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-nutrity-primary/60 backdrop-blur-md flex items-center justify-center p-4"
+                    >
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 relative"
+                        >
+                            <button onClick={() => setShowUserModal(false)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-nutrity-bg"><X className="w-5 h-5 text-nutrity-gray-text" /></button>
+                            <div className="mb-6">
+                                <h3 className="text-xl font-bold">Editar Usuario</h3>
+                                <p className="text-xs text-nutrity-gray-text font-medium">Gestión administrativa de perfil</p>
+                            </div>
+                            <form onSubmit={handleSaveUser} className="space-y-5">
+                                <FieldInput label="Nombre Completo" value={editingUser.name || ""} onChange={(v) => setEditingUser({ ...editingUser, name: v })} required />
+                                <FieldInput label="Email" value={editingUser.email || ""} onChange={(v) => setEditingUser({ ...editingUser, email: v })} required />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Rol</label>
+                                        <select 
+                                            className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10"
+                                            value={editingUser.role || "USER"}
+                                            onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                                        >
+                                            <option value="USER">Paciente (User)</option>
+                                            <option value="ADMIN">Administrador</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Plan</label>
+                                        <select 
+                                            className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10"
+                                            value={editingUser.plan || "FREE"}
+                                            onChange={(e) => setEditingUser({ ...editingUser, plan: e.target.value })}
+                                        >
+                                            <option value="FREE">FREEMIUM</option>
+                                            <option value="PREMIUM">PREMIUM</option>
+                                            <option value="ELITE">ELITE</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button disabled={isSaving} type="submit" className="w-full bg-nutrity-primary text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-nutrity-primary/20 hover:bg-nutrity-accent transition-all flex items-center justify-center gap-2">
+                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    Guardar Cambios
+                                </button>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* ─── Appointment Modal ─── */}
+                {showApptModal && editingAppt && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-nutrity-primary/60 backdrop-blur-md flex items-center justify-center p-4"
+                    >
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+                            className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 relative"
+                        >
+                            <button onClick={() => setShowApptModal(false)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-nutrity-bg"><X className="w-5 h-5 text-nutrity-gray-text" /></button>
+                            <div className="mb-6">
+                                <h3 className="text-xl font-bold">Editar Cita Médica</h3>
+                                <p className="text-xs text-nutrity-gray-text">Ajusta la programación del paciente</p>
+                            </div>
+                            <form onSubmit={handleSaveAppointment} className="space-y-5">
+                                <FieldInput label="Motivo de la Cita" value={editingAppt.title || ""} onChange={(v) => setEditingAppt({ ...editingAppt, title: v })} required />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FieldInput label="Fecha" type="date" value={editingAppt.date || ""} onChange={(v) => setEditingAppt({ ...editingAppt, date: v })} required />
+                                    <FieldInput label="Hora" type="time" value={editingAppt.time || ""} onChange={(v) => setEditingAppt({ ...editingAppt, time: v })} required />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Tipo de Cita</label>
+                                    <select 
+                                        className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10"
+                                        value={editingAppt.type || "Virtual"}
+                                        onChange={(e) => setEditingAppt({ ...editingAppt, type: e.target.value })}
+                                    >
+                                        <option value="Virtual">Virtual (IA Sync)</option>
+                                        <option value="Presencial">Presencial (Clínica)</option>
+                                    </select>
+                                </div>
+                                <button disabled={isSaving} type="submit" className="w-full bg-nutrity-primary text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-nutrity-primary/20 hover:bg-nutrity-accent transition-all flex items-center justify-center gap-2">
+                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    Guardar Cambios
+                                </button>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {/* ─── Delete Confirmation Modal ─── */}
                 {deleteTarget && (
                     <DeleteConfirmModal
                         itemName={deleteTarget.name}
