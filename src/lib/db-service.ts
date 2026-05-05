@@ -55,7 +55,33 @@ export interface Lesson {
     isFree: boolean
 }
 
+const ADMIN_EMAILS = [
+    'biovital.365@gmail.com',
+    'biovital.360@gmail.com',
+    'admin@nutrity.global',
+    'apexdigital70@gmail.com'
+];
+
 export const dbService = {
+    // Helper para obtener ID interno de Supabase desde Firebase UID o el propio ID interno
+    async getInternalId(idOrUid: string): Promise<string> {
+        // Si el ID es un UUID estándar de Supabase (36 caracteres incluyendo guiones) 
+        // o si no es un Firebase UID típico (Firebase UIDs suelen ser 28 caracteres alfanuméricos)
+        if (idOrUid.length === 36 && idOrUid.includes('-')) return idOrUid;
+        
+        // Buscar en la tabla User por firebaseUid
+        const { data, error } = await supabase
+            .from('User')
+            .select('id')
+            .eq('firebaseUid', idOrUid)
+            .maybeSingle();
+            
+        if (data) return data.id;
+        
+        // Si no se encuentra, devolvemos el original (podría ser un ID manual o nuevo)
+        return idOrUid;
+    },
+
     // Alimentos
     async getFoods(organizationId?: string) {
         let query = supabase.from('Food').select('*')
@@ -282,83 +308,91 @@ export const dbService = {
 
     async syncUserProfile(firebaseUser: any, name?: string) {
         try {
-            let profile = await this.getUserProfile(firebaseUser.uid)
+            const email = (firebaseUser.email || '').toLowerCase().trim();
+            const isAdminEmail = ADMIN_EMAILS.includes(email);
 
+            // 1. Intentar buscar por firebaseUid directamente
+            let { data: profile, error } = await supabase
+                .from('User')
+                .select('*, organization:Organization(*)')
+                .eq('firebaseUid', firebaseUser.uid)
+                .maybeSingle();
+
+            if (error) throw error;
+
+            // 2. Si no existe por UID, buscar por email (para usuarios migrados o nuevos registros)
             if (!profile) {
-                const { data: emailProfile } = await supabase
+                const { data: emailProfile, error: emailError } = await supabase
                     .from('User')
-                    .select()
-                    .eq('email', firebaseUser.email)
-                    .maybeSingle()
+                    .select('*, organization:Organization(*)')
+                    .eq('email', email)
+                    .maybeSingle();
+
+                if (emailError) throw emailError;
 
                 if (emailProfile) {
-                    const { data: updated } = await supabase
+                    // Vincular el firebaseUid al perfil existente
+                    const { data: updated, error: updateError } = await supabase
                         .from('User')
-                        .update({ firebaseUid: firebaseUser.uid })
+                        .update({ 
+                            firebaseUid: firebaseUser.uid,
+                            role: isAdminEmail ? 'ADMIN' : (emailProfile.role || 'USER'),
+                            plan: isAdminEmail ? 'ELITE' : (emailProfile.plan || 'FREE')
+                        })
                         .eq('id', emailProfile.id)
                         .select('*, organization:Organization(*)')
-                        .single()
-                    profile = updated
+                        .single();
+                    
+                    if (updateError) throw updateError;
+                    profile = updated;
                 } else {
-                    // Detectar SuperAdmins por email y asignarles el rol correcto
-                    const superAdminEmails = ['biovital.365@gmail.com', 'biovital.360@gmail.com', 'admin@nutrity.global'];
-                    const isAdmin = superAdminEmails.includes((firebaseUser.email || '').toLowerCase());
-
-                    const id = crypto.randomUUID(); // Generar UUID para el nuevo usuario
-                    const { data: created } = await supabase
+                    // 3. Crear nuevo perfil si no existe nada
+                    const id = crypto.randomUUID();
+                    const { data: created, error: createError } = await supabase
                         .from('User')
                         .insert({
                             id,
                             firebaseUid: firebaseUser.uid,
-                            email: firebaseUser.email,
-                            name: name || firebaseUser.displayName,
-                            role: isAdmin ? 'ADMIN' : 'USER',
-                            plan: isAdmin ? 'ELITE' : 'FREE',
+                            email: email,
+                            name: name || firebaseUser.displayName || 'Nuevo Usuario',
+                            role: isAdminEmail ? 'ADMIN' : 'USER',
+                            plan: isAdminEmail ? 'ELITE' : 'FREE',
+                            status: 'ACTIVE',
                             updatedAt: new Date().toISOString()
                         })
                         .select('*, organization:Organization(*)')
-                        .single()
-                    profile = created
+                        .single();
+                    
+                    if (createError) throw createError;
+                    profile = created;
                 }
+            } else if (isAdminEmail && profile.role !== 'ADMIN') {
+                // 4. Asegurar que SuperAdmins tengan el rol correcto si ya existen
+                const { data: upgraded, error: upgradeError } = await supabase
+                    .from('User')
+                    .update({ 
+                        role: 'ADMIN', 
+                        plan: 'ELITE', 
+                        updatedAt: new Date().toISOString() 
+                    })
+                    .eq('id', profile.id)
+                    .select('*, organization:Organization(*)')
+                    .single();
+                
+                if (upgradeError) throw upgradeError;
+                profile = upgraded;
             }
 
-            // Si el perfil ya existe pero el email es SuperAdmin y no tiene rol ADMIN,
-            // actualizarlo. Protege contra registros antiguos con rol incorrecto.
-            if (profile) {
-                const superAdminEmails = [
-                    'biovital.365@gmail.com', 
-                    'biovital.360@gmail.com', 
-                    'admin@nutrity.global',
-                    'apexdigital70@gmail.com'
-                ];
-                const isAdmin = superAdminEmails.includes((profile.email || '').toLowerCase());
-                if (isAdmin && profile.role !== 'ADMIN') {
-                    const { data: upgraded } = await supabase
-                        .from('User')
-                        .update({ role: 'ADMIN', plan: 'ELITE', updatedAt: new Date().toISOString() })
-                        .eq('id', profile.id)
-                        .select('*, organization:Organization(*)')
-                        .single()
-                    profile = upgraded
-                }
-            }
-
-            return profile
+            return profile;
         } catch (err) {
-            console.error('Sync profile error:', err)
-            return null
+            console.error('CRITICAL: syncUserProfile failed:', err);
+            return null;
         }
     },
 
     // Evaluaciones
     async saveEvaluation(userId: string, organizationId: string | undefined, data: any, results: any) {
-        // userId puede ser el ID interno de Supabase o el firebaseUid
-        // Buscamos el ID interno si es necesario para mantener la integridad referencial
-        let internalId = userId;
-        if (userId.length > 20) { // Probable firebaseUid
-            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
-            if (user) internalId = user.id;
-        }
+        const internalId = await this.getInternalId(userId);
 
         const id = crypto.randomUUID();
         const { data: saved, error } = await supabase
@@ -381,24 +415,13 @@ export const dbService = {
     },
 
     async getLatestEvaluation(userId: string, organizationId?: string) {
-        // Intentar buscar por ID exacto primero, luego por firebaseUid si no hay resultados
-        let { data, error } = await supabase.from('Evaluation').select('*').eq('userId', userId)
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase.from('Evaluation')
+            .select('*')
+            .eq('userId', internalId)
             .order('timestamp', { ascending: false })
             .limit(1)
-            .maybeSingle()
-        
-        if (!data && userId.length > 20) {
-            // Intentar buscar el ID interno via firebaseUid
-            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
-            if (user) {
-                const { data: dataByInternal, error: errorByInternal } = await supabase.from('Evaluation').select('*').eq('userId', user.id)
-                    .order('timestamp', { ascending: false })
-                    .limit(1)
-                    .maybeSingle()
-                data = dataByInternal;
-                error = errorByInternal;
-            }
-        }
+            .maybeSingle();
 
         if (error) throw error
         return data
@@ -406,11 +429,7 @@ export const dbService = {
 
     // Mediciones
     async getMeasurements(userId: string, organizationId?: string) {
-        let internalId = userId;
-        if (userId.length > 20) {
-            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
-            if (user) internalId = user.id;
-        }
+        const internalId = await this.getInternalId(userId);
 
         let query = supabase.from('Measurement').select('*').eq('userId', internalId)
         
@@ -425,11 +444,7 @@ export const dbService = {
     },
 
     async saveMeasurement(userId: string, organizationId: string | undefined, measurement: any) {
-        let internalId = userId;
-        if (userId.length > 20) {
-            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
-            if (user) internalId = user.id;
-        }
+        const internalId = await this.getInternalId(userId);
 
         const id = measurement.id && measurement.id.length > 20 ? measurement.id : crypto.randomUUID();
         const { data, error } = await supabase
@@ -540,11 +555,7 @@ export const dbService = {
 
     // Citas (Nuevo soporte multi-tenant en Supabase)
     async getAppointments(userId: string, organizationId?: string) {
-        let internalId = userId;
-        if (userId.length > 20) {
-            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
-            if (user) internalId = user.id;
-        }
+        const internalId = await this.getInternalId(userId);
 
         let query = supabase.from('Appointment').select('*').eq('userId', internalId)
         if (organizationId) {
@@ -556,11 +567,7 @@ export const dbService = {
     },
 
     async saveAppointment(userId: string, organizationId: string | undefined, appointment: any) {
-        let internalId = userId;
-        if (userId.length > 20) {
-            const { data: user } = await supabase.from('User').select('id').eq('firebaseUid', userId).maybeSingle();
-            if (user) internalId = user.id;
-        }
+        const internalId = await this.getInternalId(userId);
 
         const id = appointment.id && appointment.id.length > 20 ? appointment.id : crypto.randomUUID();
         const { data, error } = await supabase
