@@ -33,10 +33,21 @@ export default function App() {
         setShowAuthModal(false);
         
         // CARGA EN PARALELO (Velocidad crítica)
-        const [p, supabaseEval] = await Promise.all([
-          dbService.syncUserProfile(firebaseUser),
-          dbService.getLatestEvaluation(firebaseUser.uid)
-        ]);
+        let p = null;
+        let supabaseEval = null;
+
+        try {
+          const [profileData, evalData] = await Promise.all([
+            dbService.syncUserProfile(firebaseUser),
+            dbService.getLatestEvaluation(firebaseUser.uid)
+          ]);
+          p = profileData;
+          supabaseEval = evalData;
+        } catch (err) {
+          console.error("Critical: Initial sync failed:", err);
+          // Intentar al menos obtener perfil si el eval falla
+          p = await dbService.syncUserProfile(firebaseUser).catch(() => null);
+        }
         
         setProfile(p);
 
