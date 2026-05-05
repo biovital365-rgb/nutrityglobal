@@ -75,7 +75,12 @@ export const dbService = {
     },
 
     async saveFood(food: Partial<FoodItem>, organizationId?: string) {
-        // Omitir campos nulos para evitar errores si la columna no existe en el esquema actual
+        // Generar un ID determinista si no tiene uno, basado en el nombre para evitar duplicados en el seed
+        // Si el ID ya existe o es un UUID largo (como los de Supabase), lo mantenemos.
+        // Si no tiene ID, generamos uno basado en el nombre para que el upsert sea efectivo.
+        const nameKey = (food.name || '').toLowerCase().trim().replace(/\s+/g, '-');
+        const deterministicId = `food-${nameKey}`;
+
         const payload: any = {
             name: food.name || '',
             scientificName: food.scientificName || '',
@@ -85,7 +90,7 @@ export const dbService = {
             metabolicBenefits: food.metabolicBenefits || [],
             nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
             recipes: food.recipes || [],
-            id: food.id && food.id.length > 20 ? food.id : crypto.randomUUID(),
+            id: food.id || deterministicId,
         };
 
         const finalOrgId = food.organizationId || organizationId;
@@ -95,7 +100,7 @@ export const dbService = {
 
         const { data, error } = await supabase
             .from('Food')
-            .upsert(payload)
+            .upsert(payload, { onConflict: 'id' })
             .select()
             .single()
 
@@ -104,6 +109,31 @@ export const dbService = {
             throw error;
         }
         return data as FoodItem
+    },
+
+    // Función para limpiar duplicados (mantiene el más reciente)
+    async deduplicateFoods() {
+        const { data: allFoods } = await supabase.from('Food').select('id, name, organizationId, createdAt').order('createdAt', { ascending: false });
+        if (!allFoods) return { count: 0 };
+
+        const seen = new Set<string>();
+        const toDelete: string[] = [];
+
+        for (const food of allFoods) {
+            const key = `${food.name.toLowerCase().trim()}-${food.organizationId || 'global'}`;
+            if (seen.has(key)) {
+                toDelete.push(food.id);
+            } else {
+                seen.add(key);
+            }
+        }
+
+        if (toDelete.length > 0) {
+            const { error } = await supabase.from('Food').delete().in('id', toDelete);
+            if (error) console.error('Error deleting duplicate foods:', error);
+        }
+
+        return { count: toDelete.length };
     },
 
     async deleteFood(id: string) {
@@ -133,6 +163,9 @@ export const dbService = {
     },
 
     async saveMicronutrient(micro: Partial<Micronutrient>, organizationId?: string) {
+        const nameKey = (micro.name || '').toLowerCase().trim().replace(/\s+/g, '-');
+        const deterministicId = `micro-${nameKey}`;
+
         const payload: any = {
             name: micro.name || '',
             symbol: micro.symbol || '',
@@ -143,7 +176,7 @@ export const dbService = {
             deficiencySigns: micro.deficiencySigns || [],
             dailyDose: micro.dailyDose || '',
             image: micro.image || null,
-            id: micro.id && micro.id.length > 20 ? micro.id : crypto.randomUUID(),
+            id: micro.id || deterministicId,
         };
 
         const finalOrgId = micro.organizationId || organizationId;
@@ -153,7 +186,7 @@ export const dbService = {
 
         const { data, error } = await supabase
             .from('Micronutrient')
-            .upsert(payload)
+            .upsert(payload, { onConflict: 'id' })
             .select()
             .single()
 
@@ -162,6 +195,30 @@ export const dbService = {
             throw error;
         }
         return data as Micronutrient
+    },
+
+    async deduplicateMicronutrients() {
+        const { data: allMicros } = await supabase.from('Micronutrient').select('id, name, organizationId, createdAt').order('createdAt', { ascending: false });
+        if (!allMicros) return { count: 0 };
+
+        const seen = new Set<string>();
+        const toDelete: string[] = [];
+
+        for (const micro of allMicros) {
+            const key = `${micro.name.toLowerCase().trim()}-${micro.organizationId || 'global'}`;
+            if (seen.has(key)) {
+                toDelete.push(micro.id);
+            } else {
+                seen.add(key);
+            }
+        }
+
+        if (toDelete.length > 0) {
+            const { error } = await supabase.from('Micronutrient').delete().in('id', toDelete);
+            if (error) console.error('Error deleting duplicate micros:', error);
+        }
+
+        return { count: toDelete.length };
     },
 
     // Perfil de Usuario (SaaS)
