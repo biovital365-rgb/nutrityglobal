@@ -3,18 +3,16 @@
 ## Estado Actual (Mayo 2026)
 La plataforma **Nutrity Global** ha evolucionado hacia un enfoque de **Salud Integral (Holística)**. El motor metabólico ahora integra indicadores de estilo de vida (sueño, estrés, actividad), el Coach IA está sincronizado con el catálogo de Supabase y el diagnóstico se ha profundizado para servir como base de resultados bio-individualizados.
 
-### Logros Recientes (Sesión 04-05-2026) 🚀
-1.  **Gobernanza Administrativa Total**: Finalizado el `AdminPanel` con CRUD completo para Usuarios y Citas. Los administradores pueden editar perfiles, cambiar planes y eliminar registros con sincronización en Supabase.
-2.  **Resolución de Bucle de Onboarding**: Refactorizado `db-service.ts` para manejar el sistema dual de IDs (Firebase UID vs Supabase UUID). Esto permite que usuarios existentes (ej. `aliendredilan@gmail.com`) entren directamente al Dashboard sin repetir el diagnóstico.
-3.  **Estabilización de IA Advisor**: Migración del modelo a **`gemini-1.5-flash`** para garantizar respuestas rápidas y fiables, superando bloqueos de cuota o compatibilidad de versiones anteriores.
-4.  **CRM de Citas**: Implementada la gestión global de agenda. Los cambios en el panel administrativo se reflejan en tiempo real para los usuarios finales.
-5.  **Despliegue Continuo**: Pushed a `main` y redeploy en Vercel ejecutado con éxito.
+### Logros Recientes (Sesión 05-05-2026) 🚀
+1.  **Integridad de Datos**: Corregida duplicación (5x) mediante IDs deterministas y herramienta de deduplicación en el Panel Admin.
+2.  **Gobernanza Administrativa**: Dashboard robusto para gestión de usuarios, citas y catálogo sincronizado con Supabase.
+3.  **Salud Integral**: Rediseño del diagnóstico centrado en bio-individualidad (sueño, estrés, metabolismo).
 
 ### Decisiones Arquitectónicas
--   **Mapeo de IDs en DB Service**: El servicio de base de datos ahora resuelve automáticamente la correspondencia entre `firebaseUid` y el ID interno de Supabase para todas las operaciones de Evaluación, Citas y Mediciones.
--   **Supabase como Core**: Única fuente de verdad para perfiles y catálogo.
--   **Multi-tenancy Estricto**: Todas las operaciones administrativas requieren validación de `organizationId`.
--   **UUID v4**: Estándar obligatorio para todos los IDs de base de datos.
+-   **Idempotencia de Catálogo**: Uso de IDs deterministas en `dbService` para evitar duplicados en el seeding.
+-   **Mapeo de IDs Dual**: Resolución automática entre Firebase UID y Supabase UUID.
+-   **Multi-tenancy SaaS**: Filtrado estricto por `organizationId` para aislamiento de datos de salud.
+-   **Supabase como Core**: Única fuente de verdad para perfiles y catálogo holístico.
 
 ### 🛠️ Configuración Técnica Actual
 - **Base de Datos**: Supabase (PostgreSQL).
