@@ -31,22 +31,21 @@ export default function App() {
       setUser(firebaseUser);
       if (firebaseUser) {
         setShowAuthModal(false);
-        // Sync & Load Supabase Profile
-        const p = await dbService.syncUserProfile(firebaseUser);
+        
+        // CARGA EN PARALELO (Velocidad crítica)
+        const [p, supabaseEval] = await Promise.all([
+          dbService.syncUserProfile(firebaseUser),
+          dbService.getLatestEvaluation(firebaseUser.uid)
+        ]);
+        
         setProfile(p);
 
-        // 1. Prioridad: Supabase (Nueva Fuente de Verdad)
-        try {
-          const supabaseEval = await dbService.getLatestEvaluation(firebaseUser.uid, p?.organizationId);
-          if (supabaseEval?.results) {
-            console.log("Loading latest evaluation from Supabase...");
-            setResults(supabaseEval.results);
-            setView("dashboard");
-            setIsRestoringSession(false);
-            return;
-          }
-        } catch (supaErr) {
-          console.error("Supabase load error:", supaErr);
+        // 1. Prioridad: Supabase
+        if (supabaseEval?.results) {
+          setResults(supabaseEval.results);
+          setView("dashboard");
+          setIsRestoringSession(false);
+          return;
         }
 
         // 2. Fallback: Firestore (Legacy)
@@ -71,12 +70,9 @@ export default function App() {
         }
 
         // 3. Manejo de Admins sin evaluación
-        const isAdmin = p?.role === 'ADMIN';
-        if (isAdmin) {
+        if (p?.role === 'ADMIN') {
           setResults({ 
-            name: p?.name || "Admin", 
-            condition: "prevention", 
-            phase: "Activación",
+            name: p?.name || "Admin", condition: "prevention", phase: "Activación",
             pillars: [
               { title: "Metabolismo", desc: "Optimización de la flexibilidad metabólica." }, 
               { title: "Nutrición", desc: "Protocolo basado en superalimentos andinos." }, 
@@ -84,15 +80,12 @@ export default function App() {
               { title: "Movimiento", desc: "Entrenamiento de fuerza y zona 2." }
             ],
             holisticStats: [
-              { label: "Vitalidad", value: 85 },
-              { label: "Metabolismo", value: 78 },
-              { label: "Regeneración", value: 92 },
-              { label: "Equilibrio", value: 88 }
+              { label: "Vitalidad", value: 85 }, { label: "Metabolismo", value: 78 },
+              { label: "Regeneración", value: 92 }, { label: "Equilibrio", value: 88 }
             ]
           });
           setView("dashboard");
         } else {
-          // Usuario nuevo regular sin evaluación → onboarding
           setView("onboarding");
         }
       } else {
