@@ -101,9 +101,7 @@ export const dbService = {
     },
 
     async saveFood(food: Partial<FoodItem>, organizationId?: string) {
-        // Generar un ID determinista si no tiene uno, basado en el nombre para evitar duplicados en el seed
-        // Si el ID ya existe o es un UUID largo (como los de Supabase), lo mantenemos.
-        // Si no tiene ID, generamos uno basado en el nombre para que el upsert sea efectivo.
+        // Enforzamos ID determinista para evitar duplicados por nombre
         const nameKey = (food.name || '').toLowerCase().trim().replace(/\s+/g, '-');
         const deterministicId = `food-${nameKey}`;
 
@@ -116,7 +114,7 @@ export const dbService = {
             metabolicBenefits: food.metabolicBenefits || [],
             nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
             recipes: food.recipes || [],
-            id: food.id || deterministicId,
+            id: deterministicId, // Siempre usamos el ID derivado del nombre para UPSERT real
         };
 
         const finalOrgId = food.organizationId || organizationId;
@@ -146,7 +144,12 @@ export const dbService = {
         const toDelete: string[] = [];
 
         for (const food of allFoods) {
+            // Normalizar clave: nombre + org (o global)
             const key = `${food.name.toLowerCase().trim()}-${food.organizationId || 'global'}`;
+            
+            // Si ya vimos este alimento en esta organización, o si el ID no es el determinista
+            // y ya tenemos uno con el nombre (aunque sea más antiguo), lo marcamos para borrar.
+            // NOTA: Al estar ordenado por createdAt DESC, el primero que vemos es el más nuevo.
             if (seen.has(key)) {
                 toDelete.push(food.id);
             } else {
@@ -178,7 +181,6 @@ export const dbService = {
         if (organizationId) {
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
         }
-        // Sin filtro: devuelve todos los micronutrientes disponibles
 
         const { data, error } = await query.order('name', { ascending: true })
         if (error) {
@@ -202,7 +204,7 @@ export const dbService = {
             deficiencySigns: micro.deficiencySigns || [],
             dailyDose: micro.dailyDose || '',
             image: micro.image || null,
-            id: micro.id || deterministicId,
+            id: deterministicId, // Siempre usamos el ID derivado del nombre
         };
 
         const finalOrgId = micro.organizationId || organizationId;
@@ -221,6 +223,15 @@ export const dbService = {
             throw error;
         }
         return data as Micronutrient
+    },
+
+    async deleteMicronutrient(id: string) {
+        const { error } = await supabase
+            .from('Micronutrient')
+            .delete()
+            .eq('id', id)
+        if (error) throw error
+        return true
     },
 
     async deduplicateMicronutrients() {
