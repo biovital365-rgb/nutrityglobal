@@ -167,7 +167,7 @@ export const dbService = {
 
     // Función para limpiar duplicados (mantiene el más reciente)
     async deduplicateFoods() {
-        const { data: allFoods } = await supabase.from('Food').select('id, name, organizationId, createdAt').order('createdAt', { ascending: false });
+        const { data: allFoods } = await supabase.from('Food').select('id, name, organizationId, created_at').order('created_at', { ascending: false });
         if (!allFoods) return { count: 0 };
 
         const seen = new Set<string>();
@@ -293,7 +293,7 @@ export const dbService = {
     },
 
     async deduplicateMicronutrients() {
-        const { data: allMicros } = await supabase.from('Micronutrient').select('id, name, organizationId, createdAt').order('createdAt', { ascending: false });
+        const { data: allMicros } = await supabase.from('Micronutrient').select('id, name, organizationId, created_at').order('created_at', { ascending: false });
         if (!allMicros) return { count: 0 };
 
         const seen = new Set<string>();
@@ -488,7 +488,7 @@ export const dbService = {
         const { data, error } = await supabase.from('Evaluation')
             .select('*')
             .eq('userId', internalId)
-            .order('timestamp', { ascending: false })
+            .order('created_at', { ascending: false })
             .limit(1)
             .maybeSingle();
 
@@ -506,7 +506,7 @@ export const dbService = {
             query = query.eq('organizationId', organizationId)
         }
 
-        const { data, error } = await query.order('timestamp', { ascending: false })
+        const { data, error } = await query.order('created_at', { ascending: false })
 
         if (error) throw error
         return data
@@ -543,7 +543,7 @@ export const dbService = {
         }
         // Sin filtro: devuelve todos los cursos disponibles
 
-        const { data, error } = await query.order('createdAt', { ascending: false })
+        const { data, error } = await query.order('created_at', { ascending: false })
 
         if (error) {
             console.error('getCourses error:', error)
@@ -710,7 +710,7 @@ export const dbService = {
         if (organizationId) {
             query = query.eq('organizationId', organizationId)
         }
-        const { data, error } = await query.order('timestamp', { ascending: false })
+        const { data, error } = await query.order('created_at', { ascending: false })
         if (error) throw error
         return data
     }
