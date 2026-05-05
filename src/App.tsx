@@ -35,85 +35,65 @@ export default function App() {
         const p = await dbService.syncUserProfile(firebaseUser);
         setProfile(p);
 
-        // Buscar evaluación anterior en Firestore
+        // 1. Prioridad: Supabase (Nueva Fuente de Verdad)
         try {
-          const superAdminEmails = ['biovital.365@gmail.com', 'biovital.360@gmail.com', 'admin@nutrity.global', 'apexdigital70@gmail.com'];
-          const isSuperAdmin = superAdminEmails.includes((firebaseUser.email || '').toLowerCase()) || p?.role === 'ADMIN';
+          const supabaseEval = await dbService.getLatestEvaluation(firebaseUser.uid, p?.organizationId);
+          if (supabaseEval?.results) {
+            console.log("Loading latest evaluation from Supabase...");
+            setResults(supabaseEval.results);
+            setView("dashboard");
+            setIsRestoringSession(false);
+            return;
+          }
+        } catch (supaErr) {
+          console.error("Supabase load error:", supaErr);
+        }
 
-          const constraints = [where("userId", "==", firebaseUser.uid)];
-          // Intentar cargar con filtro de organización primero
-          let q = query(
+        // 2. Fallback: Firestore (Legacy)
+        try {
+          const q = query(
             collection(db, "evaluations"),
-            ...constraints,
+            where("userId", "==", firebaseUser.uid),
             orderBy("timestamp", "desc"),
             limit(1)
           );
+          const querySnapshot = await getDocs(q);
           
-          let querySnapshot = await getDocs(q);
-          
-          if (querySnapshot.empty && p?.organizationId) {
-              // Si no hay resultados con userId solo, probar con organizationId (algunos registros antiguos)
-              const qOrg = query(
-                  collection(db, "evaluations"),
-                  where("organizationId", "==", p.organizationId),
-                  orderBy("timestamp", "desc"),
-                  limit(1)
-              );
-              querySnapshot = await getDocs(qOrg);
-          }
-
-          // Fallback a Supabase si no hay nada en Firestore
-          if (querySnapshot.empty) {
-            try {
-              const supabaseEval = await dbService.getLatestEvaluation(firebaseUser.uid, p?.organizationId);
-              if (supabaseEval) {
-                setResults(supabaseEval.results);
-                setView("dashboard");
-                setIsRestoringSession(false);
-                return;
-              }
-            } catch (supaErr) {
-              console.error("Supabase evaluation fallback error:", supaErr);
-            }
-          }
-
           if (!querySnapshot.empty) {
-            // Usuario tiene evaluación previa → ir al dashboard directamente
             const latestData = querySnapshot.docs[0].data();
             setResults(latestData.results);
             setView("dashboard");
-          } else if (isSuperAdmin) {
-            // Es ADMIN pero no tiene evaluación → Ir a dashboard (con objeto estructurado)
-            setResults({ 
-                name: p?.name || "Admin", 
-                condition: "prevention", 
-                phase: "Activación",
-                pillars: [
-                    { title: "Metabolismo", desc: "Optimización de la flexibilidad metabólica y sensibilidad a la insulina." }, 
-                    { title: "Nutrición", desc: "Protocolo basado en superalimentos andinos y control de carga glucémica." }, 
-                    { title: "Descanso", desc: "Higiene del sueño para regular el cortisol y la hormona del crecimiento." }, 
-                    { title: "Movimiento", desc: "Entrenamiento de fuerza y zona 2 para mejorar el transporte de glucosa." }
-                ],
-                holisticStats: [
-                    { label: "Vitalidad", value: 85 },
-                    { label: "Metabolismo", value: 78 },
-                    { label: "Regeneración", value: 92 },
-                    { label: "Equilibrio", value: 88 }
-                ]
-            });
-            setView("dashboard");
-          } else {
-            // Usuario nuevo regular sin evaluación → ir al onboarding
-            setView("onboarding");
+            setIsRestoringSession(false);
+            return;
           }
-        } catch (err) {
-          console.error("Error loading previous results:", err);
-          // Si falla la query (ej. por índices), pero es admin, dejar pasar
-          if (p?.role === 'ADMIN' || firebaseUser.email === 'biovital.365@gmail.com') {
-              setView("dashboard");
-          } else {
-              setView("onboarding");
-          }
+        } catch (fireErr) {
+          console.error("Firestore fallback error:", fireErr);
+        }
+
+        // 3. Manejo de Admins sin evaluación
+        const isAdmin = p?.role === 'ADMIN';
+        if (isAdmin) {
+          setResults({ 
+            name: p?.name || "Admin", 
+            condition: "prevention", 
+            phase: "Activación",
+            pillars: [
+              { title: "Metabolismo", desc: "Optimización de la flexibilidad metabólica." }, 
+              { title: "Nutrición", desc: "Protocolo basado en superalimentos andinos." }, 
+              { title: "Descanso", desc: "Higiene del sueño para regular el cortisol." }, 
+              { title: "Movimiento", desc: "Entrenamiento de fuerza y zona 2." }
+            ],
+            holisticStats: [
+              { label: "Vitalidad", value: 85 },
+              { label: "Metabolismo", value: 78 },
+              { label: "Regeneración", value: 92 },
+              { label: "Equilibrio", value: 88 }
+            ]
+          });
+          setView("dashboard");
+        } else {
+          // Usuario nuevo regular sin evaluación → onboarding
+          setView("onboarding");
         }
       } else {
         setProfile(null);
@@ -160,18 +140,8 @@ export default function App() {
         setView("dashboard"); // Cambio de vista instantáneo
       }
 
-      // 2. Guardar en background (sin bloquear al usuario)
+      // 2. Guardar únicamente en Supabase (Definitivo)
       if (user) {
-        // Guardar en Firestore (Compatibilidad)
-        addDoc(collection(db, "evaluations"), {
-          userId: user.uid,
-          organizationId: profile?.organizationId || null,
-          ...data,
-          results: processedResults,
-          timestamp: serverTimestamp()
-        }).catch(err => console.error("Firestore save failed:", err));
-
-        // Guardar en Supabase (Nueva Fuente de Verdad)
         dbService.saveEvaluation(
           user.uid, 
           profile?.organizationId, 
@@ -198,36 +168,8 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    const loadLastEvaluation = async () => {
-      if (!user?.uid || results) return;
-      try {
-        const constraints = [where("userId", "==", user.uid)];
-        if (profile?.organizationId) {
-            constraints.push(where("organizationId", "==", profile.organizationId));
-        }
-
-        const q = query(
-          collection(db, "evaluations"),
-          ...constraints,
-          orderBy("timestamp", "desc"),
-          limit(1)
-        );
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          const evalData = snapshot.docs[0].data();
-          if (evalData.results) {
-            console.log("Loading previous evaluation results...", evalData.results);
-            setResults(evalData.results);
-            setView("dashboard");
-          }
-        }
-      } catch (err) {
-        console.error("Error loading previous evaluation:", err);
-      }
-    };
-    loadLastEvaluation();
-  }, [user?.uid]);
+  // Nota: La carga de evaluación se maneja ahora centralmente en onAuthStateChanged
+  // para evitar múltiples fuentes de verdad y race conditions.
 
   const handleGeneratePDF = async () => {
     if (!results || isGeneratingPDF) return;

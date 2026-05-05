@@ -43,17 +43,13 @@ export function Auth({ onAuthSuccess, onBack }: AuthProps) {
         try {
             if (isLogin) {
                 const credential = await signInWithEmailAndPassword(auth, email, password);
-                // Sincronizar con Supabase
-                const profile = await dbService.syncUserProfile(credential.user);
-                onAuthSuccess({ ...credential.user, profile });
+                onAuthSuccess(credential.user);
             } else {
                 const credential = await createUserWithEmailAndPassword(auth, email, password);
                 if (name) {
                     await updateProfile(credential.user, { displayName: name });
                 }
-                // Sincronizar con Supabase
-                const profile = await dbService.syncUserProfile(credential.user, name);
-                onAuthSuccess({ ...credential.user, profile });
+                onAuthSuccess(credential.user);
             }
         } catch (err: any) {
             console.error(err);
