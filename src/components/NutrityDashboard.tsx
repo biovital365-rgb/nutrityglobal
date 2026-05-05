@@ -905,27 +905,27 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <div key={m.id} className="nutrity-card p-8 group hover:border-nutrity-accent transition-all relative overflow-hidden">
                                             <div className="relative z-10 flex items-center justify-between mb-4">
                                                 <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-transform group-hover:scale-110 ${
-                                                    stat.label === 'Vitalidad' ? 'bg-amber-50 text-amber-500' :
-                                                    stat.label === 'Metabolismo' ? 'bg-nutrity-accent/10 text-nutrity-accent' :
-                                                    stat.label === 'Regeneración' ? 'bg-indigo-50 text-indigo-500' :
+                                                    m.label === 'Vitalidad' ? 'bg-amber-50 text-amber-500' :
+                                                    m.label === 'Metabolismo' ? 'bg-nutrity-accent/10 text-nutrity-accent' :
+                                                    m.label === 'Regeneración' ? 'bg-indigo-50 text-indigo-500' :
                                                     'bg-blue-50 text-blue-500'
                                                 }`}>
-                                                    {stat.label === 'Vitalidad' ? <Zap className="w-6 h-6" /> :
-                                                     stat.label === 'Metabolismo' ? <Droplets className="w-6 h-6" /> :
-                                                     stat.label === 'Regeneración' ? <Clock className="w-6 h-6" /> :
+                                                    {m.label === 'Vitalidad' ? <Zap className="w-6 h-6" /> :
+                                                     m.label === 'Metabolismo' ? <Droplets className="w-6 h-6" /> :
+                                                     m.label === 'Regeneración' ? <Clock className="w-6 h-6" /> :
                                                      <Brain className="w-6 h-6" />}
                                                 </div>
-                                                <h4 className="text-2xl font-black text-nutrity-primary">{stat.value}%</h4>
-                                                <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mt-1">{stat.label}</p>
+                                                <h4 className="text-2xl font-black text-nutrity-primary">{m.value}%</h4>
+                                                <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mt-1">{m.label}</p>
                                                 <div className="w-full h-1 bg-nutrity-bg rounded-full mt-4 overflow-hidden">
                                                     <motion.div 
                                                         initial={{ width: 0 }}
-                                                        animate={{ width: `${stat.value}%` }}
+                                                        animate={{ width: `${m.value}%` }}
                                                         transition={{ duration: 1.5, delay: i * 0.1 }}
                                                         className={`h-full ${
-                                                            stat.label === 'Vitalidad' ? 'bg-amber-500' :
-                                                            stat.label === 'Metabolismo' ? 'bg-nutrity-accent' :
-                                                            stat.label === 'Regeneración' ? 'bg-indigo-500' :
+                                                            m.label === 'Vitalidad' ? 'bg-amber-500' :
+                                                            m.label === 'Metabolismo' ? 'bg-nutrity-accent' :
+                                                            m.label === 'Regeneración' ? 'bg-indigo-500' :
                                                             'bg-blue-500'
                                                         }`}
                                                     />
