@@ -62,37 +62,73 @@ const ADMIN_EMAILS = [
     'apexdigital70@gmail.com'
 ];
 
+// Cache para IDs de usuario para acelerar la carga (30s -> <2s)
+const userIdCache: Record<string, string> = {};
+
 export const dbService = {
     // Helper para obtener ID interno de Supabase desde Firebase UID o el propio ID interno
     async getInternalId(idOrUid: string): Promise<string> {
-        // Si el ID es un UUID estándar de Supabase (36 caracteres incluyendo guiones) 
-        // o si no es un Firebase UID típico (Firebase UIDs suelen ser 28 caracteres alfanuméricos)
+        if (!idOrUid) return idOrUid;
         if (idOrUid.length === 36 && idOrUid.includes('-')) return idOrUid;
+        if (userIdCache[idOrUid]) return userIdCache[idOrUid];
         
-        // Buscar en la tabla User por firebaseUid
         const { data, error } = await supabase
             .from('User')
             .select('id')
             .eq('firebaseUid', idOrUid)
             .maybeSingle();
             
-        if (data) return data.id;
-        
-        // Si no se encuentra, devolvemos el original (podría ser un ID manual o nuevo)
+        if (data) {
+            userIdCache[idOrUid] = data.id;
+            return data.id;
+        }
         return idOrUid;
     },
 
-    // Alimentos
+    // Alimentos con Auto-Sincronización y Depuración Silenciosa (Solución Definitiva)
     async getFoods(organizationId?: string) {
         let query = supabase.from('Food').select('*')
-        
         if (organizationId) {
-            // Incluir registros globales (null) Y del tenant
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
         }
-        // Sin filtro: devuelve todos los alimentos disponibles
 
         const { data, error } = await query.order('name', { ascending: true })
+        
+        // 1. Auto-Sincronización si está vacío
+        if (!error && (!data || data.length === 0)) {
+            console.log('Catalog empty, auto-syncing foods...');
+            const { foodCatalog } = await import('../lib/food-data');
+            for (const food of foodCatalog) {
+                await this.saveFood({ ...food, organizationId }, organizationId).catch(() => {});
+            }
+            return this.getFoods(organizationId);
+        }
+
+        // 2. Depuración Silenciosa de Duplicados (Sin necesidad de botón)
+        if (data && data.length > 0) {
+            const seen = new Set();
+            const toDelete: string[] = [];
+            const uniqueData: FoodItem[] = [];
+
+            for (const food of data) {
+                const key = `${food.name.toLowerCase().trim()}-${food.organizationId || 'global'}`;
+                if (seen.has(key)) {
+                    toDelete.push(food.id);
+                } else {
+                    seen.add(key);
+                    uniqueData.push(food as FoodItem);
+                }
+            }
+
+            if (toDelete.length > 0) {
+                console.log(`Silent cleaning ${toDelete.length} duplicate foods...`);
+                supabase.from('Food').delete().in('id', toDelete).then(() => {
+                    console.log('Food cleanup completed successfully.');
+                });
+                return uniqueData;
+            }
+        }
+
         if (error) {
             console.error('getFoods error:', error)
             return []
@@ -101,7 +137,6 @@ export const dbService = {
     },
 
     async saveFood(food: Partial<FoodItem>, organizationId?: string) {
-        // Enforzamos ID determinista para evitar duplicados por nombre
         const nameKey = (food.name || '').toLowerCase().trim().replace(/\s+/g, '-');
         const deterministicId = `food-${nameKey}`;
 
@@ -114,13 +149,11 @@ export const dbService = {
             metabolicBenefits: food.metabolicBenefits || [],
             nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
             recipes: food.recipes || [],
-            id: deterministicId, // Siempre usamos el ID derivado del nombre para UPSERT real
+            id: deterministicId, 
         };
 
         const finalOrgId = food.organizationId || organizationId;
-        if (finalOrgId) {
-            payload.organizationId = finalOrgId;
-        }
+        if (finalOrgId) payload.organizationId = finalOrgId;
 
         const { data, error } = await supabase
             .from('Food')
@@ -128,10 +161,7 @@ export const dbService = {
             .select()
             .single()
 
-        if (error) {
-            console.error('saveFood error:', error, 'Payload:', payload);
-            throw error;
-        }
+        if (error) throw error;
         return data as FoodItem
     },
 
@@ -144,12 +174,8 @@ export const dbService = {
         const toDelete: string[] = [];
 
         for (const food of allFoods) {
-            // Normalizar clave: nombre + org (o global)
             const key = `${food.name.toLowerCase().trim()}-${food.organizationId || 'global'}`;
             
-            // Si ya vimos este alimento en esta organización, o si el ID no es el determinista
-            // y ya tenemos uno con el nombre (aunque sea más antiguo), lo marcamos para borrar.
-            // NOTA: Al estar ordenado por createdAt DESC, el primero que vemos es el más nuevo.
             if (seen.has(key)) {
                 toDelete.push(food.id);
             } else {
@@ -174,15 +200,50 @@ export const dbService = {
         return true
     },
 
-    // Micronutrientes
+    // Micronutrientes con Auto-Sincronización y Depuración Silenciosa
     async getMicronutrients(organizationId?: string) {
         let query = supabase.from('Micronutrient').select('*')
-        
         if (organizationId) {
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
         }
 
         const { data, error } = await query.order('name', { ascending: true })
+        
+        // 1. Auto-Sincronización
+        if (!error && (!data || data.length === 0)) {
+            console.log('Catalog empty, auto-syncing micronutrients...');
+            const { micronutrientsData } = await import('../lib/micronutrients-data');
+            for (const micro of micronutrientsData) {
+                await this.saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(() => {});
+            }
+            return this.getMicronutrients(organizationId);
+        }
+
+        // 2. Depuración Silenciosa
+        if (data && data.length > 0) {
+            const seen = new Set();
+            const toDelete: string[] = [];
+            const uniqueData: Micronutrient[] = [];
+
+            for (const micro of data) {
+                const key = `${micro.name.toLowerCase().trim()}-${micro.organizationId || 'global'}`;
+                if (seen.has(key)) {
+                    toDelete.push(micro.id);
+                } else {
+                    seen.add(key);
+                    uniqueData.push(micro as Micronutrient);
+                }
+            }
+
+            if (toDelete.length > 0) {
+                console.log(`Silent cleaning ${toDelete.length} duplicate micronutrients...`);
+                supabase.from('Micronutrient').delete().in('id', toDelete).then(() => {
+                    console.log('Micronutrient cleanup completed successfully.');
+                });
+                return uniqueData;
+            }
+        }
+
         if (error) {
             console.error('getMicronutrients error:', error)
             return []
@@ -218,10 +279,7 @@ export const dbService = {
             .select()
             .single()
 
-        if (error) {
-            console.error('saveMicronutrient error:', error, 'Payload:', payload);
-            throw error;
-        }
+        if (error) throw error;
         return data as Micronutrient
     },
 

@@ -213,64 +213,6 @@ export function AdminPanel({ user }: AdminPanelProps) {
         loadAll();
     }, [notify, user?.profile?.organizationId]);
 
-    // ─── Seed Database con datos locales ──────────────────────────────
-    const handleSeedDatabase = async () => {
-        if (!confirm(`¿Sembrar ${foodCatalog.length} alimentos y ${micronutrientsData.length} micronutrientes en Supabase? El sistema usará IDs deterministas para evitar duplicados.`)) return;
-        setIsSaving(true);
-        try {
-            const orgId = user?.profile?.organizationId;
-            // Insertar alimentos secuencialmente (ya que saveFood maneja el upsert)
-            for (const food of foodCatalog) {
-                await dbService.saveFood({ ...food, organizationId: orgId }, orgId).catch(err => console.error(`Error seeding food ${food.name}:`, err));
-            }
-            // Insertar micronutrientes
-            for (const micro of micronutrientsData) {
-                await dbService.saveMicronutrient({ ...(micro as any), organizationId: orgId }, orgId).catch(err => console.error(`Error seeding micro ${micro.name}:`, err));
-            }
-            
-            // Forzar limpieza de duplicados antiguos (por si acaso)
-            await dbService.deduplicateFoods();
-            await dbService.deduplicateMicronutrients();
-
-            // Recargar datos
-            const [foodData, microData] = await Promise.all([
-                dbService.getFoods(orgId),
-                dbService.getMicronutrients(orgId),
-            ]);
-            setFoods(foodData);
-            setMicros(microData);
-            notify("success", `✅ Catálogo sincronizado: ${foodData.length} alimentos y ${microData.length} micronutrientes`);
-        } catch (err) {
-            console.error("Seed error:", err);
-            notify("error", "Error al sembrar datos");
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleCleanupDuplicates = async () => {
-        setIsSaving(true);
-        try {
-            const orgId = user?.profile?.organizationId;
-            const resFood = await dbService.deduplicateFoods();
-            const resMicro = await dbService.deduplicateMicronutrients();
-            
-            // Recargar
-            const [foodData, microData] = await Promise.all([
-                dbService.getFoods(orgId),
-                dbService.getMicronutrients(orgId),
-            ]);
-            setFoods(foodData);
-            setMicros(microData);
-            
-            notify("success", `🧹 Limpieza completada: ${resFood.count} alimentos y ${resMicro.count} micronutrientes duplicados eliminados.`);
-        } catch (err) {
-            console.error("Cleanup error:", err);
-            notify("error", "Error durante la limpieza");
-        } finally {
-            setIsSaving(false);
-        }
-    };
 
     // ─── FOOD CRUD ────────────────────────────────────────────────────
     const handleSaveFood = async (e: React.FormEvent) => {
@@ -467,28 +409,6 @@ export function AdminPanel({ user }: AdminPanelProps) {
                     <p className="text-nutrity-gray-text text-sm">Gestión completa del catálogo y contenido de {user?.profile?.organization?.name || "Nutrity Global"}.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* Botones de mantenimiento de base de datos */}
-                    <div className="flex gap-2 mr-2">
-                        <button
-                            onClick={handleCleanupDuplicates}
-                            disabled={isSaving}
-                            title="Eliminar registros duplicados por nombre"
-                            className="bg-nutrity-bg border border-nutrity-border hover:border-red-200 hover:text-red-500 text-nutrity-gray-text p-2 rounded-xl transition-all disabled:opacity-50"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                        
-                        {(foods.length === 0 || micros.length === 0) && (
-                            <button
-                                onClick={handleSeedDatabase}
-                                disabled={isSaving}
-                                className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 transition-all disabled:opacity-50"
-                            >
-                                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                                Sembrar Catálogo
-                            </button>
-                        )}
-                    </div>
 
                     <div className="bg-nutrity-accent/10 px-4 py-2 rounded-xl flex items-center gap-3 border border-nutrity-accent/20">
                         <Shield className="w-5 h-5 text-nutrity-accent" />
