@@ -430,14 +430,15 @@ export const dbService = {
                 } else {
                     const { data: created, error: createError } = await supabase
                         .from('User')
-                        .upsert({
+                        .insert({
+                            id: crypto.randomUUID(),
                             firebaseUid: firebaseUser.uid,
                             email: email,
                             name: name || firebaseUser.displayName || 'Nuevo Usuario',
                             role: isAdminEmail ? 'ADMIN' : 'USER',
                             plan: isAdminEmail ? 'ELITE' : 'FREE',
                             status: 'ACTIVE'
-                        }, { onConflict: 'email' })
+                        })
                         .select('*, organization:Organization(*)')
                         .single();
                     
@@ -471,14 +472,24 @@ export const dbService = {
     async saveEvaluation(userId: string, organizationId: string | undefined, data: any, results: any) {
         const internalId = await this.getInternalId(userId);
 
+        // Buscar si ya existe una evaluación para no duplicarla o perder el id original
+        const { data: existingEval } = await supabase
+            .from('Evaluation')
+            .select('id')
+            .eq('userId', internalId)
+            .maybeSingle();
+
+        const evalId = existingEval?.id || crypto.randomUUID();
+
         const { data: saved, error } = await supabase
             .from('Evaluation')
             .upsert({
+                id: evalId,
                 userId: internalId,
                 organizationId: organizationId || null,
                 data,
                 results
-            }, { onConflict: 'userId' })
+            }, { onConflict: 'id' }) // Usamos 'id' porque 'userId' podría no ser único a nivel DB
             .select()
             .single()
 
@@ -600,14 +611,24 @@ export const dbService = {
     },
 
     async toggleLessonProgress(userId: string, lessonId: string, completed: boolean) {
+        const { data: existing } = await supabase
+            .from('LessonProgress')
+            .select('id')
+            .eq('userId', userId)
+            .eq('lessonId', lessonId)
+            .maybeSingle();
+
+        const progressId = existing?.id || crypto.randomUUID();
+
         const { error } = await supabase
             .from('LessonProgress')
             .upsert({
+                id: progressId,
                 userId,
                 lessonId,
                 completed,
                 updatedAt: new Date().toISOString()
-            }, { onConflict: 'userId,lessonId' })
+            }, { onConflict: 'id' })
 
         if (error) throw error
         return true

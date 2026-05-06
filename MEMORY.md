@@ -16,6 +16,7 @@
 4.  **Limpieza de Ruido Firestore**: Identificación de los logs de "Database (default) not found" como ruido heredado; el sistema ya opera satisfactoriamente sobre Supabase.
 
 ### Decisiones Arquitectónicas
+-   **Generación de IDs en Cliente**: Debido a la ausencia de generación de UUIDs por defecto a nivel de base de datos (`gen_random_uuid()`) en algunas tablas como `User`, `Evaluation` y `LessonProgress`, se estableció como estándar obligatorio la generación de IDs explícitos con `crypto.randomUUID()` desde el frontend (`db-service.ts`) antes de hacer inserts/upserts. Esto previene fallos silenciosos y errores 400.
 -   **Modelo de IA Preferido**: `gemini-pro` se establece como estándar de estabilidad para el Coach IA hasta que la cuota/disponibilidad de Flash se normalice.
 -   **Esquema de Datos**: Se prioriza la compatibilidad estricta con las columnas existentes en Supabase para evitar fallos de inserción silenciosos o 400.
 -   **Flujo de Sesión**: Priorización absoluta de los datos de evaluación de Supabase en `App.tsx` para evitar que usuarios autenticados vean la pantalla de diagnóstico por error.
