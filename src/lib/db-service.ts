@@ -419,7 +419,8 @@ export const dbService = {
                         .update({ 
                             firebaseUid: firebaseUser.uid,
                             role: isAdminEmail ? 'ADMIN' : (emailProfile.role || 'USER'),
-                            plan: isAdminEmail ? 'ELITE' : (emailProfile.plan || 'FREE')
+                            plan: isAdminEmail ? 'ELITE' : (emailProfile.plan || 'FREE'),
+                            updatedAt: new Date().toISOString()
                         })
                         .eq('id', emailProfile.id)
                         .select('*, organization:Organization(*)')
@@ -437,7 +438,7 @@ export const dbService = {
                             name: name || firebaseUser.displayName || 'Nuevo Usuario',
                             role: isAdminEmail ? 'ADMIN' : 'USER',
                             plan: isAdminEmail ? 'ELITE' : 'FREE',
-                            status: 'ACTIVE'
+                            updatedAt: new Date().toISOString()
                         })
                         .select('*, organization:Organization(*)')
                         .single();

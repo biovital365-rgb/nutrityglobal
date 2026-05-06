@@ -10,9 +10,9 @@
     - **Salud Mental**: Escalas de PNL (Programación Neurolingüística) para adherencia.
 
 ### Logros Recientes (Sesión 06-05-2026) 🚀
-1.  **Estabilización de Persistencia**: Resolución de errores 400 (Bad Request) y 409 (Conflict) en Supabase. Se eliminó el campo `updatedAt` de los payloads ya que no existe en el esquema actual de producción.
+1.  **Estabilización de Persistencia**: Resolución final de los errores 400 en Supabase causados por incompatibilidad de Prisma. Se identificó que la columna `updatedAt` ES obligatoria (NOT NULL) por la migración previa de Prisma, por lo que se ha reincorporado al payload de `User`. Además, se eliminó el campo `status` que no existía en el esquema real y causaba el "Bad Request".
 2.  **Transición de IA**: Migración del modelo principal a **`gemini-pro`** debido a errores 404 constantes con `gemini-1.5-flash`. Se mantiene el fallback entre modelos para garantizar resiliencia.
-3.  **Sincronización de Perfiles**: Corrección de la lógica de creación de usuarios en `db-service.ts`, asegurando que los nuevos registros se vinculen correctamente con Supabase sin errores de sintaxis.
+3.  **Sincronización de Perfiles**: Corrección de la lógica de creación de usuarios en `db-service.ts`, asegurando que los nuevos registros se vinculen correctamente con Supabase mediante `id` explícito (`crypto.randomUUID()`) para evitar errores 400/409.
 4.  **Limpieza de Ruido Firestore**: Identificación de los logs de "Database (default) not found" como ruido heredado; el sistema ya opera satisfactoriamente sobre Supabase.
 
 ### Decisiones Arquitectónicas
@@ -31,8 +31,8 @@
 ## 📋 Tareas Pendientes (Próxima Sesión)
 
 ### 1. Evolución del Esquema (Base de Datos) ⚠️
-- [ ] **Añadir Columna `updated_at`**: Ejecutar migración SQL en Supabase para añadir `updated_at` (con trigger `moddatetime`) a las tablas `User`, `Evaluation`, `Measurement` y `Appointment`.
-- [ ] **Estandarización de Timestamps**: Una vez añadida la columna, restaurar la lógica de `updatedAt` en `db-service.ts` usando el formato ISO.
+- [ ] **Estandarización de `status`**: Ejecutar migración SQL en Supabase para añadir formalmente la columna `status` a la tabla `User` (si se desea usar los estados ACTIVE/BLOCKED/OBSERVED), ya que su ausencia causaba errores 400.
+- [ ] **Limpieza de Prisma**: Si se planea abandonar Prisma por completo, modificar las columnas de fecha (como `updatedAt`) en la base de datos para que Supabase las gestione automáticamente mediante un trigger `moddatetime`.
 
 ### 2. UI/UX y Multimedia
 - [ ] **Fix de Imágenes 404**: Corregir las rutas de imágenes en el catálogo (ej. `yacon...png`) que no cargan en el dashboard.
