@@ -1,7 +1,13 @@
 # MEMORY - Nutrity Global SaaS (2026)
 
-## Estado Actual (Mayo 2026)
-La plataforma **Nutrity Global** ha evolucionado hacia un enfoque de **Salud Integral (Holística)**. El motor metabólico ahora integra indicadores de estilo de vida (sueño, estrés, actividad), el Coach IA está sincronizado con el catálogo de Supabase y el diagnóstico se ha profundizado para servir como base de resultados bio-individualizados.
+## 🎯 Estado Actual (Mayo 2026)
+- **Producto**: Nutrity Global - CRM & Onboarding para Remisión de Diabetes.
+- **Enfoque**: Remisión Metabólica Clínica basada en el modelo de 4 secciones (Antropometría, Bioquímica, Estilo de Vida, PNL).
+- **Integración IA**: Sincronización exitosa con **NotebookLM** (vía MCP) para fundamentación clínica (NMG y Medicina Funcional).
+- **Onboarding**: Engine de diagnóstico 100% implementado en `NutrityOnboarding.tsx`, integrando métricas clave como:
+    - **Antropometría**: Perímetro de cintura (grasa ectópica).
+    - **Bioquímica**: HbA1c y niveles de glucosa en ayuno.
+    - **Salud Mental**: Escalas de PNL (Programación Neurolingüística) para adherencia.
 
 ### Logros Recientes (Sesión 05-05-2026) 🚀
 1.  **Resolución Definitiva de Flujo**: Estandarización de IDs entre Firebase y Supabase mediante el helper `getInternalId`. Eliminación de lógica ambigua basada en longitud de strings.
@@ -13,6 +19,8 @@ La plataforma **Nutrity Global** ha evolucionado hacia un enfoque de **Salud Int
 -   **Gobernanza de IDs**: Uso de mapeo dinámico Firebase UID -> Supabase UUID en el `dbService` para garantizar integridad referencial sin sacrificar la flexibilidad de Auth.
 -   **Eliminación de Dualidad**: Transición completa hacia Supabase para almacenamiento activo. Firestore entra en modo de "archivo histórico".
 -   **Aislamiento SaaS**: Refuerzo del filtrado por `organizationId` y `userId` (interno) en todas las capas del servicio.
+-   **Engine de Remisión**: Implementación de un "Target de Remisión" dinámico (15% pérdida de peso) integrado en el onboarding.
+-   **PNL en Salud**: Integración de escalas de percepción emocional y compromiso de 12 semanas para ajustar el tono del Coach IA.
 
 ### 🛠️ Configuración Técnica Actual
 - **Base de Datos**: Supabase (PostgreSQL).

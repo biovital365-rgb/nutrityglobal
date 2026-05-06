@@ -139,6 +139,7 @@ export const dbService = {
     async saveFood(food: Partial<FoodItem>, organizationId?: string) {
         const nameKey = (food.name || '').toLowerCase().trim().replace(/\s+/g, '-');
         const deterministicId = `food-${nameKey}`;
+        const originalId = food.id; // Guardamos el ID original para detectar cambios de nombre
 
         const payload: any = {
             name: food.name || '',
@@ -162,7 +163,14 @@ export const dbService = {
             .single()
 
         if (error) throw error;
-        return data as FoodItem
+
+        // Si el ID cambió (cambio de nombre), eliminamos el registro antiguo
+        if (originalId && originalId !== deterministicId && originalId.startsWith('food-')) {
+            console.log(`Renaming food: deleting old ID ${originalId}`);
+            await supabase.from('Food').delete().eq('id', originalId).catch(() => {});
+        }
+
+        return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
     },
 
     // Función para limpiar duplicados (mantiene el más reciente)
@@ -254,6 +262,7 @@ export const dbService = {
     async saveMicronutrient(micro: Partial<Micronutrient>, organizationId?: string) {
         const nameKey = (micro.name || '').toLowerCase().trim().replace(/\s+/g, '-');
         const deterministicId = `micro-${nameKey}`;
+        const originalId = micro.id;
 
         const payload: any = {
             name: micro.name || '',
@@ -265,13 +274,11 @@ export const dbService = {
             deficiencySigns: micro.deficiencySigns || [],
             dailyDose: micro.dailyDose || '',
             image: micro.image || null,
-            id: deterministicId, // Siempre usamos el ID derivado del nombre
+            id: deterministicId, 
         };
 
         const finalOrgId = micro.organizationId || organizationId;
-        if (finalOrgId) {
-            payload.organizationId = finalOrgId;
-        }
+        if (finalOrgId) payload.organizationId = finalOrgId;
 
         const { data, error } = await supabase
             .from('Micronutrient')
@@ -280,7 +287,13 @@ export const dbService = {
             .single()
 
         if (error) throw error;
-        return data as Micronutrient
+
+        // Cleanup old ID if renamed
+        if (originalId && originalId !== deterministicId && originalId.startsWith('micro-')) {
+            await supabase.from('Micronutrient').delete().eq('id', originalId).catch(() => {});
+        }
+
+        return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
     },
 
     async deleteMicronutrient(id: string) {
