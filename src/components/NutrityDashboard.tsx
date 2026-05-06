@@ -363,7 +363,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             if (!apiKey) throw new Error("API Key de Gemini no encontrada.");
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+            let model;
+            try {
+                model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            } catch (e) {
+                console.warn("Gemini 1.5 Flash failed, falling back to Gemini Pro");
+                model = genAI.getGenerativeModel({ model: "gemini-pro" });
+            }
 
             const weightVal = parseFloat(results.weight || user?.profile?.weight || "0");
             const targetWeight = weightVal > 0 ? (weightVal * 0.85).toFixed(1) : null;

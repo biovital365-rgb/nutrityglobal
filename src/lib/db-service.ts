@@ -438,8 +438,7 @@ export const dbService = {
                             name: name || firebaseUser.displayName || 'Nuevo Usuario',
                             role: isAdminEmail ? 'ADMIN' : 'USER',
                             plan: isAdminEmail ? 'ELITE' : 'FREE',
-                            status: 'ACTIVE',
-                            updatedAt: new Date().toISOString()
+                            status: 'ACTIVE'
                         }, { onConflict: 'email' })
                         .select('*, organization:Organization(*)')
                         .single();
@@ -475,16 +474,14 @@ export const dbService = {
     async saveEvaluation(userId: string, organizationId: string | undefined, data: any, results: any) {
         const internalId = await this.getInternalId(userId);
 
-        const id = crypto.randomUUID();
         const { data: saved, error } = await supabase
             .from('Evaluation')
             .upsert({
-                id,
                 userId: internalId,
                 organizationId: organizationId || null,
                 data,
                 results
-            }, { onConflict: 'id' })
+            }, { onConflict: 'userId' })
             .select()
             .single()
 
@@ -534,8 +531,7 @@ export const dbService = {
                 ...measurement,
                 id,
                 userId: internalId,
-                organizationId: organizationId || null,
-                updatedAt: new Date().toISOString()
+                organizationId: organizationId || null
             }, { onConflict: 'id' })
             .select()
             .single()
@@ -580,8 +576,7 @@ export const dbService = {
         const payload = {
             ...course,
             organizationId: course.organizationId || organizationId || null,
-            id: course.id && course.id.length > 20 ? course.id : crypto.randomUUID(),
-            updatedAt: new Date().toISOString()
+            id: course.id && course.id.length > 20 ? course.id : crypto.randomUUID()
         };
 
         const { data, error } = await supabase
@@ -658,8 +653,7 @@ export const dbService = {
                 ...appointment,
                 id,
                 userId: internalId,
-                organizationId: organizationId || null,
-                updatedAt: new Date().toISOString()
+                organizationId: organizationId || null
             }, { onConflict: 'id' })
             .select()
             .single()
