@@ -9,46 +9,40 @@
     - **Bioquímica**: HbA1c y niveles de glucosa en ayuno.
     - **Salud Mental**: Escalas de PNL (Programación Neurolingüística) para adherencia.
 
-### Logros Recientes (Sesión 05-05-2026) 🚀
-1.  **Resolución Definitiva de Flujo**: Estandarización de IDs entre Firebase y Supabase mediante el helper `getInternalId`. Eliminación de lógica ambigua basada en longitud de strings.
-2.  **Supabase como Fuente de Verdad**: Desactivación de escrituras en Firestore para nuevas evaluaciones. Ahora Supabase centraliza toda la actividad, manteniendo Firestore solo como fallback de lectura para datos legados.
-3.  **Sincronización de Perfiles Robusta**: Refactorización de `syncUserProfile` para manejar colisiones de email y asegurar roles de ADMIN de forma determinista.
-4.  **Optimización de Auth**: Eliminación de race-conditions al centralizar la sincronización en `App.tsx`, eliminando duplicidad en el componente `Auth.tsx`.
+### Logros Recientes (Sesión 06-05-2026) 🚀
+1.  **Estabilización de Persistencia**: Resolución de errores 400 (Bad Request) y 409 (Conflict) en Supabase. Se eliminó el campo `updatedAt` de los payloads ya que no existe en el esquema actual de producción.
+2.  **Transición de IA**: Migración del modelo principal a **`gemini-pro`** debido a errores 404 constantes con `gemini-1.5-flash`. Se mantiene el fallback entre modelos para garantizar resiliencia.
+3.  **Sincronización de Perfiles**: Corrección de la lógica de creación de usuarios en `db-service.ts`, asegurando que los nuevos registros se vinculen correctamente con Supabase sin errores de sintaxis.
+4.  **Limpieza de Ruido Firestore**: Identificación de los logs de "Database (default) not found" como ruido heredado; el sistema ya opera satisfactoriamente sobre Supabase.
 
 ### Decisiones Arquitectónicas
--   **Gobernanza de IDs**: Uso de mapeo dinámico Firebase UID -> Supabase UUID en el `dbService` para garantizar integridad referencial sin sacrificar la flexibilidad de Auth.
--   **Eliminación de Dualidad**: Transición completa hacia Supabase para almacenamiento activo. Firestore entra en modo de "archivo histórico".
--   **Aislamiento SaaS**: Refuerzo del filtrado por `organizationId` y `userId` (interno) en todas las capas del servicio.
--   **Engine de Remisión**: Implementación de un "Target de Remisión" dinámico (15% pérdida de peso) integrado en el onboarding.
--   **PNL en Salud**: Integración de escalas de percepción emocional y compromiso de 12 semanas para ajustar el tono del Coach IA.
+-   **Modelo de IA Preferido**: `gemini-pro` se establece como estándar de estabilidad para el Coach IA hasta que la cuota/disponibilidad de Flash se normalice.
+-   **Esquema de Datos**: Se prioriza la compatibilidad estricta con las columnas existentes en Supabase para evitar fallos de inserción silenciosos o 400.
+-   **Flujo de Sesión**: Priorización absoluta de los datos de evaluación de Supabase en `App.tsx` para evitar que usuarios autenticados vean la pantalla de diagnóstico por error.
 
 ### 🛠️ Configuración Técnica Actual
 - **Base de Datos**: Supabase (PostgreSQL).
-- **IA**: Google Gemini (1.5-Flash).
-- **Autenticación**: Firebase Auth sincronizado con Supabase Profiles.
-- **Frontend**: React + Tailwind + Lucide + Motion (Framer).
+- **IA**: Google Gemini (Pro como principal, Flash como fallback).
+- **Autenticación**: Firebase Auth sincronizado con Supabase.
 
 ---
 
 ## 📋 Tareas Pendientes (Próxima Sesión)
 
-### 1. Verificación de Producción ⚠️
-- [ ] **Validar Purga en Vivo**: Una vez completado el despliegue en Vercel, ejecutar la limpieza de duplicados desde el Panel Admin en producción.
-- [ ] **Revisar Políticas RLS**: Si el borrado falla, auditar las políticas de `DELETE` en Supabase para las tablas de catálogo. Confirmar que el rol `service_role` o el usuario admin tengan permisos explícitos.
-- [ ] **Test de Idempotencia**: Ejecutar un "Seed" manual en producción y verificar que no se creen nuevos duplicados.
+### 1. Evolución del Esquema (Base de Datos) ⚠️
+- [ ] **Añadir Columna `updated_at`**: Ejecutar migración SQL en Supabase para añadir `updated_at` (con trigger `moddatetime`) a las tablas `User`, `Evaluation`, `Measurement` y `Appointment`.
+- [ ] **Estandarización de Timestamps**: Una vez añadida la columna, restaurar la lógica de `updatedAt` en `db-service.ts` usando el formato ISO.
 
-### 2. Importación de Datos Históricos
-- [ ] **Clarificar Origen de Datos**: Resolver si los datos reales están en `vid-a-ecommerce` o en el proyecto secundario.
-- [ ] **Permisos de Firestore**: Habilitar API o configurar Service Account para el script de migración.
-- [ ] **Ejecutar Migración**: Correr `scripts/migrate-data.ts` para unificar la base de usuarios antiguos.
+### 2. UI/UX y Multimedia
+- [ ] **Fix de Imágenes 404**: Corregir las rutas de imágenes en el catálogo (ej. `yacon...png`) que no cargan en el dashboard.
+- [ ] **Auditoría de Sesión**: Verificar que el estado `onboardingCompleted` se mantenga persistente tras cierres de sesión prolongados.
 
 ### 3. Profundización del Diagnóstico (Salud Integral) 🩺
-- [ ] **Ajuste de Insights IA**: Refinar el prompt del Asesor para considerar la correlación entre estrés/sueño y glucosa (integración de indicadores holísticos).
-- [ ] **Visualización Bio-Plan**: Implementar la vista de "dieta especial" personalizada en la pestaña de Menú, mostrando los ajustes metabólicos sugeridos por la IA.
+- [ ] **Refinar Prompt del Coach**: Ajustar las instrucciones del sistema para `gemini-pro` para que aproveche mejor el historial de mediciones en lugar de solo la última evaluación.
+- [ ] **Visualización Bio-Plan**: Implementar la vista de "dieta especial" personalizada basada en los resultados metabólicos.
 
-### 4. CRM y Reportes
-- [ ] **Dashboard de KPIs**: Implementar visualización de métricas de retención y progreso de salud global (Score de Remisión promedio).
-- [ ] **Auditoría de PDFs**: Pestaña de logs para el seguimiento de reportes generados.
+### 4. Limpieza Final de Código
+- [ ] **Remoción de SDK Firebase (Firestore)**: Una vez confirmada la estabilidad total en producción, eliminar el SDK de Firestore de `firebase.ts` y sus dependencias en `package.json` para eliminar los logs de error de base de datos no encontrada.
 
 ---
 
