@@ -428,11 +428,9 @@ export const dbService = {
                     if (updateError) throw updateError;
                     profile = updated;
                 } else {
-                    const id = crypto.randomUUID();
                     const { data: created, error: createError } = await supabase
                         .from('User')
                         .upsert({
-                            id,
                             firebaseUid: firebaseUser.uid,
                             email: email,
                             name: name || firebaseUser.displayName || 'Nuevo Usuario',
@@ -448,16 +446,15 @@ export const dbService = {
                 }
             } else if (isAdminEmail && profile.role !== 'ADMIN') {
                 // 4. Asegurar que SuperAdmins tengan el rol correcto si ya existen
-                const { data: upgraded, error: upgradeError } = await supabase
-                    .from('User')
-                    .update({ 
-                        role: 'ADMIN', 
-                        plan: 'ELITE', 
-                        updatedAt: new Date().toISOString() 
-                    })
-                    .eq('id', profile.id)
-                    .select('*, organization:Organization(*)')
-                    .single();
+                    const { data: upgraded, error: upgradeError } = await supabase
+                        .from('User')
+                        .update({ 
+                            role: 'ADMIN', 
+                            plan: 'ELITE' 
+                        })
+                        .eq('id', profile.id)
+                        .select('*, organization:Organization(*)')
+                        .single();
                 
                 if (upgradeError) throw upgradeError;
                 profile = upgraded;
