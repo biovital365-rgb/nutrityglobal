@@ -220,11 +220,15 @@ export function AdminPanel({ user }: AdminPanelProps) {
         setIsSaving(true);
         try {
             const orgId = user?.profile?.organizationId;
-            const saved = await dbService.saveFood(editingFood, orgId);
+            const saved = await dbService.saveFood(editingFood, orgId) as any;
+            
             setFoods(prev => {
-                const exists = prev.find(f => f.id === saved.id);
-                return exists ? prev.map(f => f.id === saved.id ? saved : f) : [...prev, saved];
+                // Si el ID cambió (renombrado), primero filtramos el ID viejo
+                const filtered = saved._previousId ? prev.filter(f => f.id !== saved._previousId) : prev;
+                const exists = filtered.find(f => f.id === saved.id);
+                return exists ? filtered.map(f => f.id === saved.id ? saved : f) : [...filtered, saved];
             });
+
             setShowFoodModal(false);
             setEditingFood(emptyFood);
             notify("success", `Alimento "${saved.name}" guardado`);
@@ -240,11 +244,14 @@ export function AdminPanel({ user }: AdminPanelProps) {
         setIsSaving(true);
         try {
             const orgId = user?.profile?.organizationId;
-            const saved = await dbService.saveMicronutrient(editingMicro, orgId);
+            const saved = await dbService.saveMicronutrient(editingMicro, orgId) as any;
+            
             setMicros(prev => {
-                const exists = prev.find(m => m.id === saved.id);
-                return exists ? prev.map(m => m.id === saved.id ? saved : m) : [...prev, saved];
+                const filtered = saved._previousId ? prev.filter(m => m.id !== saved._previousId) : prev;
+                const exists = filtered.find(m => m.id === saved.id);
+                return exists ? filtered.map(m => m.id === saved.id ? saved : m) : [...filtered, saved];
             });
+
             setShowMicroModal(false);
             setEditingMicro(emptyMicro);
             notify("success", `Micronutriente "${saved.name}" guardado`);
