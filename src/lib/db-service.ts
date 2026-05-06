@@ -428,11 +428,10 @@ export const dbService = {
                     if (updateError) throw updateError;
                     profile = updated;
                 } else {
-                    // 3. Crear nuevo perfil si no existe nada
                     const id = crypto.randomUUID();
                     const { data: created, error: createError } = await supabase
                         .from('User')
-                        .insert({
+                        .upsert({
                             id,
                             firebaseUid: firebaseUser.uid,
                             email: email,
@@ -441,7 +440,7 @@ export const dbService = {
                             plan: isAdminEmail ? 'ELITE' : 'FREE',
                             status: 'ACTIVE',
                             updatedAt: new Date().toISOString()
-                        })
+                        }, { onConflict: 'email' })
                         .select('*, organization:Organization(*)')
                         .single();
                     
@@ -479,13 +478,13 @@ export const dbService = {
         const id = crypto.randomUUID();
         const { data: saved, error } = await supabase
             .from('Evaluation')
-            .insert({
+            .upsert({
                 id,
                 userId: internalId,
                 organizationId: organizationId || null,
                 data,
                 results
-            })
+            }, { onConflict: 'id' })
             .select()
             .single()
 
@@ -531,12 +530,13 @@ export const dbService = {
         const id = measurement.id && measurement.id.length > 20 ? measurement.id : crypto.randomUUID();
         const { data, error } = await supabase
             .from('Measurement')
-            .insert({
+            .upsert({
                 ...measurement,
                 id,
                 userId: internalId,
-                organizationId: organizationId || null
-            })
+                organizationId: organizationId || null,
+                updatedAt: new Date().toISOString()
+            }, { onConflict: 'id' })
             .select()
             .single()
 
@@ -654,12 +654,13 @@ export const dbService = {
         const id = appointment.id && appointment.id.length > 20 ? appointment.id : crypto.randomUUID();
         const { data, error } = await supabase
             .from('Appointment')
-            .insert({
+            .upsert({
                 ...appointment,
                 id,
                 userId: internalId,
-                organizationId: organizationId || null
-            })
+                organizationId: organizationId || null,
+                updatedAt: new Date().toISOString()
+            }, { onConflict: 'id' })
             .select()
             .single()
         if (error) throw error

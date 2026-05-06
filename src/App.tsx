@@ -28,85 +28,50 @@ export default function App() {
   }, [showAuthModal]);
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
       if (firebaseUser) {
+        setUser(firebaseUser);
         setShowAuthModal(false);
         
-        // CARGA EN PARALELO (Velocidad crítica)
-        let p = null;
-        let supabaseEval = null;
-
         try {
-          const [profileData, evalData] = await Promise.all([
+          // Sincronizar perfil y obtener última evaluación
+          const [p, supabaseEval] = await Promise.all([
             dbService.syncUserProfile(firebaseUser),
             dbService.getLatestEvaluation(firebaseUser.uid)
           ]);
-          p = profileData;
-          supabaseEval = evalData;
-        } catch (err) {
-          console.error("Critical: Initial sync failed:", err);
-          // Intentar al menos obtener perfil si el eval falla
-          p = await dbService.syncUserProfile(firebaseUser).catch(() => null);
-        }
-        
-        setProfile(p);
-
-        // 1. Prioridad: Supabase
-        if (supabaseEval?.results) {
-          setResults(supabaseEval.results);
-          setView("dashboard");
-          setIsRestoringSession(false);
-          return;
-        }
-
-        // 2. Fallback: Firestore (Legacy)
-        try {
-          const q = query(
-            collection(db, "evaluations"),
-            where("userId", "==", firebaseUser.uid),
-            orderBy("timestamp", "desc"),
-            limit(1)
-          );
-          const querySnapshot = await getDocs(q);
           
-          if (!querySnapshot.empty) {
-            const latestData = querySnapshot.docs[0].data();
-            setResults(latestData.results);
-            setView("dashboard");
-            setIsRestoringSession(false);
-            return;
-          }
-        } catch (fireErr) {
-          console.error("Firestore fallback error:", fireErr);
-        }
+          setProfile(p);
 
-        // 3. Manejo de Admins sin evaluación
-        if (p?.role === 'ADMIN') {
-          setResults({ 
-            name: p?.name || "Admin", condition: "prevention", phase: "Activación",
-            pillars: [
-              { title: "Metabolismo", desc: "Optimización de la flexibilidad metabólica." }, 
-              { title: "Nutrición", desc: "Protocolo basado en superalimentos andinos." }, 
-              { title: "Descanso", desc: "Higiene del sueño para regular el cortisol." }, 
-              { title: "Movimiento", desc: "Entrenamiento de fuerza y zona 2." }
-            ],
-            holisticStats: [
-              { label: "Vitalidad", value: 85 }, { label: "Metabolismo", value: 78 },
-              { label: "Regeneración", value: 92 }, { label: "Equilibrio", value: 88 }
-            ]
-          });
-          setView("dashboard");
-        } else {
-          setView("onboarding");
+          if (supabaseEval?.results) {
+            setResults(supabaseEval.results);
+            setView("dashboard");
+          } else if (p?.role === 'ADMIN' || firebaseUser.email === 'biovital.365@gmail.com') {
+            // Caso Admin sin evaluación previa
+            setResults({ 
+              name: p?.name || "Admin", condition: "prevention", phase: "Activación",
+              remissionScore: 85,
+              pillars: [
+                { title: "Metabolismo", desc: "Optimización de la flexibilidad metabólica." }, 
+                { title: "Nutrición", desc: "Protocolo basado en superalimentos andinos." }
+              ]
+            });
+            setView("dashboard");
+          } else {
+            setView("onboarding");
+          }
+        } catch (err) {
+          console.error("Critical sync failed:", err);
+          setView("onboarding"); // Si falla la carga, mejor re-evaluar o permitir entrar
         }
       } else {
+        setUser(null);
         setProfile(null);
+        setResults(null);
         setView("landing");
       }
       setIsRestoringSession(false);
     });
     return () => unsubscribe();
-  }, []); // Sin dependencia de 'results' para no crear bucles
+  }, []);
 
   const handleStartOnboarding = () => {
     if (!user) {
@@ -123,39 +88,34 @@ export default function App() {
   const handleAuthSuccess = (userData: any) => {
     setUser(userData);
     setShowAuthModal(false);
-    // No redirigimos aqui: onAuthStateChanged detecta la sesión,
-    // carga resultados y redirige al dashboard o onboarding según corresponda.
-    // Solo mostramos una pantalla de carga temporal.
     setIsRestoringSession(true);
   };
 
   const handleCompleteOnboarding = async (data: any) => {
     try {
-      console.log("Processing onboarding data...", data);
       const plan = generateMetabolicPlan(data);
       const processedResults = { ...plan, name: data.name, condition: data.condition };
 
-      // 1. Actualizar estado local inmediatamente
       setResults(processedResults);
 
-      if (!user) {
-        setShowAuthModal(true);
-      } else {
-        setView("dashboard"); // Cambio de vista instantáneo
-      }
-
-      // 2. Guardar únicamente en Supabase (Definitivo)
       if (user) {
+        setView("dashboard");
+        // Guardar en Supabase (Async para no bloquear UI)
         dbService.saveEvaluation(
           user.uid, 
           profile?.organizationId, 
           data, 
           processedResults
-        ).catch(err => console.error("Supabase save failed:", err));
+        ).then(() => {
+          console.log("Evaluation persisted in Supabase");
+        }).catch(err => {
+          console.error("Supabase persistent save failed:", err);
+        });
+      } else {
+        setShowAuthModal(true);
       }
     } catch (err) {
-      console.error("Critical error in onboarding completion:", err);
-      // Fallback
+      console.error("Onboarding logic failure:", err);
       setView("dashboard");
     }
   };
