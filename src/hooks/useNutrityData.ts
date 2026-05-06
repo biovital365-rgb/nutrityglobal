@@ -1,9 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { db } from '../lib/firebase';
-import { collection, query, where, onSnapshot, serverTimestamp, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { dbService, FoodItem, Micronutrient, Course } from '../lib/db-service';
 
-// Acepta uid y organizationId por separado para compatibilidad con NutrityDashboard
 export function useNutrityData(uid: string | undefined, organizationId: string | undefined) {
     const [appointments, setAppointments] = useState<any[]>([]);
     const [measurements, setMeasurements] = useState<any[]>([]);
@@ -12,7 +9,20 @@ export function useNutrityData(uid: string | undefined, organizationId: string |
     const [courses, setCourses] = useState<Course[]>([]);
     const [isDataLoading, setIsDataLoading] = useState(true);
 
-    // 1. Cargar Datos de Catálogo (Supabase)
+    const loadUserData = useCallback(async () => {
+        if (!uid) return;
+        try {
+            const [apptData, measureData] = await Promise.all([
+                dbService.getAppointments(uid, organizationId),
+                dbService.getMeasurements(uid, organizationId)
+            ]);
+            setAppointments(apptData || []);
+            setMeasurements(measureData || []);
+        } catch (err) {
+            console.error('Error loading user data:', err);
+        }
+    }, [uid, organizationId]);
+
     const loadCatalogs = useCallback(async () => {
         try {
             const [foodData, microData, courseData] = await Promise.all([
@@ -28,66 +38,47 @@ export function useNutrityData(uid: string | undefined, organizationId: string |
         }
     }, [organizationId]);
 
-    // 2. Suscribirse a Datos de Usuario (Firestore - Realtime)
     useEffect(() => {
-        if (!uid) return;
+        if (!uid) {
+            setIsDataLoading(false);
+            return;
+        }
 
-        const baseFilter = organizationId
-            ? where('organizationId', '==', organizationId)
-            : where('userId', '==', uid);
+        const init = async () => {
+            setIsDataLoading(true);
+            await Promise.all([loadCatalogs(), loadUserData()]);
+            setIsDataLoading(false);
+        };
 
-        const mQuery = query(collection(db, 'measurements'), baseFilter);
-        const aQuery = query(collection(db, 'appointments'), baseFilter);
+        init();
+    }, [uid, organizationId, loadCatalogs, loadUserData]);
 
-        const mUnsub = onSnapshot(mQuery, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setMeasurements(data);
-        });
-
-        const aUnsub = onSnapshot(aQuery, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setAppointments(data);
-        });
-
-        loadCatalogs().finally(() => setIsDataLoading(false));
-
-        return () => { mUnsub(); aUnsub(); };
-    }, [uid, organizationId, loadCatalogs]);
-
-    // 3. Acciones de Escritura Protegidas (nombres alineados con Dashboard)
     const saveAppointment = async (appt: any) => {
         if (!uid) throw new Error('Auth required');
-        return addDoc(collection(db, 'appointments'), {
-            ...appt,
-            userId: uid,
-            organizationId,
-            timestamp: serverTimestamp()
-        });
+        const res = await dbService.saveAppointment(uid, organizationId, appt);
+        await loadUserData(); // Refresh local state
+        return res;
     };
 
     const saveMeasurement = async (measure: any) => {
         if (!uid) throw new Error('Auth required');
-        return addDoc(collection(db, 'measurements'), {
-            ...measure,
-            userId: uid,
-            organizationId,
-            timestamp: serverTimestamp()
-        });
+        const res = await dbService.saveMeasurement(uid, organizationId, measure);
+        await loadUserData(); // Refresh local state
+        return res;
     };
 
     const updateAppointment = async (id: string, updates: any) => {
         if (!uid) throw new Error('Auth required');
-        const docRef = doc(db, 'appointments', id);
-        return updateDoc(docRef, {
-            ...updates,
-            updatedAt: serverTimestamp()
-        });
+        const res = await dbService.updateAppointment(id, updates);
+        await loadUserData(); // Refresh local state
+        return res;
     };
 
     const deleteAppointment = async (id: string) => {
         if (!uid) throw new Error('Auth required');
-        const docRef = doc(db, 'appointments', id);
-        return deleteDoc(docRef);
+        const res = await dbService.deleteAppointment(id);
+        await loadUserData(); // Refresh local state
+        return res;
     };
 
     return {
@@ -101,6 +92,7 @@ export function useNutrityData(uid: string | undefined, organizationId: string |
         saveMeasurement,
         updateAppointment,
         deleteAppointment,
-        refreshCatalogs: loadCatalogs
+        refreshCatalogs: loadCatalogs,
+        refreshUserData: loadUserData
     };
 }

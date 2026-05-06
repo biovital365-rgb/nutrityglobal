@@ -363,7 +363,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             if (!apiKey) throw new Error("API Key de Gemini no encontrada.");
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
             const weightVal = parseFloat(results.weight || user?.profile?.weight || "0");
             const targetWeight = weightVal > 0 ? (weightVal * 0.85).toFixed(1) : null;
@@ -419,12 +419,12 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             setChatMessages(prev => [...prev, { role: 'ai', text: responseText }]);
         } catch (err) {
             console.error("Gemini Error:", err);
-            let errorMessage = `Lo siento${firstName ? ' ' + firstName : ''}, hubo un problema de sincronía con la IA.`;
+            let errorMessage = `Lo siento${firstName ? ' ' + firstName : ''}, hubo un problema de sincronía con la IA. Verificando red metabólica...`;
             if (err instanceof Error) {
-                if (err.message.includes('429') || err.message.includes('quota') || err.message.includes('400')) {
-                    errorMessage = `He alcanzado el límite de consultas por minuto de mi versión gratuita (${import.meta.env.VITE_GEMINI_API_KEY ? 'Llave detectada' : 'No llave'}). Por favor, espera un minuto antes de enviarme otra pregunta, ${firstName || 'usuario'}.`;
-                } else if (!import.meta.env.VITE_GEMINI_API_KEY) {
-                    errorMessage = `La clave VITE_GEMINI_API_KEY no se encontró en la nube.`;
+                if (err.message.includes('429') || err.message.includes('quota')) {
+                    errorMessage = `He alcanzado el límite de consultas por minuto. Por favor, espera un momento.`;
+                } else if (err.message.includes('404')) {
+                    errorMessage = `Error de conexión con el modelo AI (404). Por favor, refresca la página o intenta de nuevo más tarde.`;
                 }
             }
             setChatMessages(prev => [...prev, { role: 'ai', text: errorMessage }]);
