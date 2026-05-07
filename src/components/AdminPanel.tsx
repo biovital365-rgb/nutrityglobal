@@ -360,6 +360,9 @@ export function AdminPanel({ user }: AdminPanelProps) {
             } else if (deleteTarget.type === "calendar") {
                 await dbService.deleteAppointment(deleteTarget.id);
                 setAppointments(appointments.filter(a => a.id !== deleteTarget.id));
+            } else if (deleteTarget.type === "users") {
+                await dbService.deleteUser(deleteTarget.id);
+                setUsers(users.filter(u => u.id !== deleteTarget.id));
             }
             notify("success", `"${deleteTarget.name}" eliminado`);
         } catch (err) {
