@@ -167,7 +167,7 @@ export const dbService = {
         // Si el ID cambió (cambio de nombre), eliminamos el registro antiguo
         if (originalId && originalId !== deterministicId && originalId.startsWith('food-')) {
             console.log(`Renaming food: deleting old ID ${originalId}`);
-            await supabase.from('Food').delete().eq('id', originalId).catch(() => {});
+            await supabase.from('Food').delete().eq('id', originalId);
         }
 
         return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
@@ -290,7 +290,7 @@ export const dbService = {
 
         // Cleanup old ID if renamed
         if (originalId && originalId !== deterministicId && originalId.startsWith('micro-')) {
-            await supabase.from('Micronutrient').delete().eq('id', originalId).catch(() => {});
+            await supabase.from('Micronutrient').delete().eq('id', originalId);
         }
 
         return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
@@ -381,11 +381,11 @@ export const dbService = {
 
     async deleteUser(userId: string) {
         // Eliminar registros relacionados (Cascade Manual) para evitar violaciones de llave foránea
-        await supabase.from('Evaluation').delete().eq('userId', userId).catch(() => {});
-        await supabase.from('Measurement').delete().eq('userId', userId).catch(() => {});
-        await supabase.from('Appointment').delete().eq('userId', userId).catch(() => {});
-        await supabase.from('LessonProgress').delete().eq('userId', userId).catch(() => {});
-        await supabase.from('Enrollment').delete().eq('userId', userId).catch(() => {});
+        await supabase.from('Evaluation').delete().eq('userId', userId);
+        await supabase.from('Measurement').delete().eq('userId', userId);
+        await supabase.from('Appointment').delete().eq('userId', userId);
+        await supabase.from('LessonProgress').delete().eq('userId', userId);
+        await supabase.from('Enrollment').delete().eq('userId', userId);
         
         const { error } = await supabase
             .from('User')
