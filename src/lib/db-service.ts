@@ -380,10 +380,18 @@ export const dbService = {
     },
 
     async deleteUser(userId: string) {
+        // Eliminar registros relacionados (Cascade Manual) para evitar violaciones de llave foránea
+        await supabase.from('Evaluation').delete().eq('userId', userId).catch(() => {});
+        await supabase.from('Measurement').delete().eq('userId', userId).catch(() => {});
+        await supabase.from('Appointment').delete().eq('userId', userId).catch(() => {});
+        await supabase.from('LessonProgress').delete().eq('userId', userId).catch(() => {});
+        await supabase.from('Enrollment').delete().eq('userId', userId).catch(() => {});
+        
         const { error } = await supabase
             .from('User')
             .delete()
             .eq('id', userId)
+            
         if (error) throw error
         return true
     },
