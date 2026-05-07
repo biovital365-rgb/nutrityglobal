@@ -137,7 +137,11 @@ export const dbService = {
     },
 
     async saveFood(food: Partial<FoodItem>, organizationId?: string) {
-        const nameKey = (food.name || '').toLowerCase().trim().replace(/\s+/g, '-');
+        const nameKey = (food.name || '').toLowerCase().trim()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
+            .replace(/[^a-z0-9]/g, '-') // Non-alphanumeric to dash
+            .replace(/-+/g, '-') // Collapse multiple dashes
+            .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
         const deterministicId = `food-${nameKey}`;
         const originalId = food.id; // Guardamos el ID original para detectar cambios de nombre
 
@@ -260,7 +264,11 @@ export const dbService = {
     },
 
     async saveMicronutrient(micro: Partial<Micronutrient>, organizationId?: string) {
-        const nameKey = (micro.name || '').toLowerCase().trim().replace(/\s+/g, '-');
+        const nameKey = (micro.name || '').toLowerCase().trim()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
         const deterministicId = `micro-${nameKey}`;
         const originalId = micro.id;
 
@@ -748,5 +756,21 @@ export const dbService = {
         const { data, error } = await query.order('createdAt', { ascending: false })
         if (error) throw error
         return data
+    },
+
+    // Sincronización Forzada de Catálogos (Para Admin)
+    async forceSyncCatalog(type: 'foods' | 'micros', organizationId?: string) {
+        if (type === 'foods') {
+            const { foodCatalog } = await import('../lib/food-data');
+            for (const food of foodCatalog) {
+                await this.saveFood({ ...food, organizationId }, organizationId).catch(e => console.error(`Sync error ${food.name}:`, e));
+            }
+        } else {
+            const { micronutrientsData } = await import('../lib/micronutrients-data');
+            for (const micro of micronutrientsData) {
+                await this.saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(e => console.error(`Sync error ${micro.name}:`, e));
+            }
+        }
+        return true;
     }
 }
