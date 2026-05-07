@@ -50,7 +50,7 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
         diabetesPerception: "",
         commitment: "",
         // Section 5: Interest
-        interest: ""
+        biodescodification: ""
     });
 
     const totalSteps = 5;
@@ -392,25 +392,26 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                                         <Dna className="w-5 h-5" />
                                         <span className="text-[10px] font-bold uppercase tracking-widest">Sección 5</span>
                                     </div>
-                                    <h3 className="text-2xl font-display font-bold">Bio-Personalización.</h3>
-                                    <p className="text-nutrity-gray-text text-sm">Selecciona tu aliado ancestral para potenciar tu plan de remisión.</p>
+                                    <h3 className="text-2xl font-display font-bold">Bio-Consciencia.</h3>
+                                    <p className="text-nutrity-gray-text text-sm">¿Qué tanto conoces la medicina de Biodescodificación?</p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-3">
                                     {[
-                                        { id: "tarwi", label: "Tarwi", icon: "🌱", desc: "Altas proteínas" },
-                                        { id: "quinoa", label: "Quinoa Negra", icon: "💎", desc: "Minerales traza" },
-                                        { id: "maca", label: "Maca Negra", icon: "⚡", desc: "Energía vital" },
-                                        { id: "yacon", label: "Yacón", icon: "💧", desc: "Prebiótico natural" }
+                                        { id: "nothing", label: "Nada", icon: "🌑", desc: "No conozco el término" },
+                                        { id: "little", label: "Un Poco", icon: "🌒", desc: "He escuchado conceptos básicos" },
+                                        { id: "heard", label: "Escuché hablar", icon: "🌓", desc: "Tengo una idea general" },
+                                        { id: "enough", label: "Suficiente", icon: "🌔", desc: "Entiendo la conexión mente-cuerpo" },
+                                        { id: "much", label: "Mucho", icon: "🌕", desc: "Aplico biodescodificación en mi vida" }
                                     ].map((opt) => (
                                         <button
                                             key={opt.id}
-                                            onClick={() => setFormData({ ...formData, interest: opt.id })}
-                                            className={`p-6 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all ${formData.interest === opt.id ? 'border-nutrity-accent bg-nutrity-accent/5' : 'border-nutrity-border hover:bg-nutrity-bg'}`}
+                                            onClick={() => setFormData({ ...formData, biodescodification: opt.id })}
+                                            className={`p-4 rounded-xl border-2 flex items-center gap-4 transition-all ${formData.biodescodification === opt.id ? 'border-nutrity-accent bg-nutrity-accent/5' : 'border-nutrity-border hover:bg-nutrity-bg'}`}
                                         >
-                                            <span className="text-4xl">{opt.icon}</span>
-                                            <div className="text-center">
-                                                <p className="text-sm font-bold">{opt.label}</p>
+                                            <span className="text-2xl">{opt.icon}</span>
+                                            <div className="text-left">
+                                                <p className="text-xs font-bold">{opt.label}</p>
                                                 <p className="text-[8px] font-bold uppercase text-nutrity-gray-text/40">{opt.desc}</p>
                                             </div>
                                         </button>
@@ -440,7 +441,7 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Onboardin
                                     (step === 1 && (!formData.weight || !formData.height || !formData.waist)) ||
                                     (step === 2 && !formData.fastingGlucose) ||
                                     (step === 4 && (!formData.diabetesPerception || !formData.commitment)) ||
-                                    (step === 5 && !formData.interest) || 
+                                    (step === 5 && !formData.biodescodification) || 
                                     isSyncing
                                 }
                                 className="flex-1 bg-nutrity-accent text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-nutrity-accent/20 hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-40"

@@ -153,11 +153,60 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         socialMedia: user?.profile?.socialMedia || ""
     });
     const [isSavingProfile, setIsSavingProfile] = useState(false);
-    const [isProfileComplete, setIsProfileComplete] = useState(
-        !!(user?.profile?.phone && user?.profile?.address && user?.profile?.age)
-    );
+    const [isProfileComplete, setIsProfileComplete] = useState(false);
+
+    useEffect(() => {
+        const complete = !!(user?.profile?.phone && user?.profile?.address && user?.profile?.age);
+        setIsProfileComplete(complete);
+    }, [user?.profile]);
 
     const [useSpecialDiet, setUseSpecialDiet] = useState(false);
+    const [dynamicMenu, setDynamicMenu] = useState<any>(null);
+    const [isGeneratingMenu, setIsGeneratingMenu] = useState(false);
+
+    const generateDynamicMenu = async () => {
+        if (isGeneratingMenu) return;
+        setIsGeneratingMenu(true);
+        try {
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+            if (!apiKey) throw new Error("API Key missing");
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+            const prompt = `Eres un Chef Clínico especializado en Diabetes Tipo 2. 
+            Genera un menú semanal de 7 días (lunes a domingo) para ${results.name} que está en fase de ${results.phase}.
+            Su meta es: ${results.meta}.
+            Superfoods prioritarios a incluir: ${results.superfoods?.join(", ") || "Tarwi, Yacón, Maca"}.
+            
+            Reglas:
+            1. Carbohidratos complejos de bajo índice glucémico.
+            2. Proteína andina de alta biodisponibilidad.
+            3. Grasas saludables (Sacha Inchi, Palta).
+            
+            Retorna UNICAMENTE un objeto JSON con este formato:
+            {
+              "lunes": { "breakfast": "...", "lunch": "...", "snack": "...", "dinner": "...", "metabolicGoal": "..." },
+              "martes": { ... },
+              ... (hasta domingo)
+            }`;
+
+            const result = await model.generateContent(prompt);
+            const text = result.response.text();
+            const cleanJson = text.replace(/```json|```/g, '').trim();
+            setDynamicMenu(JSON.parse(cleanJson));
+        } catch (err) {
+            console.error("Dynamic menu generation failed:", err);
+            setDynamicMenu(weeklyMenuData);
+        } finally {
+            setIsGeneratingMenu(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === "menu" && !dynamicMenu) {
+            generateDynamicMenu();
+        }
+    }, [activeTab]);
 
     useEffect(() => {
         if (user?.uid && !isProfileComplete && activeTab !== "profile") {
@@ -363,6 +412,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             if (!apiKey) throw new Error("API Key de Gemini no encontrada.");
 
             const genAI = new GoogleGenerativeAI(apiKey);
+            let model;
             try {
                 model = genAI.getGenerativeModel({ model: "gemini-pro" });
             } catch (e) {
@@ -1061,7 +1111,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <p className="text-nutrity-gray-text text-sm">Cronograma nutricional diseñado para tu meta de {results.meta}.</p>
                                     </div>
                                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                        {Object.keys(weeklyMenuData).map((day) => (
+                                        {Object.keys(dynamicMenu || weeklyMenuData).map((day) => (
                                             <button
                                                 key={day}
                                                 onClick={() => setSelectedDay(day)}
@@ -1074,31 +1124,38 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                 </div>
 
                                 <div className="grid lg:grid-cols-4 gap-8">
-                                    {[
-                                        { label: "Desayuno", time: "08:00 AM", meal: weeklyMenuData[selectedDay].breakfast, icon: Coffee, color: "text-amber-500" },
-                                        { label: "Almuerzo", time: "01:00 PM", meal: weeklyMenuData[selectedDay].lunch, icon: Utensils, color: "text-nutrity-accent" },
-                                        { label: "Snack", time: "04:30 PM", meal: weeklyMenuData[selectedDay].snack, icon: Apple, color: "text-rose-500" },
-                                        { label: "Cena", time: "07:30 PM", meal: weeklyMenuData[selectedDay].dinner, icon: Heart, color: "text-indigo-500" }
-                                    ].map((item, i) => (
-                                        <div key={i} className="nutrity-card p-10 space-y-8 flex flex-col group hover:border-nutrity-accent transition-all">
-                                            <div className="flex justify-between items-start">
-                                                <div className={`w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>
-                                                    <item.icon className="w-8 h-8" />
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest opacity-40">{item.time}</p>
-                                                    <h4 className="font-bold text-nutrity-primary">{item.label}</h4>
-                                                </div>
-                                            </div>
-                                            <p className="text-lg font-medium leading-relaxed italic text-nutrity-primary/80 flex-1">"{item.meal}"</p>
-                                            <div className="pt-6 border-t border-nutrity-border">
-                                                <div className="flex items-center gap-2">
-                                                    <Zap className="w-3 h-3 text-nutrity-accent" />
-                                                    <span className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent">Optimización Activa</span>
-                                                </div>
-                                            </div>
+                                    {isGeneratingMenu ? (
+                                        <div className="lg:col-span-4 py-20 flex flex-col items-center gap-4">
+                                            <div className="w-12 h-12 border-4 border-nutrity-accent border-t-transparent rounded-full animate-spin" />
+                                            <p className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest">IA Cocinando tu menú personalizado...</p>
                                         </div>
-                                    ))}
+                                    ) : (
+                                        [
+                                            { label: "Desayuno", time: "08:00 AM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.breakfast, icon: Coffee, color: "text-amber-500" },
+                                            { label: "Almuerzo", time: "01:00 PM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.lunch, icon: Utensils, color: "text-nutrity-accent" },
+                                            { label: "Snack", time: "04:30 PM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.snack, icon: Apple, color: "text-rose-500" },
+                                            { label: "Cena", time: "07:30 PM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.dinner, icon: Heart, color: "text-indigo-500" }
+                                        ].map((item, i) => (
+                                            <div key={i} className="nutrity-card p-10 space-y-8 flex flex-col group hover:border-nutrity-accent transition-all">
+                                                <div className="flex justify-between items-start">
+                                                    <div className={`w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>
+                                                        <item.icon className="w-8 h-8" />
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest opacity-40">{item.time}</p>
+                                                        <h4 className="font-bold text-nutrity-primary">{item.label}</h4>
+                                                    </div>
+                                                </div>
+                                                <p className="text-lg font-medium leading-relaxed italic text-nutrity-primary/80 flex-1">"{item.meal}"</p>
+                                                <div className="pt-6 border-t border-nutrity-border">
+                                                    <div className="flex items-center gap-2">
+                                                        <Zap className="w-3 h-3 text-nutrity-accent" />
+                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent">Optimización Activa</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
 
                                 <div className="nutrity-card bg-nutrity-primary p-8 text-white relative overflow-hidden">
@@ -1109,7 +1166,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Meta Metabólica del Día</p>
-                                                <h4 className="text-2xl font-bold">{weeklyMenuData[selectedDay].metabolicGoal}</h4>
+                                                <h4 className="text-2xl font-bold">{(dynamicMenu || weeklyMenuData)[selectedDay]?.metabolicGoal}</h4>
                                             </div>
                                         </div>
                                         <div className="hidden md:block">

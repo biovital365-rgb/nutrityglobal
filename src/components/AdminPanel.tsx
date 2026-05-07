@@ -213,6 +213,23 @@ export function AdminPanel({ user }: AdminPanelProps) {
         loadAll();
     }, [notify, user?.profile?.organizationId]);
 
+    const handleSync = async (type: 'foods' | 'micros') => {
+        if (!confirm(`¿Deseas sincronizar el catálogo de ${type === 'foods' ? 'alimentos' : 'micronutrientes'}? Esto actualizará los registros existentes y agregará los faltantes.`)) return;
+        setIsSaving(true);
+        try {
+            await dbService.forceSyncCatalog(type, user?.profile?.organizationId);
+            notify("success", "Sincronización completada exitosamente.");
+            // Recargar datos
+            const orgId = user?.profile?.organizationId;
+            if (type === 'foods') setFoods(await dbService.getFoods(orgId));
+            else setMicros(await dbService.getMicronutrients(orgId));
+        } catch (err) {
+            console.error("Sync error", err);
+            notify("error", "Error durante la sincronización.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // ─── FOOD CRUD ────────────────────────────────────────────────────
     const handleSaveFood = async (e: React.FormEvent) => {
@@ -481,7 +498,17 @@ export function AdminPanel({ user }: AdminPanelProps) {
             {/* ═══════ FOODS TABLE ═══════ */}
             <AnimatePresence mode="wait">
                 {section === "foods" && (
-                    <motion.div key="foods-table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <motion.div key="foods-table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-display font-bold text-nutrity-primary">Catálogo de Alimentos</h3>
+                            <button
+                                onClick={() => handleSync('foods')}
+                                className="px-4 py-2 rounded-xl border border-nutrity-accent text-nutrity-accent font-bold text-[10px] uppercase tracking-widest hover:bg-nutrity-accent/5 transition-all flex items-center gap-2"
+                            >
+                                <Loader2 className={`w-3.5 h-3.5 ${isSaving ? 'animate-spin' : ''}`} />
+                                Sincronizar Catálogo
+                            </button>
+                        </div>
                         <div className="nutrity-card bg-white overflow-hidden shadow-xl shadow-slate-200/50">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
