@@ -6,14 +6,14 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 // Configuración de modelos con esquemas específicos
 const menuModel = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-1.5-flash-latest",
     generationConfig: {
         responseMimeType: "application/json",
     }
 });
 
 const planModel = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-1.5-flash-latest",
     generationConfig: {
         responseMimeType: "application/json",
     }
@@ -100,7 +100,7 @@ export async function generateAIWeeklyMenu(plan: MetabolicPlan, userName: string
  * AI Coach - Chat interactivo con contexto clínico
  */
 export async function getAICoachResponse(messages: any[], context: any) {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
     
     const systemPrompt = `Eres Nutrity Coach IA V8, experto en Medicina de Restauración y NMG.
     Contexto del usuario:
@@ -148,7 +148,7 @@ export async function regenerateMeal(plan: MetabolicPlan, day: string, slot: str
     Respuesta:`;
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
         const result = await model.generateContent(prompt);
         return result.response.text().trim().replace(/^"|"$/g, '');
     } catch (error) {
