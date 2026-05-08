@@ -134,12 +134,6 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [microSearch, setMicroSearch] = useState("");
     const [selectedDay, setSelectedDay] = useState("lunes");
 
-    // --- EFECTOS INICIALES ---
-    useEffect(() => {
-        if (dynamicMenu) {
-        onMenuUpdate?.(dynamicMenu);
-        }
-    }, [dynamicMenu]);
 
     // Form States
     const [newAppt, setNewAppt] = useState({ title: "", date: "", time: "", type: "Virtual" });
@@ -172,6 +166,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
     const [useSpecialDiet, setUseSpecialDiet] = useState(false);
     const [dynamicMenu, setDynamicMenu] = useState<any>(null);
+
+    // --- EFECTOS DE SINCRONIZACIÓN ---
+    useEffect(() => {
+        if (dynamicMenu) {
+            onMenuUpdate?.(dynamicMenu);
+        }
+    }, [dynamicMenu, onMenuUpdate]);
     const [isGeneratingMenu, setIsGeneratingMenu] = useState(false);
 
     const generateDynamicMenu = async () => {
