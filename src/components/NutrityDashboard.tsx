@@ -65,9 +65,10 @@ interface NutrityDashboardProps {
     onRequireAuth: () => void;
     onLogout: () => void;
     isGeneratingPDF?: boolean;
+    onMenuUpdate?: (menu: any) => void;
 }
 
-export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, onRequireAuth, onLogout, isGeneratingPDF }: NutrityDashboardProps) {
+export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, onRequireAuth, onLogout, isGeneratingPDF, onMenuUpdate }: NutrityDashboardProps) {
     const [activeTab, setActiveTab] = useState("main");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -132,6 +133,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [foodSearch, setFoodSearch] = useState("");
     const [microSearch, setMicroSearch] = useState("");
     const [selectedDay, setSelectedDay] = useState("lunes");
+
+    // --- EFECTOS INICIALES ---
+    useEffect(() => {
+        if (dynamicMenu) {
+        onMenuUpdate?.(dynamicMenu);
+        }
+    }, [dynamicMenu]);
 
     // Form States
     const [newAppt, setNewAppt] = useState({ title: "", date: "", time: "", type: "Virtual" });
