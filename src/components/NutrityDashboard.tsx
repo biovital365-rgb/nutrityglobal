@@ -144,6 +144,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
     });
     const [editingApptId, setEditingApptId] = useState<string | null>(null);
+    const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
     // Profile States
     const [profileForm, setProfileForm] = useState({
@@ -180,13 +181,12 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         // Dilan e invitados deben tener estos datos para no ser redirigidos
         if (user?.profile && user?.email !== 'admin@nutrity.global' && user?.profile?.role !== 'ADMIN') {
             const hasPhone = !!user.profile.phone;
-            const hasAddress = !!user.profile.address;
-            const hasAge = !!user.profile.age;
             
-            const complete = hasPhone && hasAddress && hasAge;
+            // Relajamos la validación para evitar loops infinitos si el usuario prefiere no llenar todo
+            // Pero mantenemos la redirección si no tiene celular (dato mínimo de contacto)
+            const complete = hasPhone || user.profile.status === 'ACTIVE'; 
             setIsProfileComplete(complete);
             
-            // Si está incompleto, forzamos la pestaña de perfil
             if (!complete && activeTab !== 'profile') {
                 setActiveTab('profile');
             }
@@ -341,14 +341,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             setNotification({ type: 'success', message: '¡Perfil actualizado correctamente!' });
             setTimeout(() => setNotification(null), 3000);
             
-            // Opcional: Recargar la página o el estado global para reflejar cambios
-            // window.location.reload(); 
-            setIsProfileComplete(true);
-            alert("Perfil actualizado satisfactoriamente.");
             if (activeTab === "profile") setActiveTab("main");
         } catch (err) {
             console.error("Error saving profile", err);
-            alert("Error al guardar el perfil.");
+            setNotification({ type: 'error', message: 'Error al guardar el perfil.' });
+            setTimeout(() => setNotification(null), 3000);
         } finally {
             setIsSavingProfile(false);
         }
@@ -1624,6 +1621,24 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                 <div className="pb-8"></div>
                             </div>
                         </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Notification Toast */}
+            <AnimatePresence>
+                {notification && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                        className={`fixed bottom-8 right-8 z-[1000] px-6 py-4 rounded-2xl shadow-2xl text-sm font-bold flex items-center gap-3 ${notification.type === "success"
+                            ? "bg-emerald-500 text-white shadow-emerald-500/30"
+                            : "bg-rose-500 text-white shadow-rose-500/30"
+                            }`}
+                    >
+                        <Activity className="w-4 h-4" />
+                        {notification.message}
                     </motion.div>
                 )}
             </AnimatePresence>
