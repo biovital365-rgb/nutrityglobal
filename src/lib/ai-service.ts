@@ -44,10 +44,12 @@ export async function generateAILifePlan(data: OnboardingData): Promise<Metaboli
        - desc: Descripción estratégica.
        - color: Una clase de fondo Tailwind (ej. "bg-nutrity-blue", "bg-orange-400", "bg-red-400").
        - tag: Etiqueta (ej. "Nutrición", "Mente", "Cuerpo").
-    5. insight: Un análisis clínico empoderador basado en NMG (Nueva Medicina Germánica).
-    6. trendData: Un array de 9 números que representen la curva proyectada de glucosa.
-    7. holisticStats: 4 objetos con { label, value (1-100), color (clase bg-...) }.
-    8. superfoods: Lista de 3 alimentos andinos clave.
+    5. insight: Un análisis clínico empoderador.
+    6. biodescodificacion: Un mensaje profundo sobre la raíz emocional del síntoma (ej. resistencia, miedo al futuro) basado en NMG.
+    7. biodescodificacionRecommendations: Un array de 4 acciones de consciencia/emocionales.
+    8. trendData: Un array de 9 números que representen la curva proyectada de glucosa.
+    9. holisticStats: 4 objetos con { label, value (1-100), color (clase bg-...) }.
+    10. superfoods: Lista de 3 alimentos andinos clave.
     
     Responde estrictamente en JSON.`;
 

@@ -30,6 +30,8 @@ export const MetabolicPlanSchema = z.object({
     tag: z.string()
   })),
   insight: z.string(),
+  biodescodificacion: z.string().optional(),
+  biodescodificacionRecommendations: z.array(z.string()).optional(),
   trendData: z.array(z.number()),
   holisticStats: z.array(z.object({
     label: z.string(),

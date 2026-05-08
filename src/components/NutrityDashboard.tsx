@@ -156,19 +156,45 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         maritalStatus: user?.profile?.maritalStatus || "",
         socialMedia: user?.profile?.socialMedia || ""
     });
+
+    // Sincronizar el formulario cuando el perfil del usuario cambia (al cargar de Supabase)
+    useEffect(() => {
+        if (user?.profile) {
+            setProfileForm({
+                name: user.profile.name || "",
+                email: user.profile.email || user?.email || "",
+                phone: user.profile.phone || "",
+                address: user.profile.address || "",
+                age: user.profile.age || "",
+                occupation: user.profile.occupation || "",
+                maritalStatus: user.profile.maritalStatus || "",
+                socialMedia: user.profile.socialMedia || ""
+            });
+        }
+    }, [user?.profile, user?.email]);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isProfileComplete, setIsProfileComplete] = useState(false);
 
     useEffect(() => {
         // Solo marcar como completo si tenemos el objeto de perfil y los campos requeridos
-        if (user?.profile) {
-            const complete = !!(user.profile.phone && user.profile.address && user.profile.age);
+        // Dilan e invitados deben tener estos datos para no ser redirigidos
+        if (user?.profile && user?.email !== 'admin@nutrity.global' && user?.profile?.role !== 'ADMIN') {
+            const hasPhone = !!user.profile.phone;
+            const hasAddress = !!user.profile.address;
+            const hasAge = !!user.profile.age;
+            
+            const complete = hasPhone && hasAddress && hasAge;
             setIsProfileComplete(complete);
+            
+            // Si está incompleto, forzamos la pestaña de perfil
+            if (!complete && activeTab !== 'profile') {
+                setActiveTab('profile');
+            }
         } else {
-            // Mientras carga, no asumimos que está incompleto para evitar saltos de UI
+            // Mientras carga o si es admin, no forzamos
             setIsProfileComplete(true); 
         }
-    }, [user?.profile]);
+    }, [user?.profile, user?.email, activeTab]);
 
     const [useSpecialDiet, setUseSpecialDiet] = useState(false);
     const [dynamicMenu, setDynamicMenu] = useState<any>(null);
@@ -311,6 +337,12 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         setIsSavingProfile(true);
         try {
             await dbService.updateUserProfile(user.profile.id, profileForm);
+            setIsProfileComplete(true);
+            setNotification({ type: 'success', message: '¡Perfil actualizado correctamente!' });
+            setTimeout(() => setNotification(null), 3000);
+            
+            // Opcional: Recargar la página o el estado global para reflejar cambios
+            // window.location.reload(); 
             setIsProfileComplete(true);
             alert("Perfil actualizado satisfactoriamente.");
             if (activeTab === "profile") setActiveTab("main");
