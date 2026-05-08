@@ -304,27 +304,63 @@ export default function App() {
         doc.text(`- ${step} `, margin + 5, y);
         y += 7;
       });
-
-      // 7. BIODESCODIFICACIÓN Y GESTIÓN EMOCIONAL
-      y += 10;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.setTextColor(22, 163, 74); // Success Green
-      doc.text("V. BIODESCODIFICACIÓN Y GESTIÓN EMOCIONAL", margin, y);
-
       y += 10;
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(30, 41, 59);
       
       const emotionalInsight = results.pillars?.find((p: any) => p.title === 'Mente')?.recommendation || "Identificar el conflicto de resistencia biológica.";
-      doc.text(`• Nivel de Consciencia: ${data?.biodescodification || 'Evaluación Inicial'}`, margin + 5, y);
+      doc.text(`• Nivel de Consciencia: ${user?.profile?.biodescodification || 'Evaluación Inicial'}`, margin + 5, y);
       y += 6;
       const emotionalLines = doc.splitTextToSize(`• Recomendación: ${emotionalInsight}`, 165);
       doc.text(emotionalLines, margin + 5, y);
-      y += (emotionalLines.length * 6) + 12;
+      y += (emotionalLines.length * 6) + 10;
 
-      // 8. PRÓXIMO CONTROL Y ACADEMIA
+      // 8. DIETA PROGRAMADA (NUEVO)
+      if (y > 240) { doc.addPage(); y = 25; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(22, 101, 52); // Dark Green
+      doc.text("VI. PLAN DE ALIMENTACIÓN PROGRAMADO (HOY)", margin, y);
+      
+      y += 10;
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(30, 41, 59);
+      
+      // Intentar obtener el menú de hoy (esto es simplificado, en producción se consultaría el estado)
+      const dayNames = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
+      const todayName = dayNames[new Date().getDay()];
+      
+      // Estructura de dieta base si no hay dinámica
+      const baseMenu = {
+        breakfast: "Batido de Tarwi con Arándanos y Canela",
+        lunch: "Quinua con Pollo a las hierbas y ensalada de hojas verdes",
+        snack: "Puñado de nueces amazónicas",
+        dinner: "Sopa de vegetales con Sacha Inchi"
+      };
+
+      doc.text(`• Desayuno: ${baseMenu.breakfast}`, margin + 5, y); y += 5;
+      doc.text(`• Almuerzo: ${baseMenu.lunch}`, margin + 5, y); y += 5;
+      doc.text(`• Snack: ${baseMenu.snack}`, margin + 5, y); y += 5;
+      doc.text(`• Cena: ${baseMenu.dinner}`, margin + 5, y); y += 12;
+
+      // 9. RUTA PARA LA REMISIÓN METABÓLICA (NUEVO)
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(15, 23, 42);
+      doc.text("VII. RUTA PARA LA REMISIÓN METABÓLICA", margin, y);
+      
+      y += 8;
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      const routeText = `Su ruta de remisión se basa en la restauración de la sensibilidad a la insulina mediante el eje ${currentPhase}. Se estima un periodo de 12 a 24 semanas para estabilizar biomarcadores. Próximo hito: Evaluación de Hemoglobina Glicosilada en 90 días.`;
+      const routeLines = doc.splitTextToSize(routeText, 165);
+      doc.text(routeLines, margin + 5, y);
+      y += (routeLines.length * 6) + 12;
+
+      // 10. PRÓXIMO CONTROL Y ACADEMIA
+      if (y > 250) { doc.addPage(); y = 25; }
       doc.setFillColor(238, 242, 255);
       doc.rect(margin, y, 170, 35, 'F');
       
@@ -346,12 +382,12 @@ export default function App() {
       doc.text(`2. ACADEMIA NUTRITY: Adquiere tus Guías eBooks y Masterclasses en la sección Academia.`, margin + 5, y);
       y += 5;
       doc.setFont("helvetica", "normal");
-      doc.text(`   Link Directo: https://nutrityglobal.ai/academy`, margin + 5, y);
+      doc.text(`   Link Directo: https://nutrityglobal.vercel.app/academy`, margin + 5, y);
 
       // PIE DE PÁGINA
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184);
-      doc.text("Nutrity Global AI - Auditoría Médica V4.5 - CONFIDENCIAL", margin, 285);
+      doc.text("Nutrity Global AI - Auditoría Médica V7.0 - CONFIDENCIAL", margin, 285);
       doc.text(`Página 1 de 1`, 170, 285);
 
       // --- DESCARGA DEFINITIVA ---

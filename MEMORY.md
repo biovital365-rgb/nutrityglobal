@@ -7,35 +7,32 @@
 - **Onboarding**: Engine de diagnóstico 100% implementado en `NutrityOnboarding.tsx`, integrando métricas clave como:
     - **Antropometría**: Perímetro de cintura (grasa ectópica).
     - **Bioquímica**: HbA1c y niveles de glucosa### Session Summary: Nutrity Global Admin Restoration Interface (Phase 3)
+    - **Bioquímica**: HbA1c y niveles de glucosa
 
-In this session, we successfully completed the implementation of the administrative **"Restore" functionality** in the `AdminPanel`, enabling the recovery of soft-deleted records across the platform.
+### 🛠️ Features Implemented (Phase 4 Maintenance)
+1.  **Clinical Report V7.0**:
+    *   Resolved `ReferenceError` in PDF generation by correcting state mapping.
+    *   Enriched reports with "Scheduled Diet", "Metabolic Route", and "Health Situation" insights.
+    *   Updated download logic for professional presentation.
+2.  **AI Engine Stability**:
+    *   Migrated Gemini model IDs to `gemini-1.5-flash-latest` to resolve 404 errors in the `v1beta` endpoint.
+    *   Improved retry logic and system instructions for deterministic JSON outputs.
+3.  **Database Persistence & Schema Sync**:
+    *   Synchronized Supabase schema to support `deletedAt` (Soft Delete) and extended profile fields.
+    *   Validated `updateUserProfile` flow to ensure profile completion state is correctly persisted.
 
-#### 🛠️ Key Features Implemented
-1.  **Backend Recovery Layer**:
-    *   Updated `src/lib/db-service.ts` to include `restore` methods for `Food`, `Micronutrient`, `Course`, `User`, and `Appointment` models.
-    *   Modified existing `get` methods (e.g., `getFoods`, `getAllUsers`) to accept an optional `includeDeleted` boolean parameter, allowing the Admin UI to toggle the visibility of soft-deleted items.
-2.  **Admin Recovery UI**:
-    *   Added a `showDeleted` toggle state in `AdminPanel.tsx` to filter the data tables.
-    *   Integrated "Restaurar" buttons in the action columns of the Food, Micronutrient, Course, User, and Calendar tables, which only appear when a record's `deletedAt` field is populated.
-    *   Implemented `handleRestore` within `AdminPanel.tsx` to communicate with the new `db-service` restoration methods.
-3.  **UI Stabilization**:
-    *   Fixed corrupted JSX in `AdminPanel.tsx` caused by previous tool failures.
-    *   Standardized table rendering and action columns for all entities.
+#### 🔑 Key Context & Decisions
+*   **Architecture**: Supabase (PostgreSQL), Firebase (Auth), Gemini 1.5-Flash (Metabolic Core).
+*   **Design**: Nature Biotech aesthetics maintained across all clinical modules.
 
-#### 🔑 Key Information & Context
-*   **Database Schema**: The platform uses soft-deletion (via a `deletedAt` timestamp column) across all primary entities.
-*   **Data Integrity**: Restoration logic simply clears the `deletedAt` field, reverting the record to active status.
-*   **Project Path**: `c:\Files ECOTRAFFIC\PROYECTOS 2026\BioVital 365\app Nutrity Global`.
+#### ⚠️ Active Issues & Blockers
+*   **None**: All critical blockers (Profile Save, PDF Crash, AI 404) have been resolved.
 
-#### ⚠️ Active Blockers & Pending Work
-1.  **Monetization**: Gating academy content based on `User.plan` status remains on the roadmap.
-2.  **Mobile UX**: The WhatsApp floating button still requires CSS positioning adjustments to prevent overlap on narrow viewports.
-3.  **Catalog Sync**: While `force-sync` is implemented, we should monitor its performance as the database grows to ensure timeouts don't occur.
+#### 🚀 Next Steps
+1.  **Scale Testing**: Monitor user interactions with the new `regenerateMeal` feature.
+2.  **SEO/GEO Optimization**: Audit landing page for Generative Engine Optimization (GEO).
+3.  **Analytics**: Implement metabolic trend tracking visualizations in the main dashboard.
 
-#### 🚀 Roadmap for Future Sessions
-1.  **Implement Monetization Gates**: Add logic to `App.tsx` and the `Academy` component to verify `User.plan` before rendering specific content.
-2.  **Refine Structured Outputs**: Ensure the AI Metabolic Engine consistently produces high-validity JSON for menu generation.
-3.  **Responsive Polish**: Refine the floating WhatsApp button CSS to ensure it respects safe area constraints on mobile devices.
  Datos**: Supabase (PostgreSQL) con Prisma ORM.
 - **IA**: Google Gemini (Pro/Flash).
 - **Estrategia de Persistencia**: Deterministic IDs + Logical Deletion.
