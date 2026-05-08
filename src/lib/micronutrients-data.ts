@@ -22,7 +22,7 @@ export const micronutrientsData: Micronutrient[] = [
         sources: ["Cacao Puro", "Semillas de Zapallo", "Espinaca", "Almendras"],
         deficiencySigns: ["Calambres", "Ansiedad", "Resistencia a la insulina"],
         dailyDose: "300 - 450 mg",
-        image: "/magnesium_metabolic_supplement_1772296000000_1772295945476.png"
+        image: "https://images.unsplash.com/photo-1548907040-4baa42d100fe?q=80&w=1000&auto=format&fit=crop"
     },
     {
         id: "m2",
@@ -34,7 +34,7 @@ export const micronutrientsData: Micronutrient[] = [
         sources: ["Brócoli", "Levadura de cerveza", "Cebada", "Hígado"],
         deficiencySigns: ["Intolerancia a la glucosa", "Fatiga", "Confusión mental"],
         dailyDose: "200 - 400 mcg",
-        image: "/chromium_metabolic_supplement_1772296000000_1772295984094.png"
+        image: "https://images.unsplash.com/photo-1453227588063-bb302b62f50b?q=80&w=1000&auto=format&fit=crop"
     },
     {
         id: "m3",
@@ -46,7 +46,7 @@ export const micronutrientsData: Micronutrient[] = [
         sources: ["Granos Andinos", "Perejil", "Pimienta negra", "Hongos"],
         deficiencySigns: ["Metabolismo lento de carbohidratos", "Problemas de crecimiento"],
         dailyDose: "10 - 20 mcg",
-        image: "/vanadium_andean_grain_supplement_1772296000000_1772295984094_1772298636858.png"
+        image: "https://images.unsplash.com/photo-1586201327102-330081300858?q=80&w=1000&auto=format&fit=crop"
     },
     {
         id: "m4",
@@ -58,7 +58,7 @@ export const micronutrientsData: Micronutrient[] = [
         sources: ["Semillas de Sacha Inchi", "Ostras", "Carne de pastoreo", "Garbanzos"],
         deficiencySigns: ["Mala cicatrización", "Pérdida de gusto", "Inmunidad baja"],
         dailyDose: "15 - 30 mg",
-        image: "/zinc_pumpkin_seeds_metabolic_1772300191231.png"
+        image: "https://images.unsplash.com/photo-1511067007398-7e4b90cfa4bc?q=80&w=1000&auto=format&fit=crop"
     },
     {
         id: "m5",
@@ -70,7 +70,7 @@ export const micronutrientsData: Micronutrient[] = [
         sources: ["Castañas de Brasil", "Atún", "Huevo", "Semillas de girasol"],
         deficiencySigns: ["Hipotiroidismo", "Debilidad muscular", "Envejecimiento prematuro"],
         dailyDose: "55 - 200 mcg",
-        image: "/selenium_brazil_nuts_metabolic_1772296000000_1772295984094_1772298636858_1772298664774.png"
+        image: "https://images.unsplash.com/photo-1552345387-9a143b6fbd44?q=80&w=1000&auto=format&fit=crop"
     },
     {
         id: "m6",
@@ -82,7 +82,7 @@ export const micronutrientsData: Micronutrient[] = [
         sources: ["Maíz Morado", "Arándanos", "Oca Morada", "Açai"],
         deficiencySigns: ["Fragilidad capilar", "Inflamación crónica", "Visión pobre"],
         dailyDose: "50 - 500 mg",
-        image: "/anthocyanins_maiz_morado_metabolic_1772300153652.png"
+        image: "https://images.unsplash.com/photo-1513531926349-466f15ec8cc7?q=80&w=1000&auto=format&fit=crop"
     },
     {
         id: "m7",
