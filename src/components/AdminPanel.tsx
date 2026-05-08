@@ -1362,19 +1362,51 @@ export function AdminPanel({ user }: AdminPanelProps) {
                         className="fixed inset-0 z-[200] bg-nutrity-primary/60 backdrop-blur-md flex items-center justify-center p-4"
                     >
                         <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
-                            className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 relative"
+                            className="bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
                         >
-                            <button onClick={() => setShowUserModal(false)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-nutrity-bg"><X className="w-5 h-5 text-nutrity-gray-text" /></button>
-                            <div className="mb-6">
-                                <h3 className="text-xl font-bold">Editar Usuario</h3>
-                                <p className="text-xs text-nutrity-gray-text font-medium">Gestión administrativa de perfil</p>
+                            <div className="p-8 border-b border-nutrity-border flex items-center justify-between shrink-0">
+                                <div>
+                                    <h3 className="text-xl font-bold">Editar Perfil Completo</h3>
+                                    <p className="text-xs text-nutrity-gray-text font-medium">Gestión administrativa de datos clínicos y de contacto</p>
+                                </div>
+                                <button onClick={() => setShowUserModal(false)} className="p-2 rounded-full hover:bg-nutrity-bg"><X className="w-5 h-5 text-nutrity-gray-text" /></button>
                             </div>
-                            <form onSubmit={handleSaveUser} className="space-y-5">
-                                <FieldInput label="Nombre Completo" value={editingUser.name || ""} onChange={(v) => setEditingUser({ ...editingUser, name: v })} required />
-                                <FieldInput label="Email" value={editingUser.email || ""} onChange={(v) => setEditingUser({ ...editingUser, email: v })} required />
-                                <div className="grid grid-cols-2 gap-4">
+
+                            <form onSubmit={handleSaveUser} className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <FieldInput label="Nombre Completo" value={editingUser.name || ""} onChange={(v) => setEditingUser({ ...editingUser, name: v })} required />
+                                    <FieldInput label="Email" value={editingUser.email || ""} onChange={(v) => setEditingUser({ ...editingUser, email: v })} required />
+                                    
+                                    <FieldInput label="Celular de Contacto" value={editingUser.phone || ""} onChange={(v) => setEditingUser({ ...editingUser, phone: v })} placeholder="+591 ..." />
+                                    <FieldInput label="Edad" type="number" value={String(editingUser.age || "")} onChange={(v) => setEditingUser({ ...editingUser, age: v })} />
+                                    
+                                    <div className="md:col-span-2">
+                                        <FieldInput label="Dirección Completa" value={editingUser.address || ""} onChange={(v) => setEditingUser({ ...editingUser, address: v })} />
+                                    </div>
+
+                                    <FieldInput label="Ocupación / Profesión" value={editingUser.occupation || ""} onChange={(v) => setEditingUser({ ...editingUser, occupation: v })} />
+                                    
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Rol</label>
+                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Estado Civil</label>
+                                        <select 
+                                            className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10"
+                                            value={editingUser.maritalStatus || ""}
+                                            onChange={(e) => setEditingUser({ ...editingUser, maritalStatus: e.target.value })}
+                                        >
+                                            <option value="">No especificado</option>
+                                            <option value="soltero">Soltero/a</option>
+                                            <option value="casado">Casado/a</option>
+                                            <option value="divorciado">Divorciado/a</option>
+                                            <option value="viudo">Viudo/a</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="md:col-span-2">
+                                        <FieldInput label="Redes Sociales (IG/FB)" value={editingUser.socialMedia || ""} onChange={(v) => setEditingUser({ ...editingUser, socialMedia: v })} />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Rol del Sistema</label>
                                         <select 
                                             className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10"
                                             value={editingUser.role || "USER"}
@@ -1385,7 +1417,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                         </select>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Plan</label>
+                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Plan de Suscripción</label>
                                         <select 
                                             className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10"
                                             value={editingUser.plan || "FREE"}
@@ -1397,9 +1429,31 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                         </select>
                                     </div>
                                 </div>
+
+                                {/* Bio-Cardex Insight Section */}
+                                {editingUser.metabolicResults && (
+                                    <div className="mt-2 p-6 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Zap className="w-5 h-5 text-emerald-500" />
+                                                <h4 className="text-sm font-bold text-emerald-900">Estado Metabólico Actual</h4>
+                                            </div>
+                                            <span className="px-3 py-1 bg-emerald-600 text-white text-[10px] font-black rounded-lg">SCORE: {editingUser.metabolicResults.remissionScore}%</span>
+                                        </div>
+                                        <p className="text-xs text-emerald-800 italic leading-relaxed">
+                                            "{editingUser.metabolicResults.insight || "Sin observaciones registradas."}"
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {editingUser.metabolicResults.pillars?.map((p: any, i: number) => (
+                                                <span key={i} className="px-2 py-0.5 bg-white/50 text-emerald-700 text-[9px] font-bold rounded-md border border-emerald-100">{p.title}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <button disabled={isSaving} type="submit" className="w-full bg-nutrity-primary text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-nutrity-primary/20 hover:bg-nutrity-accent transition-all flex items-center justify-center gap-2">
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Guardar Cambios
+                                    Guardar Cambios del Paciente
                                 </button>
                             </form>
                         </motion.div>
