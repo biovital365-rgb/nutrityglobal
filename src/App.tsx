@@ -18,6 +18,7 @@ export default function App() {
   // V7.2 Nature Biotech Edition - Build Trigger
   const [view, setView] = useState<"landing" | "onboarding" | "dashboard" | "detail" | "auth" | "history">("landing");
   const [results, setResults] = useState<any>(null);
+  const [weeklyMenu, setWeeklyMenu] = useState<any>(null);
   const [selectedPillar, setSelectedPillar] = useState<string>("");
   const [user, setUser] = useState<any>(null); // Firebase User
   const [profile, setProfile] = useState<any>(null); // Supabase Profile
@@ -174,241 +175,204 @@ export default function App() {
     setIsGeneratingPDF(true);
 
     try {
-      console.log("Generating Professional Clinical Report [V7]...", results);
-      const doc = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      // Data Sanitization
-      const getName = () => results.name || (user as any)?.profile?.name || (user as any)?.displayName || 'PACIENTE';
-      const patientName = getName().toUpperCase();
-      const conditionLabel = results.condition === 'diabetes' ? 'Diabetes Tipo 2' : results.condition === 'resistance' ? 'Resistencia Insulínica' : 'Optimización Metabólica';
-      const currentPhase = results.phase || 'Activación';
-
+      const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const margin = 20;
-      let y = 30;
+      let y = 0;
 
-      // 1. CABECERA PROFESIONAL
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(24);
-      doc.setTextColor(15, 23, 42); // Slate 900
-      doc.text("BIOVITAL 365 AI", margin, y);
+      // Helper para rectángulos redondeados y diseño
+      const drawHeader = (title: string, subtitle: string, color = [15, 23, 42]) => {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(color[0], color[1], color[2]);
+        doc.text(title, margin, 20);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 116, 139);
+        doc.text(subtitle, margin, 28);
+        doc.setDrawColor(color[0], color[1], color[2]);
+        doc.setLineWidth(1);
+        doc.line(margin, 35, 60, 35);
+      };
 
-      y += 8;
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 116, 139); // Slate 400
-      doc.text("SISTEMA AVANZADO DE BIOMETRÍA Y REPROGRAMACIÓN METABÓLICA", margin, y);
+      // --- PÁGINA 1: STATUS CLÍNICO ---
+      drawHeader("AUDITORÍA DE REMISIÓN METABÓLICA", "NUTRITY GLOBAL AI - PROTOCOLO DE PRECISIÓN 2025");
+      y = 55;
 
-      y += 4;
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.5);
-      doc.line(margin, y, 190, y);
-
-      // 2. FICHA TÉCNICA DEL PACIENTE
-      y += 12;
-      doc.setFillColor(248, 250, 252);
-      doc.rect(margin, y, 170, 25, 'F');
-
-      y += 8;
+      // Ficha del Paciente
+      doc.setFillColor(241, 245, 249);
+      doc.roundedRect(margin, y, 170, 30, 3, 3, 'F');
       doc.setFontSize(10);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(51, 65, 85);
-      doc.text("DATOS DEL PACIENTE", margin + 5, y);
-      doc.text("METADATOS CLÍNICOS", 120, y);
-
-      y += 6;
+      doc.text("EXPEDIENTE BIO-DIGITAL", margin + 5, y + 8);
+      
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.text(`Nombre: ${patientName}`, margin + 5, y);
-      doc.text(`ID Sesión: ${user?.uid?.substring(0, 12) || 'ANON'}`, 120, y);
-      y += 5;
-      doc.text(`Fecha Ref: ${new Date().toLocaleDateString()}`, margin + 5, y);
-      doc.text(`Fase Activa: ${currentPhase.toUpperCase()}`, 120, y);
+      const patientName = (results.name || user?.profile?.name || "PACIENTE").toUpperCase();
+      doc.text(`Paciente: ${patientName}`, margin + 5, y + 16);
+      doc.text(`Fase Actual: ${results.phase || 'Activación'}`, margin + 5, y + 22);
+      doc.text(`ID Clínico: ${user?.uid?.substring(0, 10)}`, 120, y + 16);
+      doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 120, y + 22);
 
-      // 3. EVALUACIÓN Y BIO-ESTADO
-      y += 15;
+      y += 45;
+      
+      // Indicador de Remisión (Gauge Visual)
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.setTextColor(79, 70, 229); // Indigo 600
-      doc.text("I. EVALUACIÓN DE ESTADO METABÓLICO", margin, y);
-
+      doc.setFontSize(14);
+      doc.setTextColor(79, 70, 229);
+      doc.text("I. SCORE DE SENSIBILIDAD BIOLÓGICA", margin, y);
+      
       y += 10;
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(30, 41, 59);
-      doc.text(`• Diagnóstico de Perfil: ${conditionLabel}`, margin + 5, y);
-      y += 6;
-      doc.text(`• Objetivo Clínico: ${results.meta || 'Restauración de Sensibilidad a la Insulina'}`, margin + 5, y);
-      doc.text(`• Score de Remisión Actual: ${results.remissionScore || '90'}%`, margin + 5, y);
+      const score = results.remissionScore || 85;
+      doc.setDrawColor(226, 232, 240);
+      doc.setFillColor(241, 245, 249);
+      doc.rect(margin, y, 170, 8, 'F');
+      doc.setFillColor(34, 197, 94); // Green
+      doc.rect(margin, y, (170 * score) / 100, 8, 'F');
+      doc.setFontSize(8);
+      doc.setTextColor(255, 255, 255);
+      doc.text(`${score}% OPTIMIZADO`, margin + 5, y + 5.5);
 
-      // 4. DIAGNÓSTICO IA MOLECULAR
-      y += 12;
+      y += 20;
+
+      // Diagnóstico IA (Insight)
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.text("II. DIAGNÓSTICO MOLECULAR IA (INSIGHT)", margin, y);
-
+      doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42);
+      doc.text("II. INSIGHT METABÓLICO (INTELIGENCIA CLÍNICA)", margin, y);
+      
       y += 8;
       doc.setFontSize(10);
       doc.setFont("helvetica", "italic");
       doc.setTextColor(71, 85, 105);
-      const summaryText = results.summary || results.insight || "Se identifica una resistencia periférica moderada. El protocolo se ajusta para maximizar la autofagia celular y la biogénesis mitocondrial mediante restricción de carbohidratos simples y suplementación específica.";
-      const summaryLines = doc.splitTextToSize(summaryText, 165);
-      doc.text(summaryLines, margin + 5, y);
-      y += (summaryLines.length * 6) + 10;
+      const insight = results.insight || "Se detecta una oportunidad crítica de reprogramación. El protocolo se ajustará para estabilizar el eje insulina-glucosa mediante superfoods andinos.";
+      const insightLines = doc.splitTextToSize(insight, 170);
+      doc.text(insightLines, margin, y);
+      y += (insightLines.length * 6) + 15;
 
-      // 5. PROTOCOLO DE MICRONUTRICIÓN
-      y += 10;
+      // Pilares del Plan
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.setTextColor(79, 70, 229);
-      doc.text("III. PROTOCOLO DE MICRONUTRICIÓN DE PRECISIÓN", margin, y);
-
-      y += 10;
-      doc.setFontSize(9);
-      doc.setTextColor(30, 41, 59);
-
-      const micros = results.micronutrients || [];
-      if (micros.length > 0) {
-        micros.forEach((m: any, idx: number) => {
-          doc.setFont("helvetica", "bold");
-          doc.text(`${idx + 1}. ${m.name}: `, margin + 5, y);
-          doc.setFont("helvetica", "normal");
-          doc.text(`${m.dose} - ${m.reason} `, margin + 50, y);
-          y += 6;
-          if (y > 275) { doc.addPage(); y = 25; }
-        });
-      } else {
-        doc.text("Base protocol: Magnesium Bisglycinate (400mg), Vitamin D3+K2 (5000 IU).", margin + 5, y);
-        y += 6;
-      }
-
-      // 6. PLAN DE BIO-HACKING
-      y += 10;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.text("IV. PROTOCOLO DE BIO-HACKING Y ESTILO DE VIDA", margin, y);
-
-      y += 10;
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      const hackingSteps = [
-        "Ventana de ayuno 16:8 obligatoria (Última comida 19:00).",
-        "Protocolo de luz roja o exposición solar matutina (15 min).",
-        "Entrenamiento de fuerza (Z2) para mejora de GLUT4.",
-        "Ducha fría (30 seg al final) para activación de grasa parda."
-      ];
-      hackingSteps.forEach(step => {
-        doc.text(`- ${step} `, margin + 5, y);
-        y += 7;
-      });
-      y += 10;
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(30, 41, 59);
-      
-      const emotionalInsight = results.pillars?.find((p: any) => p.title === 'Mente')?.recommendation || "Identificar el conflicto de resistencia biológica.";
-      doc.text(`• Nivel de Consciencia: ${user?.profile?.biodescodification || 'Evaluación Inicial'}`, margin + 5, y);
-      y += 6;
-      const emotionalLines = doc.splitTextToSize(`• Recomendación: ${emotionalInsight}`, 165);
-      doc.text(emotionalLines, margin + 5, y);
-      y += (emotionalLines.length * 6) + 10;
-
-      // 8. DIETA PROGRAMADA (NUEVO)
-      if (y > 240) { doc.addPage(); y = 25; }
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.setTextColor(22, 101, 52); // Dark Green
-      doc.text("VI. PLAN DE ALIMENTACIÓN PROGRAMADO (HOY)", margin, y);
-      
-      y += 10;
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(30, 41, 59);
-      
-      // Intentar obtener el menú de hoy (esto es simplificado, en producción se consultaría el estado)
-      const dayNames = ["domingo", "lunes", "martes", "miercoles", "jueves", "viernes", "sabado"];
-      const todayName = dayNames[new Date().getDay()];
-      
-      // Estructura de dieta base si no hay dinámica
-      const baseMenu = {
-        breakfast: "Batido de Tarwi con Arándanos y Canela",
-        lunch: "Quinua con Pollo a las hierbas y ensalada de hojas verdes",
-        snack: "Puñado de nueces amazónicas",
-        dinner: "Sopa de vegetales con Sacha Inchi"
-      };
-
-      doc.text(`• Desayuno: ${baseMenu.breakfast}`, margin + 5, y); y += 5;
-      doc.text(`• Almuerzo: ${baseMenu.lunch}`, margin + 5, y); y += 5;
-      doc.text(`• Snack: ${baseMenu.snack}`, margin + 5, y); y += 5;
-      doc.text(`• Cena: ${baseMenu.dinner}`, margin + 5, y); y += 12;
-
-      // 9. RUTA PARA LA REMISIÓN METABÓLICA (NUEVO)
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
+      doc.setFontSize(14);
       doc.setTextColor(15, 23, 42);
-      doc.text("VII. RUTA PARA LA REMISIÓN METABÓLICA", margin, y);
+      doc.text("III. PILARES DE RESTAURACIÓN", margin, y);
       
-      y += 8;
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      const routeText = `Su ruta de remisión se basa en la restauración de la sensibilidad a la insulina mediante el eje ${currentPhase}. Se estima un periodo de 12 a 24 semanas para estabilizar biomarcadores. Próximo hito: Evaluación de Hemoglobina Glicosilada en 90 días.`;
-      const routeLines = doc.splitTextToSize(routeText, 165);
-      doc.text(routeLines, margin + 5, y);
-      y += (routeLines.length * 6) + 12;
+      y += 10;
+      (results.pillars || []).forEach((p: any, i: number) => {
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(margin, y, 170, 15, 2, 2, 'F');
+        doc.setFontSize(10);
+        doc.setTextColor(79, 70, 229);
+        doc.text(`${p.tag}: ${p.title}`, margin + 5, y + 9);
+        y += 18;
+      });
 
-      // 10. PRÓXIMO CONTROL Y ACADEMIA
-      if (y > 250) { doc.addPage(); y = 25; }
-      doc.setFillColor(238, 242, 255);
-      doc.rect(margin, y, 170, 35, 'F');
+      // --- PÁGINA 2: MENÚ SEMANAL DE PRECISIÓN ---
+      doc.addPage();
+      drawHeader("CRONOGRAMA NUTRICIONAL DE PRECISIÓN", "PLAN SEMANAL BASADO EN BIOMARCADORES Y SUPERFOODS", [22, 101, 52]);
       
-      y += 8;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(79, 70, 229);
-      doc.text("PRÓXIMOS PASOS CRÍTICOS:", margin + 5, y);
-      
-      y += 6;
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(51, 65, 85);
-      const nextDate = new Date();
-      nextDate.setDate(nextDate.getDate() + 7);
-      doc.text(`1. DIAGNÓSTICO PROFUNDO: Programado automáticamente para el ${nextDate.toLocaleDateString()}.`, margin + 5, y);
-      y += 5;
-      doc.setFont("helvetica", "bold");
-      doc.text(`2. ACADEMIA NUTRITY: Adquiere tus Guías eBooks y Masterclasses en la sección Academia.`, margin + 5, y);
-      y += 5;
-      doc.setFont("helvetica", "normal");
-      doc.text(`   Link Directo: https://nutrityglobal.vercel.app/academy`, margin + 5, y);
+      y = 55;
+      const days = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
+      const menu = weeklyMenu || {};
 
-      // PIE DE PÁGINA
+      days.forEach((day) => {
+        const dayData = menu[day] || { breakfast: "Pendiente", lunch: "Pendiente", snack: "Pendiente", dinner: "Pendiente" };
+        
+        doc.setFillColor(240, 253, 244);
+        doc.rect(margin, y, 170, 28, 'F');
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(21, 128, 61);
+        doc.text(day.toUpperCase(), margin + 2, y + 6);
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(30, 41, 59);
+        doc.text(`D: ${dayData.breakfast}`, margin + 25, y + 6);
+        doc.text(`A: ${dayData.lunch}`, margin + 25, y + 11);
+        doc.text(`S: ${dayData.snack}`, margin + 25, y + 16);
+        doc.text(`C: ${dayData.dinner}`, margin + 25, y + 21);
+        
+        y += 32;
+        if (y > 270) { doc.addPage(); y = 20; }
+      });
+
+      // --- PÁGINA 3: BIODESCODIFICACIÓN Y CUMPLIMIENTO ---
+      doc.addPage();
+      drawHeader("BIO-TRACKER & BIODESCODIFICACIÓN", "MONITOREO DE ADHERENCIA Y GESTIÓN EMOCIONAL", [194, 65, 12]);
+      
+      y = 55;
+
+      // Alertas Metabólicas (Semáforo)
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42);
+      doc.text("IV. SEMÁFORO DE CONTROL METABÓLICO", margin, y);
+      
+      y += 12;
+      // Verde
+      doc.setFillColor(34, 197, 94); doc.circle(margin + 5, y, 3, 'F');
+      doc.setFontSize(9); doc.setTextColor(30, 41, 59);
+      doc.text("ZONA DE REMISIÓN (70-110 mg/dL): Energía óptima y quema de grasa activa.", margin + 12, y + 1);
+      y += 10;
+      // Amarillo
+      doc.setFillColor(234, 179, 8); doc.circle(margin + 5, y, 3, 'F');
+      doc.text("ZONA DE OBSERVACIÓN (111-140 mg/dL): Posible inflamación o estrés celular.", margin + 12, y + 1);
+      y += 10;
+      // Rojo
+      doc.setFillColor(239, 68, 68); doc.circle(margin + 5, y, 3, 'F');
+      doc.text("ZONA DE RESISTENCIA (>140 mg/dL): Riesgo de glicación. Ajustar protocolo de inmediato.", margin + 12, y + 1);
+
+      y += 20;
+
+      // Biodescodificación
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.text("V. RECOMENDACIÓN DE BIODESCODIFICACIÓN", margin, y);
+      
+      y += 10;
+      doc.setFillColor(255, 247, 237);
+      doc.roundedRect(margin, y, 170, 35, 3, 3, 'F');
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(154, 52, 18);
+      const bioText = "El síntoma es la solución biológica a un conflicto no resuelto. Tu resistencia a la insulina habla de una necesidad de 'defender tu territorio' o un 'miedo al futuro'. La remisión ocurre cuando el corazón comprende lo que el cuerpo expresa.";
+      const bioLines = doc.splitTextToSize(bioText, 160);
+      doc.text(bioLines, margin + 5, y + 10);
+
+      y += 50;
+
+      // Checklist de Adherencia
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42);
+      doc.text("VI. CHECK-LIST DE CUMPLIMIENTO DIARIO", margin, y);
+      
+      y += 10;
+      const checks = [
+        "¿Cumplí con el ayuno 16:8?",
+        "¿Consumí mi dosis de Superfoods (Tarwi/Yacón)?",
+        "¿Realicé mis 20 min de Bio-Hacking (Fuerza/Frío)?",
+        "¿Registré mis niveles de glucosa en la App?"
+      ];
+
+      checks.forEach((check) => {
+        doc.setDrawColor(203, 213, 225);
+        doc.rect(margin, y, 5, 5);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(check, margin + 8, y + 4);
+        y += 10;
+      });
+
+      // Pie de Página
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184);
-      doc.text("Nutrity Global AI - Auditoría Médica V7.0 - CONFIDENCIAL", margin, 285);
-      doc.text(`Página 1 de 1`, 170, 285);
+      doc.text("Certificado por el Algoritmo Bio-Integral 2025 - CONFIDENCIAL", margin, 285);
 
-      // --- DESCARGA DEFINITIVA ---
-      console.log("Saving PDF binary...");
-      const pdfBinary = doc.output('blob');
-      const blobUrl = URL.createObjectURL(pdfBinary);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = `REPORTE - CLINICO - ${patientName.replace(/\s+/g, '-')}.pdf`;
-
-      // Force download logic
-      document.body.appendChild(link);
-      link.click();
-
-      // Cleanup with generous delay to ensure browser handled the trigger
-      setTimeout(() => {
-        document.body.removeChild(link);
-        // We DON'T revoke immediately to avoid the GUID/ghost issue
-      }, 10000);
-
-      console.log("PDF download triggered successfully.");
+      // Descarga
+      doc.save(`PROTOCOLO-REMISION-${patientName}.pdf`);
 
     } catch (err: any) {
       console.error("Critical PDF Error:", err);
@@ -461,6 +425,7 @@ export default function App() {
             onRequireAuth={() => setShowAuthModal(true)}
             onLogout={handleLogout}
             isGeneratingPDF={isGeneratingPDF}
+            onMenuUpdate={(menu) => setWeeklyMenu(menu)}
           />
         )}
           </>
