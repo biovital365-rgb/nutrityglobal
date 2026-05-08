@@ -828,6 +828,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                                         )}
                                                     </div>
                                                 </td>
+                                            </tr>
                                         ))}
                                     </tbody>
                                 </table>
