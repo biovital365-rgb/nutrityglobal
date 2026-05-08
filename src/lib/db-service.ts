@@ -16,6 +16,7 @@ export interface FoodItem {
         sugar: string
     }
     recipes: Array<{ title: string; instructions: string[] }>
+    deletedAt?: string
 }
 
 export interface Micronutrient {
@@ -30,6 +31,7 @@ export interface Micronutrient {
     deficiencySigns: string[]
     dailyDose: string
     image: string
+    deletedAt?: string
 }
 
 export interface Course {
@@ -42,6 +44,7 @@ export interface Course {
     price: number
     paypalUrl?: string
     lessons?: Lesson[]
+    deletedAt?: string
 }
 
 export interface Lesson {
@@ -87,7 +90,7 @@ export const dbService = {
 
     // Alimentos con Auto-Sincronización y Depuración Silenciosa (Solución Definitiva)
     async getFoods(organizationId?: string) {
-        let query = supabase.from('Food').select('*')
+        let query = supabase.from('Food').select('*').is('deletedAt', null)
         if (organizationId) {
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
         }
@@ -206,7 +209,7 @@ export const dbService = {
     async deleteFood(id: string) {
         const { error } = await supabase
             .from('Food')
-            .delete()
+            .update({ deletedAt: new Date().toISOString() })
             .eq('id', id)
         if (error) throw error
         return true
@@ -214,7 +217,7 @@ export const dbService = {
 
     // Micronutrientes con Auto-Sincronización y Depuración Silenciosa
     async getMicronutrients(organizationId?: string) {
-        let query = supabase.from('Micronutrient').select('*')
+        let query = supabase.from('Micronutrient').select('*').is('deletedAt', null)
         if (organizationId) {
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
         }
@@ -307,7 +310,7 @@ export const dbService = {
     async deleteMicronutrient(id: string) {
         const { error } = await supabase
             .from('Micronutrient')
-            .delete()
+            .update({ deletedAt: new Date().toISOString() })
             .eq('id', id)
         if (error) throw error
         return true
@@ -343,6 +346,7 @@ export const dbService = {
             .from('User')
             .select('*, organization:Organization(*)')
             .eq('firebaseUid', firebaseUid)
+            .is('deletedAt', null)
             .maybeSingle()
 
         if (error) {
@@ -366,14 +370,21 @@ export const dbService = {
     },
 
     // Admin: Gestión de Usuarios
-    async getAllUsers(organizationId?: string) {
-        let query = supabase.from('User').select('*, organization:Organization(*)')
+    async getAllUsers(organizationId?: string, includeDeleted = false) {
+        let query = supabase.from('User').select('*, organization:Organization(*), evaluations:Evaluation(results)')
+        if (!includeDeleted) query = query.is('deletedAt', null)
+        
         if (organizationId) {
             query = query.eq('organizationId', organizationId)
         }
         const { data, error } = await query.order('name', { ascending: true })
         if (error) throw error
-        return data
+        
+        // Mapear para facilitar acceso al último resultado
+        return (data || []).map(u => ({
+            ...u,
+            metabolicResults: (u as any).evaluations?.[0]?.results || null
+        }));
     },
 
     async updateUserStatus(userId: string, status: 'ACTIVE' | 'BLOCKED' | 'OBSERVED') {
@@ -397,7 +408,7 @@ export const dbService = {
         
         const { error } = await supabase
             .from('User')
-            .delete()
+            .update({ deletedAt: new Date().toISOString() })
             .eq('id', userId)
             
         if (error) throw error
@@ -414,6 +425,7 @@ export const dbService = {
                 .from('User')
                 .select('*, organization:Organization(*)')
                 .eq('firebaseUid', firebaseUser.uid)
+                .is('deletedAt', null)
                 .maybeSingle();
 
             if (error) throw error;
@@ -424,6 +436,7 @@ export const dbService = {
                     .from('User')
                     .select('*, organization:Organization(*)')
                     .eq('email', email)
+                    .is('deletedAt', null)
                     .maybeSingle();
 
                 if (emailError) throw emailError;
@@ -569,8 +582,9 @@ export const dbService = {
     },
 
     // --- Módulo de Academia (SaaS) ---
-    async getCourses(organizationId?: string) {
+    async getCourses(organizationId?: string, includeDeleted = false) {
         let query = supabase.from('Course').select('*')
+        if (!includeDeleted) query = query.is('deletedAt', null)
         
         if (organizationId) {
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
@@ -620,7 +634,7 @@ export const dbService = {
     async deleteCourse(id: string) {
         const { error } = await supabase
             .from('Course')
-            .delete()
+            .update({ deletedAt: new Date().toISOString() })
             .eq('id', id)
 
         if (error) throw error
@@ -666,10 +680,11 @@ export const dbService = {
     },
 
     // Citas (Nuevo soporte multi-tenant en Supabase)
-    async getAppointments(userId: string, organizationId?: string) {
+    async getAppointments(userId: string, organizationId?: string, includeDeleted = false) {
         const internalId = await this.getInternalId(userId);
-
         let query = supabase.from('Appointment').select('*').eq('userId', internalId)
+        if (!includeDeleted) query = query.is('deletedAt', null)
+        
         if (organizationId) {
             query = query.eq('organizationId', organizationId)
         }
@@ -695,8 +710,10 @@ export const dbService = {
         if (error) throw error
         return data
     },
-    async getAllAppointments(organizationId?: string) {
+    async getAllAppointments(organizationId?: string, includeDeleted = false) {
         let query = supabase.from('Appointment').select('*, user:User(name, email)')
+        if (!includeDeleted) query = query.is('deletedAt', null)
+        
         if (organizationId) {
             query = query.eq('organizationId', organizationId)
         }
@@ -719,7 +736,7 @@ export const dbService = {
     async deleteAppointment(id: string) {
         const { error } = await supabase
             .from('Appointment')
-            .delete()
+            .update({ deletedAt: new Date().toISOString() })
             .eq('id', id)
         if (error) throw error
         return true
@@ -772,5 +789,82 @@ export const dbService = {
             }
         }
         return true;
+    },
+
+    // --- Módulo de Menús Diarios ---
+    async saveDailyMenu(userId: string, date: string, menuData: any, metabolicGoal?: string) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .upsert({
+                userId: internalId,
+                date,
+                menuData,
+                metabolicGoal,
+                updatedAt: new Date().toISOString()
+            }, { onConflict: 'userId,date' })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async getDailyMenu(userId: string, date: string) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .select('*')
+            .eq('userId', internalId)
+            .eq('date', date)
+            .is('deletedAt', null)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async getDailyMenus(userId: string) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .select('*')
+            .eq('userId', internalId)
+            .is('deletedAt', null)
+            .order('date', { ascending: false });
+
+        if (error) throw error;
+        return data;
+    },
+
+    // Recovery methods
+    async restoreFood(id: string) {
+        const { data, error } = await supabase.from('Food').update({ deletedAt: null }).eq('id', id).select().single();
+        if (error) throw error;
+        return data;
+    },
+
+    async restoreMicronutrient(id: string) {
+        const { data, error } = await supabase.from('Micronutrient').update({ deletedAt: null }).eq('id', id).select().single();
+        if (error) throw error;
+        return data;
+    },
+
+    async restoreCourse(id: string) {
+        const { data, error } = await supabase.from('Course').update({ deletedAt: null }).eq('id', id).select().single();
+        if (error) throw error;
+        return data;
+    },
+
+    async restoreUser(id: string) {
+        const { data, error } = await supabase.from('User').update({ deletedAt: null }).eq('id', id).select().single();
+        if (error) throw error;
+        return data;
+    },
+
+    async restoreAppointment(id: string) {
+        const { data, error } = await supabase.from('Appointment').update({ deletedAt: null }).eq('id', id).select().single();
+        if (error) throw error;
+        return data;
     }
 }

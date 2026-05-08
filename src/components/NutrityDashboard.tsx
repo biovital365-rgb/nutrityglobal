@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { motion, AnimatePresence } from "motion/react";
+import { z } from "zod";
+import { WeeklyMenuSchema } from "../lib/schemas";
+import * as aiService from "../lib/ai-service";
 import {
     Activity,
     Calendar,
@@ -168,32 +170,18 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         if (isGeneratingMenu) return;
         setIsGeneratingMenu(true);
         try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error("API Key missing");
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const validatedMenu = await aiService.generateAIWeeklyMenu(results, results.name || "Freddy");
+            setDynamicMenu(validatedMenu);
 
-            const prompt = `Eres un Chef Clínico especializado en Diabetes Tipo 2. 
-            Genera un menú semanal de 7 días (lunes a domingo) para ${results.name} que está en fase de ${results.phase}.
-            Su meta es: ${results.meta}.
-            Superfoods prioritarios a incluir: ${results.superfoods?.join(", ") || "Tarwi, Yacón, Maca"}.
-            
-            Reglas:
-            1. Carbohidratos complejos de bajo índice glucémico.
-            2. Proteína andina de alta biodisponibilidad.
-            3. Grasas saludables (Sacha Inchi, Palta).
-            
-            Retorna UNICAMENTE un objeto JSON con este formato:
-            {
-              "lunes": { "breakfast": "...", "lunch": "...", "snack": "...", "dinner": "...", "metabolicGoal": "..." },
-              "martes": { ... },
-              ... (hasta domingo)
-            }`;
-
-            const result = await model.generateContent(prompt);
-            const text = result.response.text();
-            const cleanJson = text.replace(/```json|```/g, '').trim();
-            setDynamicMenu(JSON.parse(cleanJson));
+            // Persistencia determinística
+            if (user?.uid) {
+                const today = new Date().toISOString().split('T')[0];
+                await dbService.saveDailyMenu({
+                    userId: user.uid,
+                    date: today,
+                    menuData: validatedMenu
+                });
+            }
         } catch (err) {
             console.error("Dynamic menu generation failed:", err);
             setDynamicMenu(weeklyMenuData);
@@ -202,11 +190,59 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         }
     };
 
-    useEffect(() => {
-        if (activeTab === "menu" && !dynamicMenu) {
-            generateDynamicMenu();
+    const handleRegenerateMeal = async (day: string, slot: string) => {
+        if (!dynamicMenu || !user?.uid || isGeneratingMenu) return;
+        
+        const currentMeal = dynamicMenu[day][slot];
+        // We set a temporary loading text
+        const tempMenu = { ...dynamicMenu, [day]: { ...dynamicMenu[day], [slot]: "Analizando biomarcadores para nueva opción..." } };
+        setDynamicMenu(tempMenu);
+        
+        try {
+            const newMeal = await aiService.regenerateMeal(results, day, slot, currentMeal);
+            
+            const updatedMenu = {
+                ...dynamicMenu,
+                [day]: {
+                    ...dynamicMenu[day],
+                    [slot]: newMeal
+                }
+            };
+            
+            setDynamicMenu(updatedMenu);
+            
+            // Persistencia
+            const today = new Date().toISOString().split('T')[0];
+            await dbService.saveDailyMenu({
+                userId: user.uid,
+                date: today,
+                menuData: updatedMenu
+            });
+        } catch (err) {
+            console.error("Meal regeneration failed:", err);
+            setDynamicMenu(dynamicMenu); // Rollback
         }
-    }, [activeTab]);
+    };
+
+    useEffect(() => {
+        const loadMenu = async () => {
+            if (activeTab === "menu" && user?.uid && !dynamicMenu) {
+                const today = new Date().toISOString().split('T')[0];
+                try {
+                    const savedMenu = await dbService.getDailyMenu(user.uid, today);
+                    if (savedMenu) {
+                        setDynamicMenu(savedMenu.menuData);
+                    } else if (!isGeneratingMenu) {
+                        generateDynamicMenu();
+                    }
+                } catch (err) {
+                    console.error("Error loading menu:", err);
+                    if (!isGeneratingMenu) generateDynamicMenu();
+                }
+            }
+        };
+        loadMenu();
+    }, [activeTab, user?.uid]);
 
     useEffect(() => {
         if (user?.uid && !isProfileComplete && activeTab !== "profile") {
@@ -408,81 +444,16 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         setIsTyping(true);
 
         try {
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            if (!apiKey) throw new Error("API Key de Gemini no encontrada.");
-
-            const genAI = new GoogleGenerativeAI(apiKey);
-            let model;
-            try {
-                model = genAI.getGenerativeModel({ model: "gemini-pro" });
-            } catch (e) {
-                console.warn("Gemini Pro failed, trying fallback");
-                model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            }
-
-            const weightVal = parseFloat(results.weight || user?.profile?.weight || "0");
-            const targetWeight = weightVal > 0 ? (weightVal * 0.85).toFixed(1) : null;
-
-            const systemPrompt = `Eres Nutrity Coach IA V7, un experto en Remisión Metabólica Clínica de Diabetes Tipo 2 y Medicina de Restauración Biológica.
-            
-            FUNDAMENTOS CLÍNICOS (NotebookLM Context):
-            1. Remisión: Definida como HbA1c < 6.5% sin medicación por al menos 3 meses.
-            2. El Target Maestro: Pérdida del 15% del peso corporal para limpiar la grasa ectópica (hígado/páncreas) y restaurar la función beta-celular.
-            3. Antropometría: El perímetro abdominal es el marcador crítico de grasa visceral.
-            
-            ENFOQUE NMG (Nueva Medicina Germánica):
-            - Entiende la diabetes como un conflicto biológico de "oposición" o "resistencia" con un matiz de "miedo-disgusto".
-            - Integra el estado emocional (PNL) del usuario para ayudarle a reprogramar la percepción de su condición de "condena" a "oportunidad de regeneración".
-            
-            DATOS DEL PACIENTE:
-            - Nombre: ${firstName}
-            - ID Sesión: ${user?.uid?.substring(0, 8)}
-            - Fase Actual: ${results.phase}
-            - Perímetro Abdominal: ${results.waist || 'No registrado'} cm
-            - Meta de Peso (15%): ${targetWeight ? targetWeight + ' kg' : 'Cálculo pendiente'}
-            - Score de Remisión: ${results.remissionScore}%
-            - Nivel de Estrés (PNL): ${results.stressLevel || 5}/10
-            
-            CATÁLOGO DE SUPERFOODS ANDINOS (Prioridad de prescripción):
-            - **Tarwi**: Altas proteínas y alcaloides para sensibilidad insulínica.
-            - **Yacón**: FOS (prebiótico) para control glucémico.
-            - **Maca Negra**: Resiliencia adrenal y energía mitocondrial.
-            - **Quinoa Negra**: Litio natural y minerales traza.
-            
-            REGLAS DE COMUNICACIÓN:
-            1. Rigor Científico: Habla de biogénesis mitocondrial, autofagia y señalización molecular.
-            2. Empoderamiento PNL: Usa un lenguaje que transforme el miedo en acción. Evita el tono paternalista.
-            3. Precisión: Máximo 250 palabras. Usa Markdown (**negrita**).
-            4. Seguridad: Si detectas hipoglucemia severa o síntomas de cetoacidosis, recomienda contacto médico inmediato.
-            
-            Responde como un científico que cree en el milagro biológico de la remisión mediante la disciplina y el conocimiento.`;
-
-            const chat = model.startChat({
-                history: [
-                    { role: "user", parts: [{ text: systemPrompt }] },
-                    { role: "model", parts: [{ text: "Entendido. Estoy listo para asistir a " + firstName + " con rigor científico y motivación clínica. ¿Cuál es su consulta?" }] },
-                    ...chatMessages.map(m => ({
-                        role: m.role === 'user' ? 'user' : 'model',
-                        parts: [{ text: m.text }],
-                    })).slice(-6) // Mantener contexto reciente
-                ],
+            const responseText = await aiService.getAICoachResponse([...chatMessages, userMsg], {
+                name: firstName,
+                phase: results.phase,
+                meta: results.meta
             });
-
-            const result = await chat.sendMessage(msgText);
-            const responseText = result.response.text();
 
             setChatMessages(prev => [...prev, { role: 'ai', text: responseText }]);
         } catch (err) {
             console.error("Gemini Error:", err);
-            let errorMessage = `Lo siento${firstName ? ' ' + firstName : ''}, hubo un problema de sincronía con la IA. Verificando red metabólica...`;
-            if (err instanceof Error) {
-                if (err.message.includes('429') || err.message.includes('quota')) {
-                    errorMessage = `He alcanzado el límite de consultas por minuto. Por favor, espera un momento.`;
-                } else if (err.message.includes('404')) {
-                    errorMessage = `Error de conexión con el modelo AI (404). Por favor, refresca la página o intenta de nuevo más tarde.`;
-                }
-            }
-            setChatMessages(prev => [...prev, { role: 'ai', text: errorMessage }]);
+            setChatMessages(prev => [...prev, { role: 'ai', text: "Lo siento, hubo un problema de sincronía con la IA. Verificando red metabólica..." }]);
         } finally {
             setIsTyping(false);
         }
@@ -810,9 +781,21 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                             <div key={course.id} className="nutrity-card overflow-hidden group hover:border-nutrity-accent transition-all flex flex-col">
                                                 <div className="h-48 overflow-hidden relative">
                                                     <img src={getDirectImageUrl(course.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={course.title} />
-                                                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">
-                                                        {course.category}
+                                                    <div className="absolute top-4 right-4 flex gap-2">
+                                                        {course.price > 0 && !user?.profile?.plan?.includes('ELITE') && (
+                                                            <div className="bg-amber-500 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-lg">
+                                                                <Shield className="w-3 h-3" /> Premium
+                                                            </div>
+                                                        )}
+                                                        <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">
+                                                            {course.category}
+                                                        </div>
                                                     </div>
+                                                    {course.price > 0 && !user?.profile?.plan?.includes('ELITE') && (
+                                                        <div className="absolute inset-0 bg-nutrity-primary/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Shield className="w-12 h-12 text-white opacity-50" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="p-8 flex-1 flex flex-col">
                                                     <h3 className="text-2xl font-bold mb-3">{course.title}</h3>
@@ -1136,7 +1119,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                             { label: "Snack", time: "04:30 PM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.snack, icon: Apple, color: "text-rose-500" },
                                             { label: "Cena", time: "07:30 PM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.dinner, icon: Heart, color: "text-indigo-500" }
                                         ].map((item, i) => (
-                                            <div key={i} className="nutrity-card p-10 space-y-8 flex flex-col group hover:border-nutrity-accent transition-all">
+                                            <div key={i} className="nutrity-card p-10 space-y-8 flex flex-col group hover:border-nutrity-accent transition-all relative">
                                                 <div className="flex justify-between items-start">
                                                     <div className={`w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>
                                                         <item.icon className="w-8 h-8" />
@@ -1147,11 +1130,18 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                     </div>
                                                 </div>
                                                 <p className="text-lg font-medium leading-relaxed italic text-nutrity-primary/80 flex-1">"{item.meal}"</p>
-                                                <div className="pt-6 border-t border-nutrity-border">
+                                                <div className="pt-6 border-t border-nutrity-border flex items-center justify-between">
                                                     <div className="flex items-center gap-2">
                                                         <Zap className="w-3 h-3 text-nutrity-accent" />
-                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent">Optimización Activa</span>
+                                                        <span className="text-[9px] font-bold uppercase tracking-widest text-nutrity-accent">Optimización Activa</span>
                                                     </div>
+                                                    <button 
+                                                        onClick={() => handleRegenerateMeal(selectedDay, item.label.toLowerCase() as any)}
+                                                        className="p-2 hover:bg-nutrity-bg rounded-lg text-nutrity-gray-text hover:text-nutrity-accent transition-all active:rotate-180 duration-500"
+                                                        title="Regenerar Plato con IA"
+                                                    >
+                                                        <Sparkles className="w-4 h-4" />
+                                                    </button>
                                                 </div>
                                             </div>
                                         ))

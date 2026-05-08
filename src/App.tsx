@@ -8,6 +8,8 @@ import { auth, db } from "./lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs } from "firebase/firestore";
 import { generateMetabolicPlan } from "./lib/metabolic-engine";
+import * as aiService from "./lib/ai-service";
+import { OnboardingDataSchema } from "./lib/schemas";
 import { dbService } from "./lib/db-service";
 import { jsPDF } from "jspdf";
 import { Download, X, CheckCircle2, LogOut } from "lucide-react";
@@ -22,6 +24,7 @@ export default function App() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isRestoringSession, setIsRestoringSession] = useState(true); // Evita flash de landing antes de cargar sesión
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
 
   useEffect(() => {
     console.log("DEBUG: showAuthModal state changed to ->", showAuthModal);
@@ -92,9 +95,21 @@ export default function App() {
   };
 
   const handleCompleteOnboarding = async (data: any) => {
+    setIsGeneratingPlan(true);
     try {
-      const plan = generateMetabolicPlan(data);
-      const processedResults = { ...plan, name: data.name, condition: data.condition };
+      let processedResults;
+      
+      try {
+        // Intentar generación con IA
+        const validatedData = OnboardingDataSchema.parse(data);
+        const aiPlan = await aiService.generateAILifePlan(validatedData);
+        processedResults = { ...aiPlan, name: data.name, condition: data.condition };
+      } catch (aiErr) {
+        console.warn("AI Plan generation failed, falling back to static engine:", aiErr);
+        // Fallback al motor estático
+        const plan = generateMetabolicPlan(data);
+        processedResults = { ...plan, name: data.name, condition: data.condition };
+      }
 
       setResults(processedResults);
 
@@ -122,7 +137,6 @@ export default function App() {
               type: "Virtual",
               status: "PROGRAMADA"
             });
-            console.log("Auto-diagnosis appointment scheduled for:", dateStr);
           } catch (apptErr) {
             console.error("Failed to schedule auto-appointment:", apptErr);
           }
@@ -135,6 +149,8 @@ export default function App() {
     } catch (err) {
       console.error("Onboarding logic failure:", err);
       setView("dashboard");
+    } finally {
+      setIsGeneratingPlan(false);
     }
   };
 
@@ -434,7 +450,7 @@ export default function App() {
         href="https://bit.ly/whatsapp-update-channel"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 left-6 z-[100] bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all active:scale-95 group flex items-center gap-2"
+        className="fixed bottom-24 left-6 md:bottom-6 md:left-6 z-[100] bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-all active:scale-95 group flex items-center gap-2"
         title="Canal de Actualizaciones"
       >
         <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
@@ -454,6 +470,29 @@ export default function App() {
             <div>
               <h3 className="text-xl font-display font-bold mb-2">Generando Reporte Profesional</h3>
               <p className="text-sm text-nutrity-gray-text">Sincronizando biomarcadores para auditoría médica...</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isGeneratingPlan && (
+        <div className="fixed inset-0 z-[400] bg-nutrity-primary/80 backdrop-blur-xl flex items-center justify-center p-6">
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-12 shadow-2xl flex flex-col items-center gap-8 text-center animate-in zoom-in-95 duration-500 ring-1 ring-white/20">
+            <div className="relative">
+              <div className="w-24 h-24 border-4 border-nutrity-accent/20 rounded-full"></div>
+              <div className="absolute inset-0 w-24 h-24 border-4 border-nutrity-accent border-t-transparent rounded-full animate-spin"></div>
+              <Brain className="absolute inset-0 m-auto w-10 h-10 text-nutrity-accent animate-pulse" />
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-3xl font-display font-bold text-nutrity-primary">Diseñando tu Ecosistema Metabólico</h3>
+              <p className="text-nutrity-gray-text font-medium leading-relaxed">
+                Nuestra IA está analizando tus biomarcadores andinos y principios de Medicina de Restauración para crear un plan 100% personalizado...
+              </p>
+              <div className="flex items-center justify-center gap-2 pt-2">
+                <span className="w-2 h-2 bg-nutrity-accent rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                <span className="w-2 h-2 bg-nutrity-accent rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                <span className="w-2 h-2 bg-nutrity-accent rounded-full animate-bounce"></span>
+              </div>
             </div>
           </div>
         </div>
