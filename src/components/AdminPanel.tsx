@@ -20,6 +20,7 @@ import {
     Activity,
     Calendar,
     FileText,
+    CheckCircle2,
 } from "lucide-react";
 import { dbService, FoodItem, Micronutrient, Course, Lesson } from "../lib/db-service";
 import { weeklyMenuData, DayMeal } from "../lib/menu-data";
@@ -179,6 +180,8 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [editingAppt, setEditingAppt] = useState<any>(null);
     const [showUserModal, setShowUserModal] = useState(false);
     const [editingUser, setEditingUser] = useState<any>(null);
+    const [showCardexModal, setShowCardexModal] = useState(false);
+    const [selectedCardexUser, setSelectedCardexUser] = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<{ type: AdminSection; id: string; name: string } | null>(null);
     const [apptFilter, setApptFilter] = useState<"ALL" | "DIAGNOSTICO" | "CONTROL">("ALL");
 
@@ -753,9 +756,9 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                     <thead>
                                         <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">
                                             <th className="py-4 px-6">Usuario</th>
+                                            <th className="py-4 px-6">Contacto / Ubicación</th>
                                             <th className="py-4 px-6">Metabolismo / NMG</th>
                                             <th className="py-4 px-6">Estado</th>
-                                            <th className="py-4 px-6">Plan</th>
                                             <th className="py-4 px-6 text-right">Acciones</th>
                                         </tr>
                                     </thead>
@@ -763,14 +766,20 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                         {filteredUsers.map((u) => (
                                             <tr key={u.id} className={`hover:bg-slate-50 transition-colors group ${(u as any).deletedAt ? 'opacity-50' : ''}`}>
                                                 <td className="py-4 px-6">
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setSelectedCardexUser(u); setShowCardexModal(true); }}>
                                                         <div className="w-10 h-10 rounded-full bg-nutrity-primary/10 flex items-center justify-center text-nutrity-primary font-bold text-xs">
                                                             {u.name?.charAt(0) || "U"}
                                                         </div>
                                                         <div>
-                                                            <span className="font-bold text-sm block">{u.name || "Sin nombre"}</span>
-                                                            <p className="text-[10px] text-nutrity-gray-text">{u.role || "PATIENT"}</p>
+                                                            <span className="font-bold text-sm block hover:text-nutrity-accent transition-colors">{u.name || "Sin nombre"}</span>
+                                                            <p className="text-[10px] text-nutrity-gray-text">{u.email}</p>
                                                         </div>
+                                                    </div>
+                                                </td>
+                                                <td className="py-4 px-6">
+                                                    <div className="space-y-0.5">
+                                                        <p className="text-xs font-medium text-nutrity-primary">{u.phone || 'No registrado'}</p>
+                                                        <p className="text-[10px] text-nutrity-gray-text">{u.address || 'Sin dirección'}</p>
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-6">
@@ -787,11 +796,13 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                                     )}
                                                 </td>
                                                 <td className="py-4 px-6">
-                                                    <span className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider ${u.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                                                        {u.status || 'ACTIVE'}
-                                                    </span>
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-center ${u.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                                            {u.status || 'ACTIVE'}
+                                                        </span>
+                                                        <span className="text-[9px] font-bold text-nutrity-accent text-center">{u.plan || "FREEMIUM"}</span>
+                                                    </div>
                                                 </td>
-                                                <td className="py-4 px-6 text-xs font-bold text-nutrity-primary">{u.plan || "FREEMIUM"}</td>
                                                 <td className="py-4 px-6">
                                                     <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                                                         {(u as any).deletedAt ? (
@@ -801,6 +812,10 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                                             </button>
                                                         ) : (
                                                             <>
+                                                                <button onClick={() => { setSelectedCardexUser(u); setShowCardexModal(true); }}
+                                                                    className="p-2 rounded-lg bg-nutrity-primary/10 text-nutrity-primary hover:bg-nutrity-primary hover:text-white transition-all" title="Ver Cardex">
+                                                                    <FileText className="w-4 h-4" />
+                                                                </button>
                                                                 <button onClick={() => { setEditingUser(u); setShowUserModal(true); }}
                                                                     className="p-2 rounded-lg bg-nutrity-accent/10 text-nutrity-accent hover:bg-nutrity-accent hover:text-white transition-all">
                                                                     <Pencil className="w-4 h-4" />
@@ -813,7 +828,6 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                                         )}
                                                     </div>
                                                 </td>
-                                            </tr>
                                         ))}
                                     </tbody>
                                 </table>
@@ -821,6 +835,142 @@ export function AdminPanel({ user }: AdminPanelProps) {
                         </div>
                     </motion.div>
                 )}
+
+            {/* BIO-CARDEX MODAL */}
+            <AnimatePresence>
+                {showCardexModal && selectedCardexUser && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[400] bg-nutrity-primary/60 backdrop-blur-md flex items-center justify-center p-4 md:p-10">
+                        <motion.div initial={{ scale: 0.9, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 30 }} className="bg-nutrity-bg w-full max-w-4xl rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden relative">
+                            {/* Cardex Header */}
+                            <div className="bg-white p-8 md:p-10 border-b border-nutrity-border flex flex-col md:flex-row justify-between gap-6 items-start">
+                                <div className="flex items-center gap-6">
+                                    <div className="w-20 h-20 rounded-3xl bg-nutrity-primary flex items-center justify-center text-white text-3xl font-bold shadow-xl shadow-nutrity-primary/20">
+                                        {selectedCardexUser.name?.charAt(0) || "U"}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-3">
+                                            <h3 className="text-3xl font-display font-bold">{selectedCardexUser.name || "Sin nombre"}</h3>
+                                            <span className="px-3 py-1 bg-nutrity-accent/10 text-nutrity-accent text-[10px] font-bold rounded-full uppercase tracking-widest">{selectedCardexUser.plan || "FREEMIUM"}</span>
+                                        </div>
+                                        <p className="text-nutrity-gray-text font-medium">{selectedCardexUser.email}</p>
+                                        <div className="flex items-center gap-4 pt-2">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-nutrity-primary">
+                                                <Shield className="w-3.5 h-3.5" /> {selectedCardexUser.role}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs font-bold text-emerald-600">
+                                                <CheckCircle2 className="w-3.5 h-3.5" /> {selectedCardexUser.status || "ACTIVE"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowCardexModal(false)} className="absolute top-8 right-8 p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 transition-all text-nutrity-gray-text">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            {/* Cardex Content */}
+                            <div className="flex-1 overflow-y-auto p-8 md:p-10 space-y-10">
+                                {/* Grid de Datos Rápidos */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-nutrity-border space-y-1">
+                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Celular</span>
+                                        <p className="font-bold text-nutrity-primary">{selectedCardexUser.phone || "---"}</p>
+                                    </div>
+                                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-nutrity-border space-y-1">
+                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Edad</span>
+                                        <p className="font-bold text-nutrity-primary">{selectedCardexUser.age || "---"} años</p>
+                                    </div>
+                                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-nutrity-border space-y-1">
+                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Estado Civil</span>
+                                        <p className="font-bold text-nutrity-primary">{selectedCardexUser.maritalStatus || "---"}</p>
+                                    </div>
+                                    <div className="bg-white p-5 rounded-3xl shadow-sm border border-nutrity-border space-y-1">
+                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Ocupación</span>
+                                        <p className="font-bold text-nutrity-primary">{selectedCardexUser.occupation || "---"}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid md:grid-cols-2 gap-10">
+                                    {/* Sección Médica */}
+                                    <div className="space-y-6">
+                                        <h4 className="text-xl font-display font-bold flex items-center gap-3">
+                                            <Activity className="w-6 h-6 text-nutrity-accent" />
+                                            Expediente Metabólico
+                                        </h4>
+                                        <div className="bg-white rounded-3xl p-6 shadow-sm border border-nutrity-border space-y-6">
+                                            {selectedCardexUser.metabolicResults ? (
+                                                <>
+                                                    <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                                                        <div className="space-y-1">
+                                                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Score de Remisión</span>
+                                                            <p className="text-2xl font-black text-emerald-700">{selectedCardexUser.metabolicResults.remissionScore}%</p>
+                                                        </div>
+                                                        <Zap className="w-8 h-8 text-emerald-500" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Insight IA</span>
+                                                        <p className="text-sm font-medium text-nutrity-primary italic leading-relaxed">
+                                                            "{selectedCardexUser.metabolicResults.insight || "Sin insight generado"}"
+                                                        </p>
+                                                    </div>
+                                                    <div className="pt-4 border-t border-nutrity-border">
+                                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-3 block">Pilares de Tratamiento</span>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {selectedCardexUser.metabolicResults.pillars?.map((p: any, i: number) => (
+                                                                <span key={i} className="px-3 py-1 bg-nutrity-bg text-nutrity-primary text-[10px] font-bold rounded-lg border border-nutrity-border">{p.title}</span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="py-10 text-center space-y-3 opacity-40">
+                                                    <AlertTriangle className="w-10 h-10 mx-auto" />
+                                                    <p className="text-sm font-bold uppercase tracking-widest">Sin Diagnóstico Realizado</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Sección de Contacto y Social */}
+                                    <div className="space-y-6">
+                                        <h4 className="text-xl font-display font-bold flex items-center gap-3">
+                                            <Users className="w-6 h-6 text-nutrity-accent" />
+                                            Información de Contacto
+                                        </h4>
+                                        <div className="bg-white rounded-3xl p-6 shadow-sm border border-nutrity-border space-y-4">
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Dirección Completa</span>
+                                                <p className="text-sm font-bold text-nutrity-primary">{selectedCardexUser.address || "No especificada"}</p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Redes Sociales</span>
+                                                <p className="text-sm font-bold text-nutrity-accent">{selectedCardexUser.socialMedia || "Sin redes registradas"}</p>
+                                            </div>
+                                            <div className="pt-4 border-t border-nutrity-border flex gap-4">
+                                                <a href={`https://wa.me/${selectedCardexUser.phone?.replace(/\+/g, '')}`} target="_blank" className="flex-1 py-3 rounded-2xl bg-[#25D366] text-white text-[10px] font-bold uppercase tracking-widest text-center shadow-lg shadow-green-500/20 hover:scale-105 transition-all">WhatsApp Directo</a>
+                                                <a href={`mailto:${selectedCardexUser.email}`} className="flex-1 py-3 rounded-2xl bg-nutrity-primary text-white text-[10px] font-bold uppercase tracking-widest text-center shadow-lg shadow-nutrity-primary/20 hover:scale-105 transition-all">Enviar Email</a>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Acciones de Cardex */}
+                                        <div className="bg-nutrity-primary text-white rounded-3xl p-6 space-y-4 shadow-xl shadow-nutrity-primary/20">
+                                            <p className="text-xs font-bold uppercase tracking-widest opacity-60">Control Administrativo</p>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button onClick={() => { setEditingUser(selectedCardexUser); setShowUserModal(true); setShowCardexModal(false); }} className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all text-xs font-bold flex items-center justify-center gap-2">
+                                                    <Pencil className="w-4 h-4" /> Editar
+                                                </button>
+                                                <button onClick={() => { setDeleteTarget({ type: 'users', id: selectedCardexUser.id, name: selectedCardexUser.name || selectedCardexUser.email }); setShowCardexModal(false); }} className="p-3 rounded-xl bg-red-500/20 hover:bg-red-500/40 transition-all text-xs font-bold text-red-200 flex items-center justify-center gap-2">
+                                                    <Trash2 className="w-4 h-4" /> Eliminar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
                 {section === "calendar" && (
                     <motion.div key="calendar-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
