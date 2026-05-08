@@ -6,14 +6,14 @@ const genAI = new GoogleGenerativeAI(apiKey);
 
 // Configuración de modelos con esquemas específicos
 const menuModel = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash-latest",
+    model: "gemini-1.5-flash",
     generationConfig: {
         responseMimeType: "application/json",
     }
 });
 
 const planModel = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash-latest",
+    model: "gemini-1.5-flash",
     generationConfig: {
         responseMimeType: "application/json",
     }
