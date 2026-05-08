@@ -160,8 +160,14 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [isProfileComplete, setIsProfileComplete] = useState(false);
 
     useEffect(() => {
-        const complete = !!(user?.profile?.phone && user?.profile?.address && user?.profile?.age);
-        setIsProfileComplete(complete);
+        // Solo marcar como completo si tenemos el objeto de perfil y los campos requeridos
+        if (user?.profile) {
+            const complete = !!(user.profile.phone && user.profile.address && user.profile.age);
+            setIsProfileComplete(complete);
+        } else {
+            // Mientras carga, no asumimos que está incompleto para evitar saltos de UI
+            setIsProfileComplete(true); 
+        }
     }, [user?.profile]);
 
     const [useSpecialDiet, setUseSpecialDiet] = useState(false);
@@ -254,10 +260,15 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     }, [activeTab, user?.uid]);
 
     useEffect(() => {
-        if (user?.uid && !isProfileComplete && activeTab !== "profile") {
+        // Redirigir a perfil SOLO si:
+        // 1. No es ADMIN (los admins tienen libertad total)
+        // 2. El perfil ya cargó pero está incompleto
+        const isAdmin = user?.profile?.role === 'ADMIN' || user?.email === 'biovital.365@gmail.com';
+        
+        if (user?.uid && user?.profile && !isProfileComplete && activeTab !== "profile" && !isAdmin) {
             setActiveTab("profile");
         }
-    }, [isProfileComplete, activeTab, user?.uid]);
+    }, [isProfileComplete, activeTab, user?.uid, user?.profile]);
 
     const handleAutoControl = async () => {
         if (!user?.uid) { onRequireAuth(); return; }
