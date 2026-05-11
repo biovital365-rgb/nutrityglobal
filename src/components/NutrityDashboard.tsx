@@ -600,7 +600,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         <button
                             onClick={onLogout}
                             title="Cerrar sesión"
-                            className="p-2.5 rounded-xl border border-nutrity-border text-nutrity-gray-text hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all"
+                            className="p-2.5 rounded-xl border border-red-100 text-red-500 bg-red-50/30 hover:bg-red-50 hover:text-red-600 transition-all"
                         >
                             <LogOut className="w-4 h-4" />
                         </button>
@@ -1694,21 +1694,29 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         { id: 'menu', icon: ClipboardCheck, label: 'Menú' },
                         { id: 'goals', icon: Target, label: 'Metas' },
                         { id: 'profile', icon: User, label: 'Perfil' },
-                    ].map((item) => {
+                        { id: 'logout', icon: LogOut, label: 'Salir', color: 'text-red-500' },
+                    ].map((item: any) => {
                         const isActive = activeTab === item.id;
-                        const isDisabled = !isProfileComplete && item.id !== 'profile';
+                        const isLogout = item.id === 'logout';
+                        const isDisabled = !isProfileComplete && item.id !== 'profile' && !isLogout;
                         const Icon = item.icon;
                         return (
                             <button
                                 key={item.id}
-                                onClick={() => !isDisabled && setActiveTab(item.id)}
+                                onClick={() => {
+                                    if (isLogout) {
+                                        onLogout();
+                                    } else if (!isDisabled) {
+                                        setActiveTab(item.id);
+                                    }
+                                }}
                                 disabled={isDisabled}
-                                className={`flex flex-col items-center gap-1.5 transition-all outline-none shrink-0 snap-center w-16 ${isActive ? 'text-nutrity-primary' : 'text-nutrity-gray-text opacity-60'} ${isDisabled ? "opacity-30 cursor-not-allowed" : ""}`}
+                                className={`flex flex-col items-center gap-1.5 transition-all outline-none shrink-0 snap-center w-16 ${isActive ? 'text-nutrity-primary' : (item.color || 'text-nutrity-gray-text opacity-60')} ${isDisabled ? "opacity-30 cursor-not-allowed" : ""}`}
                             >
-                                <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-nutrity-accent/20 text-nutrity-accent' : ''}`}>
-                                    <Icon className="w-6 h-6" />
+                                <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-nutrity-accent/20 text-nutrity-accent' : (isLogout ? 'bg-red-50' : '')}`}>
+                                    <Icon className={`w-6 h-6 ${isLogout ? 'text-red-500' : ''}`} />
                                 </div>
-                                <span className="text-[9px] font-bold uppercase tracking-wide truncate max-w-full text-center">{item.label}</span>
+                                <span className={`text-[9px] font-bold uppercase tracking-wide truncate max-w-full text-center ${isLogout ? 'text-red-500' : ''}`}>{item.label}</span>
                             </button>
                         );
                     })}
