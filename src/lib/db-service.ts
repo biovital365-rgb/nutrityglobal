@@ -791,21 +791,227 @@ export const dbService = {
         return true;
     },
 
-    // --- Módulo de Menús Diarios ---
-    async saveDailyMenu(userId: string, date: string, menuData: any, metabolicGoal?: string) {
+    // ─── Módulo de Menú Semanal con Flujo de Aprobación ─────────────────────────
+
+    /**
+     * Guarda los 7 días de un menú semanal con status PENDING.
+     * Llamado por el Admin después de generar con IA.
+     * weekStart: lunes de la semana en formato YYYY-MM-DD
+     * days: objeto { lunes: {breakfast, lunch, dinner, snack, metabolicGoal}, ... }
+     */
+    async saveWeeklyMenu(userId: string, weekStart: string, phase: string, days: Record<string, any>) {
+        const internalId = await this.getInternalId(userId);
+        const dayNames = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+        const offsets  = [0, 1, 2, 3, 4, 5, 6];
+        const base = new Date(weekStart + 'T12:00:00Z');
+
+        const rows = dayNames.map((dayName, i) => {
+            const d = new Date(base);
+            d.setUTCDate(base.getUTCDate() + offsets[i]);
+            const date = d.toISOString().split('T')[0];
+            const dayData = days[dayName] || {};
+            return {
+                id: crypto.randomUUID(),
+                userId: internalId,
+                date,
+                weekStart,
+                phase,
+                status: 'PENDING',
+                menuData: {
+                    breakfast:    dayData.breakfast    || '',
+                    lunch:        dayData.lunch        || '',
+                    dinner:       dayData.dinner       || '',
+                    snack:        dayData.snack        || '',
+                },
+                metabolicGoal: dayData.metabolicGoal || '',
+                updatedAt: new Date().toISOString(),
+            };
+        });
+
+        // Eliminar semana previa para este usuario si existe (re-generación)
+        await supabase
+            .from('DailyMenu')
+            .delete()
+            .eq('userId', internalId)
+            .eq('weekStart', weekStart);
+
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .insert(rows)
+            .select();
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Retorna los 7 registros de una semana específica para un usuario.
+     */
+    async getWeeklyMenu(userId: string, weekStart: string) {
         const internalId = await this.getInternalId(userId);
         const { data, error } = await supabase
             .from('DailyMenu')
-            .upsert({
-                userId: internalId,
-                date,
+            .select('*')
+            .eq('userId', internalId)
+            .eq('weekStart', weekStart)
+            .order('date', { ascending: true });
+
+        if (error) throw error;
+        return data || [];
+    },
+
+    /**
+     * Retorna el menú semanal APROBADO más reciente del usuario.
+     * El usuario ve este en su tab "Menú".
+     */
+    async getApprovedMenu(userId: string) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .select('*')
+            .eq('userId', internalId)
+            .eq('status', 'APPROVED')
+            .order('weekStart', { ascending: false })
+            .limit(7);
+
+        if (error) throw error;
+        return data || [];
+    },
+
+    /**
+     * Retorna el menú PENDIENTE más reciente (si existe) para un usuario.
+     */
+    async getPendingMenu(userId: string) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .select('*')
+            .eq('userId', internalId)
+            .eq('status', 'PENDING')
+            .order('weekStart', { ascending: false })
+            .limit(7);
+
+        if (error) throw error;
+        return data || [];
+    },
+
+    /**
+     * Admin aprueba todos los días de una semana.
+     */
+    async approveWeeklyMenu(userId: string, weekStart: string, adminEmail: string, notes?: string) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .update({
+                status:     'APPROVED',
+                approvedAt: new Date().toISOString(),
+                approvedBy: adminEmail,
+                adminNotes: notes || null,
+                updatedAt:  new Date().toISOString(),
+            })
+            .eq('userId', internalId)
+            .eq('weekStart', weekStart)
+            .select();
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Admin rechaza todos los días de una semana con notas.
+     */
+    async rejectWeeklyMenu(userId: string, weekStart: string, adminEmail: string, notes: string) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .update({
+                status:     'REJECTED',
+                approvedBy: adminEmail,
+                adminNotes: notes,
+                updatedAt:  new Date().toISOString(),
+            })
+            .eq('userId', internalId)
+            .eq('weekStart', weekStart)
+            .select();
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Admin edita un día específico del menú.
+     */
+    async updateDayMenu(recordId: string, menuData: any, metabolicGoal: string) {
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .update({
                 menuData,
                 metabolicGoal,
+                updatedAt: new Date().toISOString(),
+            })
+            .eq('id', recordId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Admin: obtiene todos los usuarios con su último estado de menú.
+     * Retorna un array de { userId, userName, userEmail, weekStart, status, phase }
+     */
+    async getAllMenusStatus(organizationId?: string) {
+        let query = supabase
+            .from('DailyMenu')
+            .select('userId, weekStart, status, phase, approvedAt, approvedBy, user:User(id, name, email)')
+            .order('weekStart', { ascending: false });
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        // Agrupar: un objeto por userId con el weekStart más reciente
+        const map: Record<string, any> = {};
+        for (const row of (data || [])) {
+            const uid = (row as any).userId;
+            if (!map[uid]) {
+                map[uid] = {
+                    userId:      uid,
+                    userName:    (row as any).user?.name  || 'Sin nombre',
+                    userEmail:   (row as any).user?.email || '',
+                    weekStart:   (row as any).weekStart,
+                    status:      (row as any).status,
+                    phase:       (row as any).phase,
+                    approvedAt:  (row as any).approvedAt,
+                    approvedBy:  (row as any).approvedBy,
+                };
+            }
+        }
+        return Object.values(map);
+    },
+
+    // ─── Compatibilidad con llamadas anteriores (no se rompe nada) ────────────
+    async saveDailyMenu(params: { userId: string; date: string; menuData: any; metabolicGoal?: string } | string, date?: string, menuData?: any, metabolicGoal?: string) {
+        // Soporte para llamada legacy: saveDailyMenu(userId, date, menuData)
+        let userId_: string, date_: string, menuData_: any, metabolicGoal_: string | undefined;
+        if (typeof params === 'object' && 'userId' in params) {
+            userId_ = params.userId; date_ = params.date; menuData_ = params.menuData; metabolicGoal_ = params.metabolicGoal;
+        } else {
+            userId_ = params as string; date_ = date!; menuData_ = menuData; metabolicGoal_ = metabolicGoal;
+        }
+        const internalId = await this.getInternalId(userId_);
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .upsert({
+                id: crypto.randomUUID(),
+                userId: internalId,
+                date: date_,
+                menuData: menuData_,
+                metabolicGoal: metabolicGoal_,
                 updatedAt: new Date().toISOString()
             }, { onConflict: 'userId,date' })
             .select()
             .single();
-
         if (error) throw error;
         return data;
     },
@@ -817,7 +1023,6 @@ export const dbService = {
             .select('*')
             .eq('userId', internalId)
             .eq('date', date)
-            .is('deletedAt', null)
             .maybeSingle();
 
         if (error) throw error;
@@ -830,7 +1035,6 @@ export const dbService = {
             .from('DailyMenu')
             .select('*')
             .eq('userId', internalId)
-            .is('deletedAt', null)
             .order('date', { ascending: false });
 
         if (error) throw error;

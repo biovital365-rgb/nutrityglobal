@@ -141,6 +141,56 @@ export default function App() {
           } catch (apptErr) {
             console.error("Failed to schedule auto-appointment:", apptErr);
           }
+
+          // --- GENERACIÓN AUTOMÁTICA DE MENÚ SEMANAL (PENDING) ---
+          // Se genera en background. El Coach lo aprobará antes de que el usuario lo vea.
+          try {
+            const phase: string = processedResults?.phase?.includes('Avanzada') ? 'Avanzada'
+              : processedResults?.phase?.includes('Intermedia') ? 'Intermedia'
+              : 'Iniciación';
+
+            const { GoogleGenerativeAI } = await import('@google/generative-ai');
+            const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+
+            const menuPrompt = `Eres un coach de nutrición clínica especializado en Remisión Metabólica con superalimentos andinos.
+Genera un plan de menú semanal para un paciente con diagnóstico: "${processedResults?.insight || 'Remisión metabólica'}".
+Fase de remisión: ${phase}.
+
+REGLAS:
+- Usa superalimentos andinos: Quinua, Kiwicha, Cañihua, Maca, Aguaymanto, Tarwi, Sacha Inchi, Cacao puro, Oca Morada.
+- Fase Iniciación: antiinflamatorio, bajo azúcar, fácil digestión, porciones moderadas.
+- Fase Intermedia: mayor variedad, incorporar flexibilidad metabólica.
+- Fase Avanzada: optimización hormonal, regeneración celular, máxima densidad nutricional.
+- Nombres de platillos concretos y reales, no genéricos.
+
+Responde SOLO con JSON válido, sin explicaciones ni código markdown:
+{
+  "lunes":    {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
+  "martes":   {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
+  "miercoles":{"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
+  "jueves":   {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
+  "viernes":  {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
+  "sabado":   {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
+  "domingo":  {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."}
+}`;
+
+            const aiResult = await model.generateContent(menuPrompt);
+            const rawText = aiResult.response.text().replace(/```json|```/g, '').trim();
+            const menuDays = JSON.parse(rawText);
+
+            // weekStart = lunes de la semana actual
+            const weekStart = new Date();
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Monday
+            const weekStartStr = weekStart.toISOString().split('T')[0];
+
+            await dbService.saveWeeklyMenu(user.uid, weekStartStr, phase, menuDays);
+            console.log(`[AutoMenu] Menú semanal PENDING generado para fase ${phase} — semana ${weekStartStr}`);
+          } catch (menuErr) {
+            // No bloquear el flujo principal si falla la generación del menú
+            console.error("[AutoMenu] Error generando menú automático:", menuErr);
+          }
+
         }).catch(err => {
           console.error("Supabase persistent save failed:", err);
         });

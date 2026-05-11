@@ -29,9 +29,10 @@
 *   **Assets**: Las imágenes 404 en el catálogo (ej. zinc, pumpkin seeds) deben ser cargadas manualmente a `public/` o actualizadas en la DB con URLs externas válidas.
 
 #### 🚀 Next Steps
-1.  **Carga de Assets**: Completar la biblioteca de imágenes de alimentos en el servidor.
-2.  **GEO Audit**: Preparar el contenido para ser indexable por motores de búsqueda generativos.
-3.  **Final Launch**: Revisión estética final de la landing page.
+1.  **Notificaciones Push/Email**: Avisar al paciente cuando su menú sea aprobado.
+2.  **Feedback del Usuario**: Botón "Solicitar Cambios" si el menú aprobado no le convence.
+3.  **GEO Audit**: Preparar el contenido para ser indexable por motores de búsqueda generativos.
+4.  **Final Launch**: Revisión estética final de la landing page.
 
  Datos**: Supabase (PostgreSQL) con Prisma ORM.
 - **IA**: Google Gemini (Pro/Flash).
@@ -51,11 +52,11 @@
     *   Dashboard de Auditoría en `AdminPanel.tsx` con visibilidad de resultados metabólicos.
     *   Alertas automáticas en CRM para pacientes con bajo puntaje de remisión.
     *   Filtros avanzados en calendario y gestión de usuarios (Bloqueo/Observación).
-- [x] **Fase 4: Monetización y Pulido Final** (Completado)
-    *   Implementación de Gating en Academia (Lock Premium UI).
-    *   Corrección de UI Móvil (WhatsApp button responsive).
-    *   Funcionalidad de Regeneración Parcial de Menú con IA.
-    *   Refinamiento de CSS Global para estética Premium Nature Biotech.
+- [x] **Fase 5: Flujo de Aprobación de Menús** (Completado)
+    *   Implementación de Admin Workflow para generación, edición y aprobación de menús.
+    *   Integración de estados PENDING/APPROVED en `DailyMenu` para control clínico.
+    *   Generación automática de menú semanal en background post-diagnóstico.
+    *   Dashboard de usuario actualizado para mostrar solo planes validados por Coach.
 
 ## Decisiones Arquitectónicas Recientes
 1.  **Regeneración Granular**: Se añadió el método `regenerateMeal` en el servicio de IA para permitir actualizaciones atómicas del menú sin reescribir la semana completa, optimizando el consumo de tokens y la experiencia de usuario.
@@ -64,6 +65,8 @@
 1.  **Visibilidad Admin de IA**: Se modificó `getAllUsers` para incluir un join con `Evaluation`, permitiendo a los administradores auditar el progreso metabólico real de cada usuario desde la tabla principal.
 2.  **Filtrado de Citas Local**: Implementado filtrado reactivo en el Admin Panel para separar "Diagnósticos Profundos" de "Controles de Seguimiento", optimizando el flujo de trabajo clínico.
 3.  **Aislamiento SaaS**: Todas las vistas administrativas ahora respetan estrictamente el `organizationId` del perfil del administrador, asegurando multi-tenancy.
+4.  **Flujo de Menú Validado**: Se estableció un "Air-gap" de aprobación. El usuario ya no recibe menús generados al vuelo por la IA sin supervisión; ahora el Coach debe revisar, editar si es necesario y dar click en "Aprobar" para que el plan sea visible en el dashboard del paciente.
+5.  **Generación Silenciosa (Background)**: Al terminar el onboarding, la IA genera el menú pero lo guarda como `PENDING`. Esto evita que el usuario vea un plan crudo y asegura que su primera interacción con la dieta sea con un plan ya validado profesionalmente.
 
 ---
 

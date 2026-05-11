@@ -198,6 +198,10 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
     const [useSpecialDiet, setUseSpecialDiet] = useState(false);
     const [dynamicMenu, setDynamicMenu] = useState<any>(null);
+    // ─── Menú Aprobado por Coach ─────────────────────────────────────────
+    const [approvedMenuDays, setApprovedMenuDays] = useState<any[]>([]);
+    const [menuStatus, setMenuStatus] = useState<'NONE' | 'PENDING' | 'APPROVED'>('NONE');
+    const [isLoadingApprovedMenu, setIsLoadingApprovedMenu] = useState(false);
 
     // --- EFECTOS DE SINCRONIZACIÓN ---
     useEffect(() => {
@@ -265,24 +269,36 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         }
     };
 
+    // ─── Carga del Menú Personalizado (Aprobado por Coach) ─────────────────────
     useEffect(() => {
-        const loadMenu = async () => {
-            if (activeTab === "menu" && user?.uid && !dynamicMenu) {
-                const today = new Date().toISOString().split('T')[0];
-                try {
-                    const savedMenu = await dbService.getDailyMenu(user.uid, today);
-                    if (savedMenu) {
-                        setDynamicMenu(savedMenu.menuData);
-                    } else if (!isGeneratingMenu) {
-                        generateDynamicMenu();
-                    }
-                } catch (err) {
-                    console.error("Error loading menu:", err);
-                    if (!isGeneratingMenu) generateDynamicMenu();
+        const loadApprovedMenu = async () => {
+            if (activeTab !== "menu" || !user?.uid || isLoadingApprovedMenu) return;
+            setIsLoadingApprovedMenu(true);
+            try {
+                // 1. Intentar obtener menú aprobado
+                const approved = await dbService.getApprovedMenu(user.uid);
+                if (approved.length > 0) {
+                    setApprovedMenuDays(approved);
+                    setMenuStatus('APPROVED');
+                    setIsLoadingApprovedMenu(false);
+                    return;
                 }
+                // 2. Si no hay aprobado, verificar si hay pendiente
+                const pending = await dbService.getPendingMenu(user.uid);
+                if (pending.length > 0) {
+                    setMenuStatus('PENDING');
+                } else {
+                    setMenuStatus('NONE');
+                }
+            } catch (err) {
+                console.error("Error loading approved menu:", err);
+                setMenuStatus('NONE');
+            } finally {
+                setIsLoadingApprovedMenu(false);
             }
         };
-        loadMenu();
+        loadApprovedMenu();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, user?.uid]);
 
     useEffect(() => {
@@ -1137,83 +1153,104 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
                         {activeTab === "menu" && (
                             <motion.div key="menu" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                {/* Header */}
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div className="space-y-1">
                                         <h2 className="text-3xl font-display font-bold">Menú Semanal de Precisión</h2>
-                                        <p className="text-nutrity-gray-text text-sm">Cronograma nutricional diseñado para tu meta de {results.meta}.</p>
+                                        <p className="text-nutrity-gray-text text-sm">Cronograma nutricional personalizado para tu fase de remisión metabólica.</p>
                                     </div>
-                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                        {Object.keys(dynamicMenu || weeklyMenuData).map((day) => (
-                                            <button
-                                                key={day}
-                                                onClick={() => setSelectedDay(day)}
-                                                className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${selectedDay === day ? 'bg-nutrity-accent text-white shadow-lg' : 'bg-white text-nutrity-gray-text border border-nutrity-border hover:border-nutrity-accent/30'}`}
-                                            >
-                                                {day}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="grid lg:grid-cols-4 gap-8">
-                                    {isGeneratingMenu ? (
-                                        <div className="lg:col-span-4 py-20 flex flex-col items-center gap-4">
-                                            <div className="w-12 h-12 border-4 border-nutrity-accent border-t-transparent rounded-full animate-spin" />
-                                            <p className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest">IA Cocinando tu menú personalizado...</p>
-                                        </div>
-                                    ) : (
-                                        [
-                                            { label: "Desayuno", time: "08:00 AM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.breakfast, icon: Coffee, color: "text-amber-500" },
-                                            { label: "Almuerzo", time: "01:00 PM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.lunch, icon: Utensils, color: "text-nutrity-accent" },
-                                            { label: "Snack", time: "04:30 PM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.snack, icon: Apple, color: "text-rose-500" },
-                                            { label: "Cena", time: "07:30 PM", meal: (dynamicMenu || weeklyMenuData)[selectedDay]?.dinner, icon: Heart, color: "text-indigo-500" }
-                                        ].map((item, i) => (
-                                            <div key={i} className="nutrity-card p-10 space-y-8 flex flex-col group hover:border-nutrity-accent transition-all relative">
-                                                <div className="flex justify-between items-start">
-                                                    <div className={`w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}>
-                                                        <item.icon className="w-8 h-8" />
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest opacity-40">{item.time}</p>
-                                                        <h4 className="font-bold text-nutrity-primary">{item.label}</h4>
-                                                    </div>
-                                                </div>
-                                                <p className="text-lg font-medium leading-relaxed italic text-nutrity-primary/80 flex-1">"{item.meal}"</p>
-                                                <div className="pt-6 border-t border-nutrity-border flex items-center justify-between">
-                                                    <div className="flex items-center gap-2">
-                                                        <Zap className="w-3 h-3 text-nutrity-accent" />
-                                                        <span className="text-[9px] font-bold uppercase tracking-widest text-nutrity-accent">Optimización Activa</span>
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => handleRegenerateMeal(selectedDay, item.label.toLowerCase() as any)}
-                                                        className="p-2 hover:bg-nutrity-bg rounded-lg text-nutrity-gray-text hover:text-nutrity-accent transition-all active:rotate-180 duration-500"
-                                                        title="Regenerar Plato con IA"
-                                                    >
-                                                        <Sparkles className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
+                                    {menuStatus === 'APPROVED' && (
+                                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-[10px] font-bold uppercase tracking-widest">
+                                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                            Plan Aprobado por Coach
+                                        </span>
                                     )}
                                 </div>
 
-                                <div className="nutrity-card bg-nutrity-primary p-8 text-white relative overflow-hidden">
-                                    <div className="relative z-10 flex items-center justify-between">
-                                        <div className="flex items-center gap-6">
-                                            <div className="w-16 h-16 rounded-3xl bg-white/10 flex items-center justify-center">
-                                                <Target className="w-8 h-8 text-nutrity-accent" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1">Meta Metabólica del Día</p>
-                                                <h4 className="text-2xl font-bold">{(dynamicMenu || weeklyMenuData)[selectedDay]?.metabolicGoal}</h4>
-                                            </div>
-                                        </div>
-                                        <div className="hidden md:block">
-                                            <button className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">Ver Recomendaciones Detalladas</button>
-                                        </div>
+                                {/* Loading state */}
+                                {isLoadingApprovedMenu && (
+                                    <div className="py-20 flex flex-col items-center gap-4">
+                                        <div className="w-10 h-10 border-4 border-nutrity-accent border-t-transparent rounded-full animate-spin" />
+                                        <p className="text-sm font-bold text-nutrity-gray-text">Cargando tu plan nutricional...</p>
                                     </div>
-                                    <div className="absolute top-0 right-0 w-64 h-64 bg-nutrity-accent/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                                </div>
+                                )}
+
+                                {/* ESTADO: APROBADO — mostrar los 7 días */}
+                                {!isLoadingApprovedMenu && menuStatus === 'APPROVED' && (
+                                    <div className="space-y-4">
+                                        {approvedMenuDays.map((record) => {
+                                            const dateLabel = new Date(record.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                                            return (
+                                                <div key={record.id} className="nutrity-card p-6 space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <h3 className="font-bold text-base capitalize">{dateLabel}</h3>
+                                                        <span className="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg">APROBADO</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                        {[
+                                                            { l: 'Desayuno', k: 'breakfast', icon: Coffee, color: 'text-amber-500 bg-amber-50' },
+                                                            { l: 'Almuerzo', k: 'lunch', icon: Utensils, color: 'text-nutrity-accent bg-nutrity-accent/5' },
+                                                            { l: 'Cena', k: 'dinner', icon: Heart, color: 'text-indigo-500 bg-indigo-50' },
+                                                            { l: 'Snack', k: 'snack', icon: Apple, color: 'text-rose-500 bg-rose-50' },
+                                                        ].map(({ l, k, icon: Icon, color }) => (
+                                                            <div key={k} className="bg-nutrity-bg rounded-xl p-3 space-y-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${color}`}>
+                                                                        <Icon className="w-3.5 h-3.5" />
+                                                                    </div>
+                                                                    <span className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest">{l}</span>
+                                                                </div>
+                                                                <p className="text-xs font-medium text-nutrity-primary leading-snug">{record.menuData?.[k] || '—'}</p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    {record.metabolicGoal && (
+                                                        <div className="flex items-center gap-2 pt-1">
+                                                            <Target className="w-3.5 h-3.5 text-nutrity-accent" />
+                                                            <span className="text-[10px] font-bold text-nutrity-accent">Meta del día: {record.metabolicGoal}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
+                                {/* ESTADO: PENDIENTE — en revisión por coach */}
+                                {!isLoadingApprovedMenu && menuStatus === 'PENDING' && (
+                                    <div className="nutrity-card p-16 flex flex-col items-center justify-center text-center space-y-6">
+                                        <div className="w-20 h-20 rounded-3xl bg-amber-50 flex items-center justify-center">
+                                            <ClipboardCheck className="w-10 h-10 text-amber-500" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-xl font-bold text-nutrity-primary">Tu plan está siendo revisado</h3>
+                                            <p className="text-sm text-nutrity-gray-text max-w-sm">Tu Coach Nutrity está revisando y personalizando tu menú semanal. Recibirás acceso en cuanto sea aprobado.</p>
+                                        </div>
+                                        <span className="px-6 py-3 bg-amber-50 text-amber-600 border border-amber-200 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                                            Pendiente de Aprobación
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* ESTADO: SIN MENÚ — aún no generado */}
+                                {!isLoadingApprovedMenu && menuStatus === 'NONE' && (
+                                    <div className="nutrity-card p-16 flex flex-col items-center justify-center text-center space-y-6">
+                                        <div className="w-20 h-20 rounded-3xl bg-nutrity-bg flex items-center justify-center">
+                                            <Utensils className="w-10 h-10 text-nutrity-gray-text opacity-40" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-xl font-bold text-nutrity-primary">Sin plan nutricional aún</h3>
+                                            <p className="text-sm text-nutrity-gray-text max-w-sm">Completa tu diagnóstico metabólico para que tu Coach pueda generar y aprobar tu menú personalizado de Remisión Metabólica.</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setActiveTab('main')}
+                                            className="px-8 py-3.5 bg-nutrity-accent text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-nutrity-accent/20 hover:scale-105 transition-all"
+                                        >
+                                            Ir al Dashboard Principal
+                                        </button>
+                                    </div>
+                                )}
                             </motion.div>
                         )}
 
