@@ -151,7 +151,7 @@ export default function App() {
 
             const { GoogleGenerativeAI } = await import('@google/generative-ai');
             const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-            const model = genAI.getGenerativeModel({ model: 'gemini-3-flash' });
+            const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
             const menuPrompt = `Eres un coach de nutrición clínica especializado en Remisión Metabólica con superalimentos andinos.
 Genera un plan de menú semanal para un paciente con diagnóstico: "${processedResults?.insight || 'Remisión metabólica'}".
