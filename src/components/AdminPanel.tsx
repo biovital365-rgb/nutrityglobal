@@ -175,6 +175,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [menuWeekDays, setMenuWeekDays] = useState<any[]>([]);
     const [isGeneratingAIMenu, setIsGeneratingAIMenu] = useState(false);
     const [isApprovingMenu, setIsApprovingMenu] = useState(false);
+    const [isLoadingMenu, setIsLoadingMenu] = useState(false);
     const [menuPhase, setMenuPhase] = useState<'Iniciación' | 'Intermedia' | 'Avanzada'>('Iniciación');
     const [editingMenuRecord, setEditingMenuRecord] = useState<any>(null);
     const [menuNotes, setMenuNotes] = useState("");
@@ -434,7 +435,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const sections: { id: AdminSection; icon: typeof Utensils; label: string; count: number }[] = [
         { id: "foods", icon: Utensils, label: "Alimentos", count: foods.length },
         { id: "micronutrients", icon: Zap, label: "Micronutrientes", count: micros.length },
-        { id: "menu", icon: ClipboardCheck, label: "Menú Semanal", count: Object.keys(menuDays).length },
+        { id: "menu", icon: ClipboardCheck, label: "Menú Semanal", count: users.filter(u => u.metabolicResults?.phase).length },
         { id: "courses", icon: BookOpen, label: "Cursos", count: courses.length },
         { id: "users", icon: Users, label: "Usuarios", count: users.length },
         { id: "calendar", icon: Calendar, label: "Calendario", count: appointments.length },
@@ -733,6 +734,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                             setSelectedMenuUser(u);
                                             setMenuWeekDays([]);
                                             setMenuNotes("");
+                                            setIsLoadingMenu(true);
                                             const phase = u.metabolicResults?.phase?.includes('Avanzada') ? 'Avanzada'
                                                 : u.metabolicResults?.phase?.includes('Intermedia') ? 'Intermedia' : 'Iniciación';
                                             setMenuPhase(phase as any);
@@ -744,7 +746,12 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                                 } else {
                                                     setMenuWeekDays(days);
                                                 }
-                                            } catch(e) { console.error(e); }
+                                            } catch(e) { 
+                                                console.error("Error loading menu:", e);
+                                                notify('error', 'Error al cargar el menú del paciente.');
+                                            } finally {
+                                                setIsLoadingMenu(false);
+                                            }
                                         }}
                                         className={`w-full text-left p-4 rounded-2xl border transition-all ${
                                             selectedMenuUser?.id === u.id
@@ -808,7 +815,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                                         try {
                                                             const { GoogleGenerativeAI } = await import('@google/generative-ai');
                                                             const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-                                                            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+                                                            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
                                                             const prompt = `Eres un coach de nutrición clínica especializado en Remisión Metabólica con superalimentos andinos.
 Genera un plan de menú semanal personalizado para un paciente en Fase ${menuPhase} del protocolo Nutrity.
 
@@ -830,8 +837,11 @@ Responde SOLO con JSON válido, sin texto adicional:
   "domingo":  {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."}
 }`;
                                                             const result = await model.generateContent(prompt);
-                                                            const text = result.response.text().replace(/```json|```/g, '').trim();
-                                                            const days = JSON.parse(text);
+                                                            const rawText = result.response.text();
+                                                            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                                                            if (!jsonMatch) throw new Error("La IA no devolvió un JSON válido");
+                                                            
+                                                            const days = JSON.parse(jsonMatch[0]);
                                                             const weekStart = new Date();
                                                             weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
                                                             const weekStartStr = weekStart.toISOString().split('T')[0];
@@ -907,10 +917,20 @@ Responde SOLO con JSON válido, sin texto adicional:
                                         </div>
 
                                         {/* Días del menú */}
-                                        {menuWeekDays.length === 0 ? (
-                                            <div className="py-16 text-center text-nutrity-gray-text opacity-40 space-y-2">
-                                                <ChefHat className="w-10 h-10 mx-auto" />
-                                                <p className="text-sm font-bold">Sin menú generado. Usa el botón "Generar con IA".</p>
+                                        {isLoadingMenu ? (
+                                            <div className="py-20 flex flex-col items-center justify-center space-y-4">
+                                                <Loader2 className="w-10 h-10 text-nutrity-accent animate-spin" />
+                                                <p className="text-sm font-bold text-nutrity-gray-text">Cargando menú...</p>
+                                            </div>
+                                        ) : menuWeekDays.length === 0 ? (
+                                            <div className="py-20 bg-slate-50/50 rounded-2xl border-2 border-dashed border-nutrity-border flex flex-col items-center justify-center text-nutrity-gray-text space-y-3">
+                                                <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                                    <ChefHat className="w-8 h-8 opacity-40" />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="font-bold text-sm">Sin menú semanal generado</p>
+                                                    <p className="text-xs opacity-60">Usa el botón "Generar con IA" para crear un plan nutricional.</p>
+                                                </div>
                                             </div>
                                         ) : (
                                             <div className="space-y-3">
