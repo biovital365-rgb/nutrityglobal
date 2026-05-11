@@ -849,9 +849,10 @@ Responde SOLO con JSON válido, sin texto adicional:
                                                             const saved = await dbService.getPendingMenu(selectedMenuUser.id);
                                                             setMenuWeekDays(saved);
                                                             notify('success', 'Menú generado con IA. Revisa y aprueba.');
-                                                        } catch(e) {
-                                                            console.error('AI menu error:', e);
-                                                            notify('error', 'Error al generar con IA.');
+                                                        } catch(e: any) {
+                                                            console.error('AI menu error detailed:', e);
+                                                            const errMsg = e.message || (typeof e === 'object' ? JSON.stringify(e) : 'Error desconocido');
+                                                            notify('error', `Error al generar: ${errMsg.substring(0, 50)}...`);
                                                         } finally {
                                                             setIsGeneratingAIMenu(false);
                                                         }
