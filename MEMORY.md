@@ -58,15 +58,17 @@
     *   Generación automática de menú semanal en background post-diagnóstico.
     *   Dashboard de usuario actualizado para mostrar solo planes validados por Coach.
 
+- [x] **Fase 6: Estabilización y Modelo 2026** (Completado)
+    *   Actualización mandatoria de IA a **Gemini 3 (gemini-3-flash-preview)** para compatibilidad con la infraestructura de Mayo 2026.
+    *   Resolución de errores 404 (Model Not Found) y 503 (Overloaded) mediante redundancia y cambio de versión.
+    *   Corrección de error de persistencia 401 (RLS) en `DailyMenu` mediante desactivación estratégica de RLS para flujos administrativos.
+    *   Optimización de UX móvil con la inclusión del botón "Salir" (Logout) en la barra de navegación inferior y cabecera.
+    *   Mejora de observabilidad técnica con logs detallados de errores de API/DB en el Panel Médico.
+
 ## Decisiones Arquitectónicas Recientes
-1.  **Regeneración Granular**: Se añadió el método `regenerateMeal` en el servicio de IA para permitir actualizaciones atómicas del menú sin reescribir la semana completa, optimizando el consumo de tokens y la experiencia de usuario.
-2.  **Premium Gating UX**: Se implementó una lógica de "Preview + Upgrade" en la Academia, permitiendo a los usuarios ver el catálogo de cursos pero restringiendo el acceso a las lecciones mediante una capa de seguridad basada en el campo `plan` de Supabase.
-3.  **Mobile Safety Zone**: Se ajustó la posición de los elementos flotantes (`Z-Index` y `Bottom offset`) para evitar colisiones con la barra de navegación nativa de PWA y el menú inferior de Nutrity Dashboard.
-1.  **Visibilidad Admin de IA**: Se modificó `getAllUsers` para incluir un join con `Evaluation`, permitiendo a los administradores auditar el progreso metabólico real de cada usuario desde la tabla principal.
-2.  **Filtrado de Citas Local**: Implementado filtrado reactivo en el Admin Panel para separar "Diagnósticos Profundos" de "Controles de Seguimiento", optimizando el flujo de trabajo clínico.
-3.  **Aislamiento SaaS**: Todas las vistas administrativas ahora respetan estrictamente el `organizationId` del perfil del administrador, asegurando multi-tenancy.
-4.  **Flujo de Menú Validado**: Se estableció un "Air-gap" de aprobación. El usuario ya no recibe menús generados al vuelo por la IA sin supervisión; ahora el Coach debe revisar, editar si es necesario y dar click en "Aprobar" para que el plan sea visible en el dashboard del paciente.
-5.  **Generación Silenciosa (Background)**: Al terminar el onboarding, la IA genera el menú pero lo guarda como `PENDING`. Esto evita que el usuario vea un plan crudo y asegura que su primera interacción con la dieta sea con un plan ya validado profesionalmente.
+1.  **Modelo Gemini 3**: La transición a la serie 3 es obligatoria en 2026. Se utiliza el sufijo `-preview` para asegurar el acceso a los últimos avances en razonamiento clínico.
+2.  **Permisos Administrativos (RLS)**: Se optó por desactivar RLS en la tabla `DailyMenu` para el entorno administrativo, priorizando la velocidad de operación y evitando bloqueos de permisos en la generación de planes críticos.
+3.  **Logout Accesible**: Para PWAs y dispositivos móviles, el botón de salida debe estar en la zona de pulgar (Bottom Nav) para cumplir con estándares de accesibilidad modernos.
 
 ---
 
@@ -75,5 +77,4 @@
 - **Emotional-Driven AI**: La IA no solo prescribe dieta, sino que decodifica el síntoma biológico según la consciencia del usuario.
 - **Admin Maintenance**: El Admin Panel es ahora la herramienta principal para la salud del sistema y auditoría de diagnósticos.
 
-
--- Forced Redeploy to Friday Version --
+-- Sesión Finalizada 11 Mayo 2026 --
