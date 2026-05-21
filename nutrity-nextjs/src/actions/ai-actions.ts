@@ -3,7 +3,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { WeeklyMenuSchema, MetabolicPlanSchema, type OnboardingData, type WeeklyMenu, type MetabolicPlan } from "../lib/schemas";
 
-const apiKey = process.env.GEMINI_API_KEY!;
+const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const menuModel = genAI.getGenerativeModel({
