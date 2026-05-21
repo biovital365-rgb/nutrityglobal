@@ -57,9 +57,9 @@ export async function generateAILifePlan(data: OnboardingData): Promise<Metaboli
         const cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
         const json = JSON.parse(cleanText);
         return MetabolicPlanSchema.parse(json);
-    } catch (error) {
+    } catch (error: any) {
         console.error("AI Life Plan generation failed:", error);
-        throw error;
+        return { _error: error.message || String(error) } as any;
     }
 }
 

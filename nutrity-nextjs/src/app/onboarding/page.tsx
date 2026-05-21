@@ -11,10 +11,12 @@ export default function OnboardingPage() {
 
   const handleComplete = async (data: any) => {
     try {
-      // 1. Llamar a Server Action para generar plan IA
       const plan = await generateAILifePlan(data);
+      if ((plan as any)._error) {
+        alert("Error de Servidor: " + (plan as any)._error);
+        return;
+      }
       
-      // 2. Obtener usuario actual para guardarlo
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id || 'guest';
       const organizationId = undefined; // No organization yet for onboarding
