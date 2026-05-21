@@ -54,7 +54,8 @@ export async function generateAILifePlan(data: OnboardingData): Promise<Metaboli
     try {
         const result = await planModel.generateContent(prompt);
         const text = result.response.text();
-        const json = JSON.parse(text);
+        const cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
+        const json = JSON.parse(cleanText);
         return MetabolicPlanSchema.parse(json);
     } catch (error) {
         console.error("AI Life Plan generation failed:", error);
@@ -90,7 +91,8 @@ export async function generateAIWeeklyMenu(plan: MetabolicPlan, userName: string
     try {
         const result = await menuModel.generateContent(prompt);
         const text = result.response.text();
-        const json = JSON.parse(text);
+        const cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
+        const json = JSON.parse(cleanText);
         return WeeklyMenuSchema.parse(json);
     } catch (error) {
         console.error("AI Weekly Menu generation failed:", error);
