@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 
 interface NutrityLandingProps {
+    user?: any;
     onStart: () => void;
     onAuthClick: () => void;
 }
