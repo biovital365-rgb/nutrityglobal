@@ -13,8 +13,9 @@ export const revalidate = 0;
 
 
 // ─── Dynamic metadata ─────────────────────────────────────────────────────────
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-    const post = await getPostBySlug(params.slug) as Post | null;
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+    const { slug } = await params;
+    const post = await getPostBySlug(slug) as Post | null;
     if (!post) return { title: "Artículo no encontrado | Nutrity Global" };
     return {
         title: `${post.title} | Nutrity Global Blog`,
@@ -29,8 +30,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
         },
     };
 }
-
-// Removed inline renderMarkdown
 
 // ─── Related Posts ────────────────────────────────────────────────────────────
 async function RelatedPosts({ currentSlug, category }: { currentSlug: string; category: string }) {
@@ -60,8 +59,9 @@ async function RelatedPosts({ currentSlug, category }: { currentSlug: string; ca
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-    const post = await getPostBySlug(params.slug) as Post | null;
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const post = await getPostBySlug(slug) as Post | null;
     if (!post || !post.isPublished) notFound();
 
     const readingTime = Math.max(1, Math.ceil(post.content.split(" ").length / 200));
