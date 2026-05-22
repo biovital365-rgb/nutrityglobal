@@ -4,6 +4,8 @@ import { getPosts } from "@/actions/db-actions";
 import type { Post } from "@/lib/types";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
     title: "Blog de Salud Metabólica | Nutrity Global",
     description: "Artículos de nutrición clínica, superalimentos andinos y protocolos de remisión metabólica. Contenido creado por expertos de Nutrity Global.",
