@@ -25,13 +25,13 @@ export default function OnboardingPage() {
       // Aseguramos incluir los datos de usuario si existen
       if (userId !== 'guest') {
         await saveEvaluation(userId, organizationId, data, plan);
+        router.push("/dashboard");
       } else {
         console.warn("Evaluation not saved in DB: user is a guest");
-        // We could store it in localStorage here if needed
+        sessionStorage.setItem("guest_evaluation", JSON.stringify({ data, plan }));
+        alert("¡Tu Bio-Plan ha sido generado con éxito! Regístrate gratis en el siguiente paso para verlo y guardarlo en tu cuenta.");
+        router.push("/auth?mode=register");
       }
-
-      // 4. Redirigir al Dashboard
-      router.push("/dashboard");
     } catch (err) {
       console.error("Error en onboarding:", err);
       alert("Hubo un error al generar tu plan. Por favor, intenta de nuevo.");

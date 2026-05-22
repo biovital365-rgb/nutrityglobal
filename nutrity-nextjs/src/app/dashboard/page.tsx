@@ -22,7 +22,24 @@ export default function DashboardPage() {
       setUser(user);
 
       try {
-        const evalData = await getLatestEvaluation(user.id);
+        let evalData = await getLatestEvaluation(user.id);
+        
+        // Recover guest evaluation if available
+        const guestEvalStr = sessionStorage.getItem("guest_evaluation");
+        if (guestEvalStr) {
+          try {
+            const guestEval = JSON.parse(guestEvalStr);
+            if (guestEval.data && guestEval.plan) {
+              const { saveEvaluation } = await import("@/actions/db-actions");
+              await saveEvaluation(user.id, undefined, guestEval.data, guestEval.plan);
+              sessionStorage.removeItem("guest_evaluation");
+              evalData = guestEval.plan; // Use the recovered plan immediately
+            }
+          } catch (e) {
+            console.error("Error recovering guest evaluation", e);
+          }
+        }
+        
         setEvaluation(evalData);
       } catch (err) {
         console.error("No evaluation found", err);
