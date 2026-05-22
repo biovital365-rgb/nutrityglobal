@@ -1,11 +1,10 @@
 import { login, signup } from "@/actions/auth-actions";
 import Link from "next/link";
 
-export default function AuthPage({
-  searchParams,
-}: {
-  searchParams: { error?: string; mode?: string };
+export default async function AuthPage(props: {
+  searchParams: Promise<{ error?: string; mode?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   const isRegister = searchParams.mode === "register";
 
   return (
