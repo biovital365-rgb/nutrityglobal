@@ -110,7 +110,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         saveAppointment,
         updateAppointment,
         deleteAppointment 
-    } = useNutrityData(user?.uid, organizationId);
+    } = useNutrityData((user?.id || user?.uid), organizationId);
 
     const [chatMessages, setChatMessages] = useState<any[]>([]);
     const [inputMessage, setInputMessage] = useState("");
@@ -219,7 +219,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             setDynamicMenu(validatedMenu);
 
             // Persistencia determinística
-            if (user?.uid) {
+            if ((user?.id || user?.uid)) {
                 const today = new Date().toISOString().split('T')[0];
                 await dbService.saveDailyMenu({
                     userId: user?.id,
@@ -236,7 +236,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     };
 
     const handleRegenerateMeal = async (day: string, slot: string) => {
-        if (!dynamicMenu || !user?.uid || isGeneratingMenu) return;
+        if (!dynamicMenu || !(user?.id || user?.uid) || isGeneratingMenu) return;
         
         const currentMeal = dynamicMenu[day][slot];
         // We set a temporary loading text
@@ -272,7 +272,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     // ─── Carga del Menú Personalizado (Aprobado por Coach) ─────────────────────
     useEffect(() => {
         const loadApprovedMenu = async () => {
-            if (activeTab !== "menu" || !user?.uid || isLoadingApprovedMenu) return;
+            if (activeTab !== "menu" || !(user?.id || user?.uid) || isLoadingApprovedMenu) return;
             setIsLoadingApprovedMenu(true);
             try {
                 // 1. Intentar obtener menú aprobado
@@ -299,7 +299,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         };
         loadApprovedMenu();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeTab, user?.uid]);
+    }, [activeTab, (user?.id || user?.uid)]);
 
     useEffect(() => {
         // Redirigir a perfil SOLO si:
@@ -307,13 +307,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         // 2. El perfil ya cargó pero está incompleto
         const isAdmin = user?.profile?.role === 'ADMIN' || user?.email === 'biovital.365@gmail.com';
         
-        if (user?.uid && user?.profile && !isProfileComplete && activeTab !== "profile" && !isAdmin) {
+        if ((user?.id || user?.uid) && user?.profile && !isProfileComplete && activeTab !== "profile" && !isAdmin) {
             setActiveTab("profile");
         }
-    }, [isProfileComplete, activeTab, user?.uid, user?.profile]);
+    }, [isProfileComplete, activeTab, (user?.id || user?.uid), user?.profile]);
 
     const handleAutoControl = async () => {
-        if (!user?.uid) { onRequireAuth(); return; }
+        if (!(user?.id || user?.uid)) { onRequireAuth(); return; }
         
         const nextDate = new Date();
         nextDate.setDate(nextDate.getDate() + 15);
@@ -352,7 +352,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         if (!user?.profile?.id) return;
         setIsSavingProfile(true);
         try {
-            await dbService.updateUserProfile(user.profile.id, profileForm);
+            await dbService.updateUserProfile((user?.id || user?.uid), profileForm);
             setIsProfileComplete(true);
             setNotification({ type: 'success', message: '¡Perfil actualizado correctamente!' });
             setTimeout(() => setNotification(null), 3000);
@@ -388,7 +388,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 setMicros(microData.length > 0 ? microData : micronutrientsData as any);
                 setCourses(courseData);
 
-                if (user?.uid) {
+                if ((user?.id || user?.uid)) {
                     const progressMap = await dbService.getLessonsProgress(user?.id);
                     setLessonProgress(progressMap);
                 }
@@ -416,7 +416,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
     const handleAddAppointment = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user?.uid) { setShowApptModal(false); onRequireAuth(); return; }
+        if (!(user?.id || user?.uid)) { setShowApptModal(false); onRequireAuth(); return; }
 
         if (!newAppt.title || !newAppt.date || !newAppt.time) {
             alert("Por favor completa todos los campos.");
@@ -474,7 +474,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
     const handleAddMeasurement = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user?.uid) { setShowMeasureModal(false); onRequireAuth(); return; }
+        if (!(user?.id || user?.uid)) { setShowMeasureModal(false); onRequireAuth(); return; }
 
         if (!newMeasure.value || !newMeasure.date || !newMeasure.time) {
             alert("Por favor completa todos los campos de medición.");
@@ -922,7 +922,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                     {selectedCourse.lessons?.sort((a, b) => a.order - b.order).map((lesson, idx) => (
                                                         <div key={lesson.id}
                                                             onClick={async () => {
-                                                                if (user?.uid) {
+                                                                if ((user?.id || user?.uid)) {
                                                                     const newStatus = !lessonProgress[lesson.id];
                                                                     await dbService.toggleLessonProgress(user?.id, lesson.id, newStatus);
                                                                     setLessonProgress(prev => ({ ...prev, [lesson.id]: newStatus }));

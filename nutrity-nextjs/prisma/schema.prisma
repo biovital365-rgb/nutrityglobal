@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,122 +10,121 @@ datasource db {
 model Organization {
   id           String          @id @default(cuid())
   name         String
-  users        User[]
-  measurements Measurement[]
-  appointments Appointment[]
-  evaluations  Evaluation[]
-  enrollments  Enrollment[]
-  courses      Course[]
-  foods        Food[]
-  micros       Micronutrient[]
   createdAt    DateTime        @default(now())
+  appointments Appointment[]
+  courses      Course[]
+  enrollments  Enrollment[]
+  evaluations  Evaluation[]
+  foods        Food[]
+  measurements Measurement[]
+  micros       Micronutrient[]
   Post         Post[]
+  users        User[]
 }
 
 model User {
   id               String        @id @default(uuid())
-  firebaseUid      String?       @unique // Link to Firebase Auth
+  firebaseUid      String?       @unique
   email            String        @unique
   name             String?
-  role             String        @default("USER") // ADMIN, COACH, USER
-  plan             String        @default("FREE") // FREE, BIO_PRO, ELITE
+  role             String        @default("USER")
+  plan             String        @default("FREE")
   stripeCustomerId String?       @unique
   subscriptionId   String?       @unique
   organizationId   String?
-  organization     Organization? @relation(fields: [organizationId], references: [id])
   phone            String?
   address          String?
   age              String?
   occupation       String?
   maritalStatus    String?
   socialMedia      String?
-  measurements     Measurement[]
-  appointments     Appointment[]
-  evaluations      Evaluation[]
-  enrollments      Enrollment[]
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
-  deletedAt        DateTime? // Soft Delete
+  deletedAt        DateTime?
+  appointments     Appointment[]
   dailyMenus       DailyMenu[]
+  enrollments      Enrollment[]
+  evaluations      Evaluation[]
+  measurements     Measurement[]
+  organization     Organization? @relation(fields: [organizationId], references: [id])
 }
 
 model Food {
   id                String        @id @default(cuid())
-  organizationId    String?
-  organization      Organization? @relation(fields: [organizationId], references: [id])
   name              String
   scientificName    String
   image             String
   category          String
   description       String
-  metabolicBenefits Json // Array of strings
-  nutrients         Json // { protein: string, fiber: string, sugar: string }
-  recipes           Json // Array of { title: string, instructions: string[] }
+  metabolicBenefits Json
+  nutrients         Json
+  recipes           Json
   createdAt         DateTime      @default(now())
-  deletedAt         DateTime? // Soft Delete
+  deletedAt         DateTime?
+  organizationId    String?
+  organization      Organization? @relation(fields: [organizationId], references: [id])
 }
 
 model Micronutrient {
   id              String        @id @default(cuid())
-  organizationId  String?
-  organization    Organization? @relation(fields: [organizationId], references: [id])
   name            String
   symbol          String
   category        String
   function        String
   metabolicImpact String
-  sources         Json // Array of strings
-  deficiencySigns Json // Array of strings
+  sources         Json
+  deficiencySigns Json
   dailyDose       String
   image           String?
   createdAt       DateTime      @default(now())
-  deletedAt       DateTime? // Soft Delete
+  deletedAt       DateTime?
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
 }
 
 model Measurement {
   id             String        @id @default(cuid())
   userId         String
-  user           User          @relation(fields: [userId], references: [id])
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  label          String // Glucose, Weight, etc.
+  label          String
   value          String
-  date           String // ISO Date string
-  time           String? // HH:mm
+  date           String
+  time           String?
   status         String?
   timestamp      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
 }
 
 model Appointment {
   id             String        @id @default(cuid())
   userId         String
-  user           User          @relation(fields: [userId], references: [id])
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
   title          String
-  date           String // ISO Date
+  date           String
   time           String?
-  type           String // Virtual, Lab, etc.
+  type           String
   status         String        @default("SCHEDULED")
   createdAt      DateTime      @default(now())
-  deletedAt      DateTime? // Soft Delete
+  deletedAt      DateTime?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
 }
 
 model Evaluation {
   id             String        @id @default(cuid())
   userId         String
-  user           User          @relation(fields: [userId], references: [id])
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  data           Json // Onboarding answers
-  results        Json // Generated plan
+  data           Json
+  results        Json
   timestamp      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
 }
 
 model Course {
   id             String        @id @default(cuid())
-  organizationId String? // Optional for global courses
-  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
   title          String
   description    String
   thumbnail      String
@@ -137,35 +133,36 @@ model Course {
   paypalUrl      String?
   currency       String        @default("USD")
   isPublished    Boolean       @default(true)
-  lessons        Lesson[]
-  enrollments    Enrollment[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  deletedAt      DateTime? // Soft Delete
+  deletedAt      DateTime?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  enrollments    Enrollment[]
+  lessons        Lesson[]
 }
 
 model Lesson {
   id          String   @id @default(cuid())
   courseId    String
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   title       String
   description String?
   videoUrl    String?
-  duration    String? // e.g., "15:30"
+  duration    String?
   order       Int
   isFree      Boolean  @default(false)
   createdAt   DateTime @default(now())
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model Enrollment {
   id             String        @id @default(cuid())
   userId         String
-  user           User          @relation(fields: [userId], references: [id])
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
   courseId       String
-  course         Course        @relation(fields: [courseId], references: [id])
   enrolledAt     DateTime      @default(now())
+  course         Course        @relation(fields: [courseId], references: [id])
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User          @relation(fields: [userId], references: [id])
 }
 
 model LessonProgress {
@@ -181,13 +178,13 @@ model LessonProgress {
 model DailyMenu {
   id            String    @id @default(cuid())
   userId        String
-  user          User      @relation(fields: [userId], references: [id])
-  date          String // ISO Date string YYYY-MM-DD
-  menuData      Json // { breakfast: string, lunch: string, ... }
+  date          String
+  menuData      Json
   metabolicGoal String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime? // Soft Delete
+  deletedAt     DateTime?
+  user          User      @relation(fields: [userId], references: [id])
 
   @@unique([userId, date])
 }
@@ -195,17 +192,17 @@ model DailyMenu {
 model Post {
   id             String        @id @default(cuid())
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
   title          String
   slug           String        @unique
-  content        String        @db.Text
+  content        String
   excerpt        String?
   thumbnail      String?
   category       String
-  tags           Json? // Array de strings
+  tags           Json?
   isPublished    Boolean       @default(false)
-  isPremium      Boolean       @default(false) // Solo para usuarios logueados
+  isPremium      Boolean       @default(false)
   author         String        @default("Nutrity Global")
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  organization   Organization? @relation(fields: [organizationId], references: [id])
 }

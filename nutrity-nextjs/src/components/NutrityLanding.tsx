@@ -24,7 +24,7 @@ interface NutrityLandingProps {
     onAuthClick: () => void;
 }
 
-export function NutrityLanding({ onStart, onAuthClick }: NutrityLandingProps) {
+export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingProps) {
     return (
         <div className="flex flex-col min-h-screen w-full bg-nutrity-bg text-nutrity-primary overflow-x-hidden">
             {/* Premium Navigation */}
