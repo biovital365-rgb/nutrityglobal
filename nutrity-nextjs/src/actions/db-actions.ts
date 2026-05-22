@@ -74,7 +74,6 @@ const userIdCache: Record<string, string> = {};
     // Helper para obtener ID interno de Supabase desde Firebase UID o el propio ID interno
 export async function getInternalId(idOrUid: string): Promise<string> {
         if (!idOrUid) return idOrUid;
-        if (idOrUid.length === 36 && idOrUid.includes('-')) return idOrUid;
         if (userIdCache[idOrUid]) return userIdCache[idOrUid];
         
         const { data, error } = await supabase
@@ -87,6 +86,11 @@ export async function getInternalId(idOrUid: string): Promise<string> {
             userIdCache[idOrUid] = data.id;
             return data.id;
         }
+        
+        if (idOrUid.length === 36 && idOrUid.includes('-')) {
+            return idOrUid;
+        }
+        
         return idOrUid;
 }
 

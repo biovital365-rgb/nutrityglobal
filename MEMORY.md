@@ -69,6 +69,8 @@
 1.  **Modelo Gemini 3**: La transición a la serie 3 es obligatoria en 2026. Se utiliza el sufijo `-preview` para asegurar el acceso a los últimos avances en razonamiento clínico.
 2.  **Permisos Administrativos (RLS)**: Se optó por desactivar RLS en la tabla `DailyMenu` para el entorno administrativo, priorizando la velocidad de operación y evitando bloqueos de permisos en la generación de planes críticos.
 3.  **Logout Accesible**: Para PWAs y dispositivos móviles, el botón de salida debe estar en la zona de pulgar (Bottom Nav) para cumplir con estándares de accesibilidad modernos.
+4.  **Resolución Híbrida de Usuarios (Firebase/Supabase)**: En la función `getInternalId`, se implementó una estrategia robusta que prioriza la búsqueda por `firebaseUid` incluso si el identificador entrante es un UUID (como los generados por Supabase Auth). Esto garantiza la integridad referencial en tablas como `Evaluation` cuando el ID autogenerado difiere del proveedor de autenticación.
+5.  **Auto-Sincronización en SSR**: Las páginas críticas del servidor (como `dashboard/page.tsx`) llaman proactivamente a `syncUserProfile` para crear el registro en la base de datos si el usuario recién se autenticó, evitando errores 500 y garantizando que se guarde el perfil de salud.
 
 ---
 
