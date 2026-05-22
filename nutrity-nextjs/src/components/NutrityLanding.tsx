@@ -43,8 +43,9 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                     <nav className="hidden md:flex items-center gap-10">
                         <a href="#metodo" className="text-sm font-semibold text-nutrity-gray-text hover:text-nutrity-accent transition-colors">Nuestro Método</a>
                         <a href="#ciencia" className="text-sm font-semibold text-nutrity-gray-text hover:text-nutrity-accent transition-colors">Ciencia</a>
+                        <a href="/blog" className="text-sm font-semibold text-nutrity-gray-text hover:text-nutrity-accent transition-colors">Blog</a>
                         <button
-                            onClick={onStart}
+                            onClick={onAuthClick}
                             className="bg-nutrity-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-nutrity-accent transition-all active:scale-95"
                         >
                             Acceso Pacientes
@@ -189,6 +190,7 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                         <span className="text-sm font-bold tracking-widest uppercase">Nutrity Global AI • 2025</span>
                     </div>
                     <div className="flex gap-8 text-[10px] font-bold text-nutrity-gray-text tracking-widest uppercase">
+                        <a href="/blog" className="hover:text-nutrity-accent">Blog</a>
                         <a href="#" className="hover:text-nutrity-accent">Ciencia</a>
                         <a href="#" className="hover:text-nutrity-accent">Privacidad</a>
                         <a href="#" className="hover:text-nutrity-accent">Términos</a>

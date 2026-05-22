@@ -22,6 +22,10 @@ export default function DashboardPage() {
       setUser(user);
 
       try {
+        // Ensure user is synced in DB
+        const { syncUserProfile } = await import("@/actions/db-actions");
+        await syncUserProfile({ uid: user.id, email: user.email }, user.user_metadata?.full_name);
+
         let evalData = await getLatestEvaluation(user.id);
         
         // Recover guest evaluation if available
