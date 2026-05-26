@@ -610,6 +610,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                             )}
                         </button>
                         <button
+                            onClick={() => window.location.href = '/'}
+                            title="Volver a Inicio"
+                            className="p-2.5 rounded-xl border border-nutrity-border text-nutrity-gray-text hover:bg-slate-50 transition-all lg:hidden"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                        <button
                             onClick={onLogout}
                             title="Cerrar sesión"
                             className="p-2.5 rounded-xl border border-red-100 text-red-500 bg-red-50/30 hover:bg-red-50 hover:text-red-600 transition-all"
