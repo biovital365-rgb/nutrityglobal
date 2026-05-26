@@ -12,7 +12,8 @@ import * as aiService from "./lib/ai-service";
 import { OnboardingDataSchema } from "./lib/schemas";
 import { dbService } from "./lib/db-service";
 import { jsPDF } from "jspdf";
-import { Download, X, CheckCircle2, LogOut } from "lucide-react";
+import html2canvas from "html2canvas";
+import { Download, X, CheckCircle2, LogOut, Brain } from "lucide-react";
 
 export default function App() {
   // V7.2 Nature Biotech Edition - Build Trigger
@@ -226,239 +227,38 @@ Responde SOLO con JSON válido, sin explicaciones ni código markdown:
 
     try {
       const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-      const margin = 20;
-      let y = 0;
+      const pages = ["pdf-page-1", "pdf-page-2", "pdf-page-3", "pdf-page-4"];
 
-      // --- HELPERS DE DISEÑO PREMIUM ---
-      const drawHeader = (title: string, subtitle: string, mainColor: number[]) => {
-        doc.setFillColor(248, 250, 252);
-        doc.rect(0, 0, 210, 45, 'F');
-        
-        doc.setFillColor(mainColor[0], mainColor[1], mainColor[2]);
-        doc.rect(0, 0, 5, 45, 'F');
-        
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(22);
-        doc.setTextColor(15, 23, 42);
-        doc.text(title, margin, 22);
-        
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(mainColor[0], mainColor[1], mainColor[2]);
-        doc.text(subtitle, margin, 30);
-        
-        doc.setDrawColor(mainColor[0], mainColor[1], mainColor[2]);
-        doc.setLineWidth(1);
-        doc.line(margin, 35, 55, 35);
-      };
+      for (let i = 0; i < pages.length; i++) {
+        const pageId = pages[i];
+        const element = document.getElementById(pageId);
+        if (!element) {
+          console.warn(`Element with ID ${pageId} not found.`);
+          continue;
+        }
 
-      const drawSectionTitle = (title: string, yPos: number, accentColor: number[]) => {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(13);
-        doc.setTextColor(15, 23, 42);
-        doc.text(title, margin, yPos);
-        doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
-        doc.setLineWidth(0.5);
-        doc.line(margin, yPos + 2, 190, yPos + 2);
-      };
+        // Capture with html2canvas (high resolution scale: 2)
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#fdfcf9'
+        });
 
-      const addFooter = (pageNum: number) => {
-        doc.setFontSize(8);
-        doc.setTextColor(148, 163, 184);
-        doc.text(`BioVital 365 | Reporte de Precisión Biológica | Página ${pageNum}`, margin, 285);
-        doc.text("Nutrity Global AI - Protocolo de Remisión Metabólica", 130, 285);
-      };
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
-      // --- PÁGINA 1: AUDITORÍA DE SALUD REAL & RUTA ---
-      drawHeader("AUDITORÍA DE REMISIÓN", "PROTOCOLO DE PRECISIÓN BIO-VITAL 365", [20, 184, 166]);
-      y = 60;
+        if (i > 0) {
+          doc.addPage();
+        }
+        // A4 standard dimensions: 210mm x 297mm
+        doc.addImage(imgData, "JPEG", 0, 0, 210, 297);
+      }
 
-      // Ficha Paciente Dark Mode Style
-      doc.setFillColor(15, 23, 42);
-      doc.roundedRect(margin, y, 170, 35, 4, 4, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      const pName = (results.name || user?.profile?.name || "PACIENTE").toUpperCase();
-      doc.text(pName, margin + 10, y + 12);
-      
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(200, 200, 200);
-      doc.text(`ESTADO: ${results.phase || 'Activación'}`, margin + 10, y + 20);
-      doc.text(`SCORE: ${results.remissionScore}% OPTIMIZADO`, margin + 10, y + 26);
-      
-      doc.setDrawColor(255, 255, 255);
-      doc.line(110, y + 8, 110, y + 28);
-      doc.text(`ID CLÍNICO: ${user?.uid?.substring(0, 12)}`, 115, y + 12);
-      doc.text(`FECHA: ${new Date().toLocaleDateString('es-ES')}`, 115, y + 20);
-      doc.text(`COACH IA: Gemini 1.5 Clinical`, 115, y + 26);
-
-      y += 50;
-      drawSectionTitle("I. DIAGNÓSTICO METABÓLICO REAL (IA)", y, [20, 184, 166]);
-      y += 10;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(51, 65, 85);
-      const insightTxt = results.insight || "Análisis en proceso...";
-      const lines = doc.splitTextToSize(insightTxt, 170);
-      doc.text(lines, margin, y);
-      y += (lines.length * 6) + 10;
-
-      drawSectionTitle("II. RUTA DE REMISIÓN METABÓLICA", y, [20, 184, 166]);
-      y += 12;
-      const phases = [
-        { label: "FASE 1", title: "Desinflamación", desc: "Reset celular", ok: true },
-        { label: "FASE 2", title: "Flexibilidad", desc: "Quema grasa", ok: results.remissionScore > 40 },
-        { label: "FASE 3", title: "Remisión", desc: "Glucosa Basal", ok: results.remissionScore > 70 },
-        { label: "FASE 4", title: "Vitalidad", desc: "Libertad total", ok: results.remissionScore > 90 }
-      ];
-
-      phases.forEach((p, i) => {
-        const px = margin + (i * 42.5);
-        doc.setFillColor(p.ok ? 20 : 241, p.ok ? 184 : 245, p.ok ? 166 : 249);
-        doc.roundedRect(px, y, 38, 20, 2, 2, 'F');
-        doc.setTextColor(p.ok ? 255 : 148, p.ok ? 255 : 163, p.ok ? 255 : 184);
-        doc.setFontSize(7);
-        doc.setFont("helvetica", "bold");
-        doc.text(p.label, px + 5, y + 6);
-        doc.setFontSize(8);
-        doc.text(p.title, px + 5, y + 11);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(6);
-        doc.text(p.desc, px + 5, y + 15);
-      });
-
-      addFooter(1);
-
-      // --- PÁGINA 2: MENÚ PERSONALIZADO & TRACKER ---
-      doc.addPage();
-      drawHeader("CRONOGRAMA DE PRECISIÓN", "PLAN NUTRICIONAL Y SEGUIMIENTO DE ADHERENCIA", [21, 128, 61]);
-      y = 55;
-
-      const days = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"];
-      const menu = weeklyMenu || {};
-
-      // Header Tabla
-      doc.setFillColor(31, 41, 55);
-      doc.rect(margin, y, 170, 8, 'F');
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.setTextColor(255, 255, 255);
-      doc.text("DÍA", margin + 2, y + 5.5);
-      doc.text("MENÚ PROGRAMADO", margin + 20, y + 5.5);
-      doc.text("CUMPLIDO", 175, y + 5.5);
-
-      y += 8;
-      days.forEach(day => {
-        const d = menu[day] || { breakfast: "-", lunch: "-", snack: "-", dinner: "-" };
-        doc.setFillColor(255, 255, 255);
-        doc.setDrawColor(226, 232, 240);
-        doc.rect(margin, y, 170, 26, 'DF');
-        
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(21, 128, 61);
-        doc.text(day.toUpperCase().substring(0, 3), margin + 2, y + 14);
-        
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(51, 65, 85);
-        doc.text(`D: ${d.breakfast}`, margin + 20, y + 6);
-        doc.text(`A: ${d.lunch}`, margin + 20, y + 11);
-        doc.text(`M: ${d.snack}`, margin + 20, y + 16);
-        doc.text(`C: ${d.dinner}`, margin + 20, y + 21);
-        
-        doc.rect(180, y + 11, 4, 4); // Checkbox
-        y += 26;
-      });
-
-      y += 10;
-      drawSectionTitle("SEMÁFORO DE CONTROL DIARIO", y, [21, 128, 61]);
-      y += 10;
-      const semaforo = [
-        { c: [34, 197, 94], l: "VERDE", d: "Glucosa estable, energía constante, sin hambre entre horas." },
-        { c: [234, 179, 8], l: "AMARILLO", d: "Leve cansancio o antojos. Revisar dosis de micronutrientes." },
-        { c: [239, 68, 68], l: "ROJO", d: "Pico de glucosa o inflamación. Detener y ajustar protocolo." }
-      ];
-
-      semaforo.forEach(s => {
-        doc.setFillColor(s.c[0], s.c[1], s.c[2]);
-        doc.circle(margin + 4, y - 1, 2, 'F');
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(s.c[0], s.c[1], s.c[2]);
-        doc.text(s.l, margin + 10, y);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(71, 85, 105);
-        doc.text(s.d, margin + 30, y);
-        y += 8;
-      });
-
-      addFooter(2);
-
-      // --- PÁGINA 3: BIODESCODIFICACIÓN ---
-      doc.addPage();
-      drawHeader("BIODESCODIFICACIÓN", "EL MENSAJE EMOCIONAL DETRÁS DEL SÍNTOMA", [219, 39, 119]);
-      y = 55;
-
-      doc.setFillColor(255, 241, 242);
-      doc.roundedRect(margin, y, 170, 50, 4, 4, 'F');
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(190, 18, 60);
-      doc.text("RAÍZ EMOCIONAL DETECTADA:", margin + 8, y + 10);
-      
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(9);
-      doc.setTextColor(159, 18, 57);
-      const bioMsg = results.biodescodificacion || "Tu resistencia metabólica es un mensaje de tu cuerpo indicando la necesidad de protección. La sanación comienza al soltar la lucha.";
-      const bioLines = doc.splitTextToSize(bioMsg, 155);
-      doc.text(bioLines, margin + 8, y + 20);
-
-      y += 65;
-      drawSectionTitle("RECOMENDACIONES DE CONSCIENCIA", y, [219, 39, 119]);
-      y += 12;
-      const tips = results.biodescodificacionRecommendations || [
-        "Identifica qué situación actual te hace sentir que debes 'defenderte'.",
-        "Practica la respiración consciente 3 veces al día.",
-        "Agradece a tu síntoma por avisarte que hay algo que resolver.",
-        "Sustituye la palabra 'restricción' por 'elección consciente'."
-      ];
-
-      tips.forEach(t => {
-        doc.setFillColor(219, 39, 119);
-        doc.circle(margin + 3, y - 1, 1, 'F');
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(9);
-        doc.setTextColor(51, 65, 85);
-        doc.text(t, margin + 8, y);
-        y += 10;
-      });
-
-      y += 15;
-      drawSectionTitle("CHECKLIST DE CUMPLIMIENTO", y, [219, 39, 119]);
-      y += 10;
-      const tasks = [
-        "¿Cumplí con el protocolo de hidratación?",
-        "¿Consumí los superfoods recomendados?",
-        "¿Realicé mi práctica de consciencia/respiración?",
-        "¿Escuché a mi cuerpo antes de comer?"
-      ];
-
-      tasks.forEach(t => {
-        doc.setDrawColor(203, 213, 225);
-        doc.rect(margin, y - 3, 4, 4);
-        doc.text(t, margin + 8, y);
-        y += 8;
-      });
-
-      addFooter(3);
-
+      const pName = (results.name || "PACIENTE").toUpperCase().replace(/\s+/g, "_");
       doc.save(`REPORTE-BIO-VITAL-${pName}.pdf`);
     } catch (err) {
-      console.error("PDF Error:", err);
-      alert("Error al generar el reporte.");
+      console.error("PDF html2canvas Error:", err);
+      alert("Error al generar el reporte PDF.");
     } finally {
       setIsGeneratingPDF(false);
     }
@@ -466,6 +266,11 @@ Responde SOLO con JSON válido, sin explicaciones ni código markdown:
 
   return (
     <div className="min-h-screen bg-nutrity-bg text-nutrity-primary font-body">
+      {results && (
+        <div style={{ position: 'absolute', top: '-9999px', left: '-9999px', width: '1000px', zIndex: -1000, overflow: 'visible' }}>
+          <NutrityReportTemplate results={results} />
+        </div>
+      )}
       <main>
         {/* Pantalla de carga mientras Firebase verifica la sesión */}
         {isRestoringSession ? (

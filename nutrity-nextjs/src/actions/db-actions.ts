@@ -363,16 +363,18 @@ export async function getUserProfile(firebaseUid: string) {
 }
 
 export async function updateUserProfile(userId: string, profileData: Partial<any>) {
+        // Resolve firebaseUid -> internal DB UUID before updating
+        const internalId = await getInternalId(userId);
         const { email, ...safeData } = profileData;
         const { data, error } = await supabase
             .from('User')
-            .update(safeData)
-            .eq('id', userId)
+            .update({ ...safeData, updatedAt: new Date().toISOString() })
+            .eq('id', internalId)
             .select('*, organization:Organization(*)')
-            .single()
+            .single();
 
-        if (error) throw error
-        return data
+        if (error) throw error;
+        return data;
 }
 
     // Admin: Gestión de Usuarios
@@ -481,8 +483,8 @@ export async function syncUserProfile(firebaseUser: any, name?: string) {
                     if (createError) throw createError;
                     profile = created;
                 }
-            } else if (isAdminEmail && profile.role !== 'ADMIN') {
-                // 4. Asegurar que SuperAdmins tengan el rol correcto si ya existen
+            } else if (isAdminEmail && (profile.role !== 'ADMIN' || profile.plan !== 'ELITE')) {
+                // 4. Asegurar que SuperAdmins tengan el rol y plan correcto si ya existen
                     const { data: upgraded, error: upgradeError } = await supabase
                         .from('User')
                         .update({ 

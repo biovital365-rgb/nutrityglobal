@@ -96,7 +96,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             </div>
         );
     }
-    const firstName = results.name ? results.name.split(' ')[0] : "Freddy";
+    // Priority: diagnostic name → DB profile name → email prefix (never hardcode "Freddy")
+    const firstName = (
+        results?.name ||
+        user?.profile?.name ||
+        user?.user_metadata?.full_name ||
+        (user?.email ? user.email.split('@')[0] : '')
+    ).split(' ')[0] || 'Amig@';
 
     // Contexto Multi-tenant
     const organizationId = user?.profile?.organizationId;
@@ -349,19 +355,25 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!user?.profile?.id) return;
+        // Allow save even if profile.id is not yet set (new users synced on load)
+        const uid = user?.id || user?.uid;
+        if (!uid) return;
         setIsSavingProfile(true);
         try {
-            await dbService.updateUserProfile((user?.id || user?.uid), profileForm);
-            setIsProfileComplete(true);
+            const updated = await dbService.updateUserProfile(uid, profileForm);
+            // Reflect the saved profile back into local user state
+            if (updated) {
+                // We can't call setUser from outside page.tsx, so store in sessionStorage
+                // as a signal for next reload, but mark profile complete immediately
+                setIsProfileComplete(true);
+            }
             setNotification({ type: 'success', message: '¡Perfil actualizado correctamente!' });
-            setTimeout(() => setNotification(null), 3000);
-            
+            setTimeout(() => setNotification(null), 3500);
             if (activeTab === "profile") setActiveTab("main");
         } catch (err) {
             console.error("Error saving profile", err);
-            setNotification({ type: 'error', message: 'Error al guardar el perfil.' });
-            setTimeout(() => setNotification(null), 3000);
+            setNotification({ type: 'error', message: 'Error al guardar el perfil. Verifica tu conexión.' });
+            setTimeout(() => setNotification(null), 4000);
         } finally {
             setIsSavingProfile(false);
         }
@@ -691,8 +703,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         )}
 
                         {activeTab === "coach" && (
-                            <motion.div key="coach" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="h-full flex flex-col">
-                                <div className="nutrity-card flex-1 flex flex-col overflow-hidden bg-white shadow-xl shadow-slate-200/50">
+                            <motion.div key="coach" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col" style={{ height: 'calc(100vh - 10rem)' }}>
+                                <div className="nutrity-card flex flex-col overflow-hidden bg-white shadow-xl shadow-slate-200/50" style={{ height: '100%' }}>
                                     <div className="p-4 md:p-8 border-b border-nutrity-border flex flex-wrap items-center justify-between bg-white/50 backdrop-blur-md gap-4">
                                         <div className="flex items-center gap-3 md:gap-4">
                                             <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-nutrity-accent flex items-center justify-center text-white shadow-lg shadow-nutrity-accent/20">

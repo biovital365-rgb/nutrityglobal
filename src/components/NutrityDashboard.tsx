@@ -44,7 +44,8 @@ import {
     LogOut,
     User,
     Trash2,
-    Pencil
+    Pencil,
+    MessageSquare
 } from "lucide-react";
 import { foodCatalog } from "../lib/food-data";
 import { micronutrientsData } from "../lib/micronutrients-data";
@@ -52,10 +53,11 @@ import { weeklyMenuData } from "../lib/menu-data";
 import { auth, db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { useNutrityData } from '../hooks/useNutrityData';
-import { dbService } from '../lib/db-service';
+import { dbService, FoodItem, Micronutrient, Course } from '../lib/db-service';
 import { getDirectImageUrl } from '../lib/utils';
 import { AdminPanel } from './AdminPanel';
 import { BioPlanSection } from './BioPlanSection';
+import { PricingTable } from './PricingTable';
 
 interface NutrityDashboardProps {
     results: any; // This is the MetabolicPlan
@@ -200,8 +202,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [dynamicMenu, setDynamicMenu] = useState<any>(null);
     // ─── Menú Aprobado por Coach ─────────────────────────────────────────
     const [approvedMenuDays, setApprovedMenuDays] = useState<any[]>([]);
-    const [menuStatus, setMenuStatus] = useState<'NONE' | 'PENDING' | 'APPROVED'>('NONE');
+    const [menuStatus, setMenuStatus] = useState<'NONE' | 'PENDING' | 'APPROVED' | 'CHANGES_REQUESTED'>('NONE');
     const [isLoadingApprovedMenu, setIsLoadingApprovedMenu] = useState(false);
+
+    // ─── Solicitud de Cambios de Menú (Paciente) ─────────────────────────
+    const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+    const [requestedChangesText, setRequestedChangesText] = useState("");
+    const [isSubmittingChanges, setIsSubmittingChanges] = useState(false);
 
     // --- EFECTOS DE SINCRONIZACIÓN ---
     useEffect(() => {
@@ -279,7 +286,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 const approved = await dbService.getApprovedMenu(user.uid);
                 if (approved.length > 0) {
                     setApprovedMenuDays(approved);
-                    setMenuStatus('APPROVED');
+                    setMenuStatus(approved[0].status as any);
                     setIsLoadingApprovedMenu(false);
                     return;
                 }
@@ -311,6 +318,33 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             setActiveTab("profile");
         }
     }, [isProfileComplete, activeTab, user?.uid, user?.profile]);
+
+    const handleSubmitChanges = async () => {
+        if (!user?.uid || !requestedChangesText.trim() || approvedMenuDays.length === 0) return;
+        setIsSubmittingChanges(true);
+        try {
+            const weekStart = approvedMenuDays[0].weekStart;
+            await dbService.requestMenuChanges(user.uid, weekStart, requestedChangesText);
+            
+            // Actualizar estado local
+            setMenuStatus('CHANGES_REQUESTED');
+            
+            // Actualizar approvedMenuDays con las notas locales
+            const updatedDays = approvedMenuDays.map(day => ({
+                ...day,
+                status: 'CHANGES_REQUESTED',
+                clientNotes: requestedChangesText
+            }));
+            setApprovedMenuDays(updatedDays);
+            setIsRequestModalOpen(false);
+            setNotification({ type: 'success', message: 'Tus observaciones han sido enviadas al Coach de Nutrity.' });
+        } catch (err) {
+            console.error("Error submitting changes request:", err);
+            setNotification({ type: 'error', message: 'No se pudo registrar la solicitud. Intenta de nuevo.' });
+        } finally {
+            setIsSubmittingChanges(false);
+        }
+    };
 
     const handleAutoControl = async () => {
         if (!user?.uid) { onRequireAuth(); return; }
@@ -580,7 +614,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col overflow-hidden relative">
-                <header className="h-20 bg-white border-b border-nutrity-border flex items-center justify-between px-8 z-20">
+                <header className="h-20 bg-white/70 backdrop-blur-md border-b border-nutrity-border flex items-center justify-between px-8 z-20">
                     <div className="flex items-center gap-4">
                         <button className="lg:hidden p-2" onClick={() => setIsSidebarOpen(true)}><LayoutDashboard /></button>
                         <h1 className="text-sm md:text-xl font-display font-bold text-nutrity-primary tracking-tight truncate max-w-[150px] md:max-w-none">Nutrity V7 - Bio-Panel Médico</h1>
@@ -1023,7 +1057,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                 <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-transform group-hover:scale-110 ${
                                                     m.label === 'Vitalidad' ? 'bg-amber-50 text-amber-500' :
                                                     m.label === 'Metabolismo' ? 'bg-nutrity-accent/10 text-nutrity-accent' :
-                                                    m.label === 'Regeneración' ? 'bg-indigo-50 text-indigo-500' :
+                                                    m.label === 'Regeneración' ? 'bg-emerald-50 text-emerald-500' :
                                                     'bg-blue-50 text-blue-500'
                                                 }`}>
                                                     {m.label === 'Vitalidad' ? <Zap className="w-6 h-6" /> :
@@ -1041,7 +1075,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                         className={`h-full ${
                                                             m.label === 'Vitalidad' ? 'bg-amber-500' :
                                                             m.label === 'Metabolismo' ? 'bg-nutrity-accent' :
-                                                            m.label === 'Regeneración' ? 'bg-indigo-500' :
+                                                            m.label === 'Regeneración' ? 'bg-emerald-500' :
                                                             'bg-blue-500'
                                                         }`}
                                                     />
@@ -1159,12 +1193,35 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <h2 className="text-3xl font-display font-bold">Menú Semanal de Precisión</h2>
                                         <p className="text-nutrity-gray-text text-sm">Cronograma nutricional personalizado para tu fase de remisión metabólica.</p>
                                     </div>
-                                    {menuStatus === 'APPROVED' && (
-                                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-[10px] font-bold uppercase tracking-widest">
-                                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                                            Plan Aprobado por Coach
-                                        </span>
-                                    )}
+                                    <div className="flex items-center gap-3">
+                                        {menuStatus === 'APPROVED' && (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        const el = document.getElementById("menu-feedback-box");
+                                                        if (el) {
+                                                            el.scrollIntoView({ behavior: 'smooth' });
+                                                            const textarea = el.querySelector('textarea');
+                                                            if (textarea) textarea.focus();
+                                                        }
+                                                    }}
+                                                    className="px-4 py-2 border border-amber-500/30 text-amber-700 hover:bg-amber-50 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+                                                >
+                                                    Solicitar Cambios
+                                                </button>
+                                                <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-[10px] font-bold uppercase tracking-widest">
+                                                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                                    Plan Aprobado por Coach
+                                                </span>
+                                            </>
+                                        )}
+                                        {menuStatus === 'CHANGES_REQUESTED' && (
+                                            <span className="inline-flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-[10px] font-bold uppercase tracking-widest">
+                                                <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                                                Cambios Solicitados
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Loading state */}
@@ -1175,22 +1232,47 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                     </div>
                                 )}
 
-                                {/* ESTADO: APROBADO — mostrar los 7 días */}
-                                {!isLoadingApprovedMenu && menuStatus === 'APPROVED' && (
+                                {/* ESTADO: APROBADO o CAMBIOS SOLICITADOS — mostrar los 7 días */}
+                                {!isLoadingApprovedMenu && (menuStatus === 'APPROVED' || menuStatus === 'CHANGES_REQUESTED') && (
                                     <div className="space-y-4">
+                                        {menuStatus === 'CHANGES_REQUESTED' && approvedMenuDays[0]?.clientNotes && (
+                                            <div className="bg-amber-500/10 backdrop-blur-md border border-amber-500/20 rounded-2xl p-6 mb-6 animate-in fade-in slide-in-from-top-4 duration-300">
+                                                <div className="flex gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-600 shrink-0">
+                                                        <Info className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <h4 className="font-bold text-sm text-amber-800">Retroalimentación Enviada</h4>
+                                                        <p className="text-xs text-amber-700/80 leading-relaxed font-medium">
+                                                            "{approvedMenuDays[0].clientNotes}"
+                                                        </p>
+                                                        <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider pt-1">
+                                                            Tu Coach revisará esto y ajustará tu menú semanal a la brevedad.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                         {approvedMenuDays.map((record) => {
                                             const dateLabel = new Date(record.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                                            const isDayChangeRequested = record.status === 'CHANGES_REQUESTED';
                                             return (
                                                 <div key={record.id} className="nutrity-card p-6 space-y-4">
                                                     <div className="flex items-center justify-between">
                                                         <h3 className="font-bold text-base capitalize">{dateLabel}</h3>
-                                                        <span className="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg">APROBADO</span>
+                                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-lg ${
+                                                            isDayChangeRequested 
+                                                                ? 'bg-amber-50 text-amber-700 border border-amber-200' 
+                                                                : 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                                                        }`}>
+                                                            {isDayChangeRequested ? 'REVISIÓN' : 'APROBADO'}
+                                                        </span>
                                                     </div>
                                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                                         {[
                                                             { l: 'Desayuno', k: 'breakfast', icon: Coffee, color: 'text-amber-500 bg-amber-50' },
                                                             { l: 'Almuerzo', k: 'lunch', icon: Utensils, color: 'text-nutrity-accent bg-nutrity-accent/5' },
-                                                            { l: 'Cena', k: 'dinner', icon: Heart, color: 'text-indigo-500 bg-indigo-50' },
+                                                            { l: 'Cena', k: 'dinner', icon: Heart, color: 'text-nutrity-primary bg-nutrity-bg' },
                                                             { l: 'Snack', k: 'snack', icon: Apple, color: 'text-rose-500 bg-rose-50' },
                                                         ].map(({ l, k, icon: Icon, color }) => (
                                                             <div key={k} className="bg-nutrity-bg rounded-xl p-3 space-y-2">
@@ -1213,6 +1295,41 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                 </div>
                                             );
                                         })}
+                                        
+                                        {menuStatus === 'APPROVED' && (
+                                            <div id="menu-feedback-box" className="bg-white border border-nutrity-border rounded-2xl p-6 mt-6 space-y-4 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                                <div className="flex items-center gap-2">
+                                                    <MessageSquare className="w-5 h-5 text-nutrity-accent" />
+                                                    <h4 className="font-bold text-sm text-nutrity-primary">¿Deseas realizar algún cambio en tu menú?</h4>
+                                                </div>
+                                                <p className="text-xs text-nutrity-gray-text leading-relaxed font-medium">
+                                                    Escribe tus observaciones aquí para que tu Coach pueda realizar los ajustes en tu plan personalizado.
+                                                </p>
+                                                <textarea
+                                                    value={requestedChangesText}
+                                                    onChange={(e) => setRequestedChangesText(e.target.value)}
+                                                    placeholder="Ej: Prefiero no comer cilantro. ¿Podríamos cambiar el snack por frutos secos?"
+                                                    rows={3}
+                                                    className="w-full p-4 border border-nutrity-border rounded-xl text-xs bg-nutrity-bg text-nutrity-primary focus:outline-none focus:ring-1 focus:ring-nutrity-accent/50 resize-none font-medium transition-all"
+                                                />
+                                                <div className="flex justify-end">
+                                                    <button
+                                                        onClick={handleSubmitChanges}
+                                                        disabled={isSubmittingChanges || !requestedChangesText.trim()}
+                                                        className="px-6 py-2.5 bg-nutrity-primary text-white rounded-xl text-xs font-bold shadow-md hover:bg-nutrity-primary/95 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                                                    >
+                                                        {isSubmittingChanges ? (
+                                                            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                        ) : (
+                                                            <>
+                                                                <Send className="w-3.5 h-3.5" />
+                                                                <span>Enviar Observaciones</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -1562,6 +1679,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                     </motion.div>
                 )}
 
+
+
                 {selectedFood && (
                     <motion.div
                         key="food-modal"
@@ -1615,7 +1734,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                     </h3>
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="bg-white p-4 rounded-xl border border-nutrity-border text-center shadow-sm">
-                                            <p className="text-lg md:text-xl font-bold text-indigo-500 mb-1">{selectedFood.nutrients.protein}</p>
+                                            <p className="text-lg md:text-xl font-bold text-nutrity-primary mb-1">{selectedFood.nutrients.protein}</p>
                                             <p className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest">Proteína</p>
                                         </div>
                                         <div className="bg-white p-4 rounded-xl border border-nutrity-border text-center shadow-sm">
@@ -1666,16 +1785,32 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             <AnimatePresence>
                 {notification && (
                     <motion.div
-                        initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        className={`fixed bottom-8 right-8 z-[1000] px-6 py-4 rounded-2xl shadow-2xl text-sm font-bold flex items-center gap-3 ${notification.type === "success"
-                            ? "bg-emerald-500 text-white shadow-emerald-500/30"
-                            : "bg-rose-500 text-white shadow-rose-500/30"
-                            }`}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        className={`fixed bottom-24 md:bottom-8 right-4 left-4 md:left-auto md:right-8 z-[1000] max-w-sm backdrop-blur-xl border p-4 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] text-xs font-bold flex items-start gap-3 transition-all animate-in fade-in duration-300 ${
+                            notification.type === "success"
+                                ? "bg-white/90 border-emerald-500/30 text-nutrity-primary shadow-emerald-500/5"
+                                : "bg-white/90 border-rose-500/30 text-nutrity-primary shadow-rose-500/5"
+                        }`}
                     >
-                        <Activity className="w-4 h-4" />
-                        {notification.message}
+                        <div className={`p-2 rounded-xl shrink-0 ${
+                            notification.type === "success" ? "bg-emerald-50 text-emerald-500" : "bg-rose-50 text-rose-500"
+                        }`}>
+                            {notification.type === "success" ? <CheckCircle2 className="w-4.5 h-4.5" /> : <Info className="w-4.5 h-4.5" />}
+                        </div>
+                        <div className="flex-1 space-y-0.5 pt-0.5">
+                            <h5 className="font-extrabold uppercase tracking-wider text-[10px] text-nutrity-gray-text">
+                                {notification.type === "success" ? "Operación Exitosa" : "Atención Clínica"}
+                            </h5>
+                            <p className="font-medium text-nutrity-primary leading-relaxed">{notification.message}</p>
+                        </div>
+                        <button 
+                            onClick={() => setNotification(null)}
+                            className="p-1 rounded-lg hover:bg-slate-100 text-nutrity-gray-text opacity-45 hover:opacity-100 transition-all shrink-0"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>

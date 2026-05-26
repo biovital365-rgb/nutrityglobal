@@ -21,6 +21,8 @@ interface AdminUsersTabProps {
     onSaveUser: (e: React.FormEvent) => Promise<void>;
     setEditingUser: React.Dispatch<React.SetStateAction<any>>;
     onDeleteFromCardex: (user: any) => void;
+    /** User Status Protocol: Change ACTIVE / BLOCKED / OBSERVED */
+    onStatusChange?: (userId: string, status: 'ACTIVE' | 'BLOCKED' | 'OBSERVED') => Promise<void>;
 }
 
 export function AdminUsersTab({
@@ -28,6 +30,7 @@ export function AdminUsersTab({
     showCardexModal, selectedCardexUser,
     onOpenCardex, onCloseCardex, onEditUser, onDelete, onRestore,
     onCloseUserModal, onSaveUser, setEditingUser, onDeleteFromCardex,
+    onStatusChange,
 }: AdminUsersTabProps) {
     return (
         <>
@@ -79,10 +82,15 @@ export function AdminUsersTab({
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="flex flex-col gap-1">
-                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-center ${u.status === "ACTIVE" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`}>
-                                                    {u.status || "ACTIVE"}
+                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-center ${
+                                                    u.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600' :
+                                                    u.status === 'BLOCKED' ? 'bg-red-50 text-red-600' :
+                                                    u.status === 'OBSERVED' ? 'bg-amber-50 text-amber-600' :
+                                                    'bg-slate-50 text-slate-500'
+                                                }`}>
+                                                    {u.status || 'ACTIVE'}
                                                 </span>
-                                                <span className="text-[9px] font-bold text-nutrity-accent text-center">{u.plan || "FREEMIUM"}</span>
+                                                <span className="text-[9px] font-bold text-nutrity-accent text-center">{u.plan || 'FREEMIUM'}</span>
                                             </div>
                                         </td>
                                         <td className="py-4 px-6">
@@ -232,6 +240,29 @@ export function AdminUsersTab({
                                         </div>
                                         <div className="bg-nutrity-primary text-white rounded-3xl p-6 space-y-4 shadow-xl shadow-nutrity-primary/20">
                                             <p className="text-xs font-bold uppercase tracking-widest opacity-60">Control Administrativo</p>
+                                            {/* User Status Protocol */}
+                                            {onStatusChange && (
+                                                <div className="space-y-2">
+                                                    <p className="text-[9px] font-bold uppercase tracking-widest opacity-50">Estado del Usuario</p>
+                                                    <div className="grid grid-cols-3 gap-2">
+                                                        {(['ACTIVE', 'OBSERVED', 'BLOCKED'] as const).map((st) => (
+                                                            <button
+                                                                key={st}
+                                                                onClick={() => onStatusChange(selectedCardexUser.id, st)}
+                                                                className={`py-2 px-1 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-all ${
+                                                                    (selectedCardexUser.status || 'ACTIVE') === st
+                                                                        ? st === 'ACTIVE' ? 'bg-emerald-500 text-white shadow-lg' :
+                                                                          st === 'OBSERVED' ? 'bg-amber-500 text-white shadow-lg' :
+                                                                          'bg-red-500 text-white shadow-lg'
+                                                                        : 'bg-white/10 hover:bg-white/20'
+                                                                }`}
+                                                            >
+                                                                {st === 'ACTIVE' ? '✓ Activo' : st === 'OBSERVED' ? '⚠ Observado' : '✗ Bloqueado'}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="grid grid-cols-2 gap-3">
                                                 <button onClick={() => { onEditUser(selectedCardexUser); onCloseCardex(); }}
                                                     className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all text-xs font-bold flex items-center justify-center gap-2">
@@ -306,6 +337,16 @@ export function AdminUsersTab({
                                             <option value="FREE">FREEMIUM</option>
                                             <option value="PREMIUM">PREMIUM</option>
                                             <option value="ELITE">ELITE</option>
+                                        </select>
+                                    </div>
+                                    {/* User Status Protocol in Edit Modal */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Estado del Usuario</label>
+                                        <select className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none"
+                                            value={editingUser.status || "ACTIVE"} onChange={(e) => setEditingUser({ ...editingUser, status: e.target.value })}>
+                                            <option value="ACTIVE">✓ ACTIVE — Acceso completo</option>
+                                            <option value="OBSERVED">⚠ OBSERVED — Solo lectura</option>
+                                            <option value="BLOCKED">✗ BLOCKED — Sin acceso</option>
                                         </select>
                                     </div>
                                 </div>

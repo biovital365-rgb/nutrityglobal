@@ -43,6 +43,7 @@ interface AdminPanelProps {
             email?: string;
             role?: string;
             plan?: string;
+            organizationId?: string;
             organization?: { name?: string };
         };
     };
@@ -800,8 +801,12 @@ export function AdminPanel({ user }: AdminPanelProps) {
                                                         <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase ${
                                                             menuWeekDays[0]?.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600'
                                                             : menuWeekDays[0]?.status === 'PENDING' ? 'bg-amber-50 text-amber-600'
+                                                            : menuWeekDays[0]?.status === 'CHANGES_REQUESTED' ? 'bg-amber-100 text-amber-800 border border-amber-200'
                                                             : 'bg-red-50 text-red-500'
-                                                        }`}>{menuWeekDays[0]?.status || 'SIN MENÚ'}</span>
+                                                        }`}>{
+                                                            menuWeekDays[0]?.status === 'CHANGES_REQUESTED' ? 'CAMBIOS SOLICITADOS'
+                                                            : (menuWeekDays[0]?.status || 'SIN MENÚ')
+                                                        }</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -863,7 +868,7 @@ Responde SOLO con JSON válido, sin texto adicional:
                                                     Generar con IA
                                                 </button>
                                                 {/* Aprobar */}
-                                                {menuWeekDays.length > 0 && menuWeekDays[0]?.status === 'PENDING' && (
+                                                {menuWeekDays.length > 0 && (menuWeekDays[0]?.status === 'PENDING' || menuWeekDays[0]?.status === 'CHANGES_REQUESTED') && (
                                                     <button
                                                         disabled={isApprovingMenu}
                                                         onClick={async () => {
@@ -885,7 +890,7 @@ Responde SOLO con JSON válido, sin texto adicional:
                                                     </button>
                                                 )}
                                                 {/* Rechazar */}
-                                                {menuWeekDays.length > 0 && menuWeekDays[0]?.status === 'PENDING' && (
+                                                {menuWeekDays.length > 0 && (menuWeekDays[0]?.status === 'PENDING' || menuWeekDays[0]?.status === 'CHANGES_REQUESTED') && (
                                                     <button
                                                         onClick={async () => {
                                                             const reason = prompt('Motivo del rechazo (se enviará al coach):');
@@ -903,7 +908,22 @@ Responde SOLO con JSON válido, sin texto adicional:
                                                     </button>
                                                 )}
                                             </div>
-                                        </div>
+                                         </div>
+
+                                         {/* Notas de cambios solicitados por el paciente */}
+                                         {menuWeekDays.length > 0 && menuWeekDays[0]?.status === 'CHANGES_REQUESTED' && menuWeekDays[0]?.clientNotes && (
+                                             <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col gap-2 shadow-sm">
+                                                 <div className="flex items-center gap-2 text-amber-800">
+                                                     <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                                                     <span className="text-xs font-bold uppercase tracking-wider">Cambios Solicitados por el Paciente</span>
+                                                 </div>
+                                                 <p className="text-sm text-amber-900 bg-white/60 p-3.5 rounded-xl border border-amber-100 font-medium italic">
+                                                     "{menuWeekDays[0]?.clientNotes}"
+                                                 </p>
+                                             </div>
+                                         )}
+
+
 
                                         {/* Notas del coach */}
                                         <div className="p-4 bg-white rounded-2xl border border-nutrity-border">
@@ -919,19 +939,8 @@ Responde SOLO con JSON válido, sin texto adicional:
 
                                         {/* Días del menú */}
                                         {isLoadingMenu ? (
-                                            <div className="py-20 flex flex-col items-center justify-center space-y-4">
-                                                <Loader2 className="w-10 h-10 text-nutrity-accent animate-spin" />
-                                                <p className="text-sm font-bold text-nutrity-gray-text">Cargando menú...</p>
-                                            </div>
-                                        ) : menuWeekDays.length === 0 ? (
-                                            <div className="py-20 bg-slate-50/50 rounded-2xl border-2 border-dashed border-nutrity-border flex flex-col items-center justify-center text-nutrity-gray-text space-y-3">
-                                                <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm">
-                                                    <ChefHat className="w-8 h-8 opacity-40" />
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className="font-bold text-sm">Sin menú semanal generado</p>
-                                                    <p className="text-xs opacity-60">Usa el botón "Generar con IA" para crear un plan nutricional.</p>
-                                                </div>
+                                            <div className="h-48 flex items-center justify-center">
+                                                <Loader2 className="w-8 h-8 animate-spin text-nutrity-accent" />
                                             </div>
                                         ) : (
                                             <div className="space-y-3">

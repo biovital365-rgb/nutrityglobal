@@ -102,31 +102,39 @@ export async function generateAIWeeklyMenu(plan: MetabolicPlan, userName: string
  * AI Coach - Chat interactivo con contexto clínico
  */
 export async function getAICoachResponse(messages: any[], context: any) {
-    const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
-    
-    const systemPrompt = `Eres Nutrity Coach IA V8, experto en Medicina de Restauración y NMG.
-    Contexto del usuario:
-    - Nombre: ${context.name}
-    - Fase: ${context.phase}
-    - Meta: ${context.meta}
-    
-    Directrices:
-    1. Usa rigor científico andino.
-    2. Transforma el miedo en acción (PNL).
-    3. Responde en máximo 200 palabras.`;
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const systemPrompt = `Eres Nutrity Coach IA V8 — Experto en Medicina de Restauración Biológica, Nutrición Andina de Precisión y Nueva Medicina Germánica (NMG).
+
+Contexto clínico del usuario:
+- Nombre: ${context.name}
+- Fase Metabólica: ${context.phase || "Activación"}
+- Meta Clínica: ${context.meta || "Remisión metabólica"}
+
+PROTOCOLO DE RESPUESTA (obligatorio):
+1. DECODIFICACIÓN BIOLÓGICA: Si el usuario menciona un síntoma físico (dolor, glucosa alta, fatiga, ansiedad, insomnio, etc.), SIEMPRE decodifica el conflicto biológico subyacente según NMG/Biodescodificación. Ejemplo: "Glucosa alta → Conflicto de resistencia al futuro, necesidad de control. El páncreas (insulina) es el órgano del 'dulzor de la vida'."
+2. ACCIÓN METABÓLICA CONCRETA: Incluye 1-2 acciones nutricionales específicas con superfoods andinos (Tarwi, Yacón, Quinua, Maca, Sacha Inchi).
+3. EMPODERAMIENTO PNL: Cierra con una pregunta o reflexión que active la agencia del usuario.
+
+Directrices adicionales:
+- Rigor científico + empatía clínica. Nunca usar tecnicismos sin explicarlos.
+- Responde en máximo 250 palabras.
+- Usa español neutro. Formato: párrafo fluido, sin listas numeradas excesivas.`;
 
     const chat = model.startChat({
         history: [
             { role: "user", parts: [{ text: systemPrompt }] },
-            { role: "model", parts: [{ text: "Entendido. Estoy listo para asistir." }] },
-            ...messages.slice(-6).map(m => ({
+            { role: "model", parts: [{ text: `Entendido. Soy Nutrity Coach V8, listo para acompañar a ${context.name} con rigor clínico y consciencia biológica.` }] },
+            ...messages.slice(-8).map(m => ({
                 role: m.role === 'user' ? 'user' : 'model',
                 parts: [{ text: m.text }]
             }))
         ]
     });
 
-    const result = await chat.sendMessage(messages[messages.length - 1].text);
+    const lastUserMessage = messages[messages.length - 1]?.text;
+    if (!lastUserMessage) throw new Error("No user message to send");
+    const result = await chat.sendMessage(lastUserMessage);
     return result.response.text();
 }
 
