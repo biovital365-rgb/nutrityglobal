@@ -66,8 +66,8 @@ export default function DashboardPage() {
     if (isGeneratingPDF) return;
     setIsGeneratingPDF(true);
     try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas"),
+      const [{ toJpeg }, { default: jsPDF }] = await Promise.all([
+        import("html-to-image"),
         import("jspdf"),
       ]);
 
@@ -82,12 +82,7 @@ export default function DashboardPage() {
       const A4_H = 297;
 
       for (let i = 0; i < pages.length; i++) {
-        const canvas = await html2canvas(pages[i], {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#fdfcf9",
-        });
-        const imgData = canvas.toDataURL("image/jpeg", 0.92);
+        const imgData = await toJpeg(pages[i], { quality: 0.92, backgroundColor: "#fdfcf9" });
         if (i > 0) pdf.addPage();
         pdf.addImage(imgData, "JPEG", 0, 0, A4_W, A4_H);
       }
