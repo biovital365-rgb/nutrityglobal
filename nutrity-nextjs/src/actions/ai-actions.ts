@@ -21,35 +21,72 @@ const planModel = genAI.getGenerativeModel({
 });
 
 export async function generateAILifePlan(data: OnboardingData): Promise<MetabolicPlan> {
-    const prompt = `Actúa como un experto en Medicina de Restauración Biológica y Nutrición de Precisión.
-    Analiza los siguientes datos de diagnóstico:
+    // ── Contexto NMG del síntoma declarado (Triaje Holístico) ──────────────────
+    const nmgTriajeContext = data.mainSymptom ? `
+    TRIAJE HOLÍSTICO (Nueva Medicina Germánica + Medicina Integrativa):
+    - Síntoma Principal: ${data.mainSymptom}
+    - Sistema Biológico Afectado: ${data.affectedSystem || 'Por determinar'}
+    - Duración del Síntoma: ${data.symptomDuration || 'No especificada'}
+    - Contexto Emocional Percibido: ${data.emotionalContext || 'No especificado'}
+    - Nivel de Consciencia en Biodescodificación: ${data.biodescodification || 'Básico'}
+    ` : '';
+
+    const prompt = `Eres el Motor de Decodificación Biológica de Nutrity Global, experto en:
+    - Nueva Medicina Germánica (NMG) y conflictos biológicos programantes
+    - Nutrición Andina de Precisión (Tarwi, Yacón, Quinua, Maca, Sacha Inchi)
+    - Medicina Ayurvédica, MTC (Medicina Tradicional China), PNL Clínica, Naturopatía
+    
+    DATOS DEL PACIENTE:
     - Nombre: ${data.name}
     - Edad: ${data.age}
-    - Condición: ${data.condition}
-    - Glucosa actual: ${data.currentGlucose}
-    - Interés: ${data.interest}
-    - Estrés: ${data.stressLevel}/10
-    - Sueño: ${data.sleepQuality}
-    - Digestión: ${data.digestiveHealth}
+    - Condición Diagnosticada: ${data.condition}
+    - Glucosa en Ayunas: ${data.currentGlucose} mg/dL
+    - Nivel de Estrés: ${data.stressLevel}/10
+    - Calidad de Sueño: ${data.sleepQuality}
+    - Salud Digestiva: ${data.digestiveHealth}
+    - Actividad Física: ${data.activityLevel}
+    - Interés principal: ${data.interest}
+    ${nmgTriajeContext}
+
+    PROTOCOLO DE ANÁLISIS OBLIGATORIO:
+
+    A) DECODIFICACIÓN BIOLÓGICA (NMG): Si hay síntoma declarado, identifica:
+       - El CONFLICTO EMOCIONAL programante según la NMG (ej: Glucosa alta → Resistencia al cambio, páncreas como "dulzor de la vida")
+       - El ÓRGANO o tejido biológico afectado y su función emocional
+       - La FASE biológica actual: ¿Estrés activo (SBS) o Reparación (PCL)?
+       - Abordaje desde al menos 3 disciplinas (MTC, Ayurveda, PNL, Naturopatía)
+
+    B) PLAN METABÓLICO: Genera el plan integral de remisión.
+
+    RESPONDE con este JSON EXACTO:
+    {
+      "remissionScore": number (1-100),
+      "phase": string (ej: "Activación", "Reseteo Metabólico", "Remisión Profunda"),
+      "meta": string (objetivo clínico maestro),
+      "pillars": [
+        { "icon": string (Lucide icon name), "title": string, "desc": string, "color": string (Tailwind bg class), "tag": string }
+      ],
+      "insight": string (análisis clínico empoderador, 2-3 oraciones),
+      "biodescodificacion": string (mensaje sobre raíz emocional según NMG),
+      "biodescodificacionRecommendations": [string, string, string, string],
+      "trendData": [number x9] (curva proyectada de glucosa en 9 semanas),
+      "holisticStats": [{ "label": string, "value": number (1-100), "color": string }],
+      "superfoods": [string, string, string],
+      "nmgDiagnosis": {
+        "conflict": string (raíz emocional exacta según NMG),
+        "organ": string (órgano/tejido afectado y su rol emocional),
+        "phase": string ("Estrés Activo (SBS)" | "Reparación (PCL)" | "Equilibrio"),
+        "holisticApproach": [
+          { "discipline": "NMG", "recommendation": string },
+          { "discipline": "MTC", "recommendation": string },
+          { "discipline": "Ayurveda", "recommendation": string },
+          { "discipline": "PNL", "recommendation": string },
+          { "discipline": "Naturopatía", "recommendation": string }
+        ]
+      }
+    }
     
-    Genera un Plan Metabólico que incluya:
-    1. remissionScore: (1-100) basado en la probabilidad de remisión.
-    2. phase: Una fase clínica (ej. "Activación", "Reseteo", "Remisión").
-    3. meta: El objetivo clínico maestro.
-    4. pillars: Un array de 3 objetos, cada uno con:
-       - icon: Nombre de icono Lucide (Activity, Brain, Zap, Target, Leaf, Heart).
-       - title: Título del pilar.
-       - desc: Descripción estratégica.
-       - color: Una clase de fondo Tailwind (ej. "bg-nutrity-blue", "bg-orange-400", "bg-red-400").
-       - tag: Etiqueta (ej. "Nutrición", "Mente", "Cuerpo").
-    5. insight: Un análisis clínico empoderador.
-    6. biodescodificacion: Un mensaje profundo sobre la raíz emocional del síntoma (ej. resistencia, miedo al futuro) basado en NMG.
-    7. biodescodificacionRecommendations: Un array de 4 acciones de consciencia/emocionales.
-    8. trendData: Un array de 9 números que representen la curva proyectada de glucosa.
-    9. holisticStats: 4 objetos con { label, value (1-100), color (clase bg-...) }.
-    10. superfoods: Lista de 3 alimentos andinos clave.
-    
-    Responde estrictamente en JSON.`;
+    Responde ÚNICAMENTE con el JSON. Sin markdown, sin explicaciones extra.`;
 
     try {
         const result = await planModel.generateContent(prompt);
