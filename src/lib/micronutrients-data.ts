@@ -22,7 +22,7 @@ export const micronutrientsData: Micronutrient[] = [
         sources: ["Cacao Puro", "Semillas de Zapallo", "Espinaca", "Almendras"],
         deficiencySigns: ["Calambres", "Ansiedad", "Resistencia a la insulina"],
         dailyDose: "300 - 450 mg",
-        image: "https://images.unsplash.com/photo-1548907040-4baa42d100fe?q=80&w=1000&auto=format&fit=crop"
+        image: "/pumpkin_seeds.png"
     },
     {
         id: "m2",
@@ -58,7 +58,7 @@ export const micronutrientsData: Micronutrient[] = [
         sources: ["Semillas de Sacha Inchi", "Ostras", "Carne de pastoreo", "Garbanzos"],
         deficiencySigns: ["Mala cicatrización", "Pérdida de gusto", "Inmunidad baja"],
         dailyDose: "15 - 30 mg",
-        image: "https://images.unsplash.com/photo-1511067007398-7e4b90cfa4bc?q=80&w=1000&auto=format&fit=crop"
+        image: "/zinc.png"
     },
     {
         id: "m5",
@@ -93,7 +93,8 @@ export const micronutrientsData: Micronutrient[] = [
         metabolicImpact: "Niveles bajos están fuertemente vinculados con la Diabetes Tipo 2 y enfermedades autoinmunes.",
         sources: ["Exposición solar", "Aceite de hígado de bacalao", "Yema de huevo"],
         deficiencySigns: ["Dolor óseo", "Depresión", "Infecciones frecuentes"],
-        dailyDose: "2000 - 5000 IU"
+        dailyDose: "2000 - 5000 IU",
+        image: "/vitamina_d3.png"
     },
     {
         id: "m8",
@@ -104,6 +105,7 @@ export const micronutrientsData: Micronutrient[] = [
         metabolicImpact: "Ayuda a mantener la presión arterial saludable, crítica en pacientes metabólicos.",
         sources: ["Palta", "Camote", "Plátano", "Agua de coco"],
         deficiencySigns: ["Arritmias", "Debilidad", "Fatiga extrema"],
-        dailyDose: "3500 - 4700 mg"
+        dailyDose: "3500 - 4700 mg",
+        image: "/potasio.png"
     }
 ];

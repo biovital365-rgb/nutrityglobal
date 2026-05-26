@@ -19,6 +19,7 @@ model Organization {
   measurements Measurement[]
   micros       Micronutrient[]
   Post         Post[]
+  pdfReports   PDFReportLog[]
   users        User[]
 }
 
@@ -46,6 +47,7 @@ model User {
   enrollments      Enrollment[]
   evaluations      Evaluation[]
   measurements     Measurement[]
+  pdfReports       PDFReportLog[]
   organization     Organization? @relation(fields: [organizationId], references: [id])
 }
 
@@ -179,8 +181,14 @@ model DailyMenu {
   id            String    @id @default(cuid())
   userId        String
   date          String
+  weekStart     String?
+  phase         String?
+  status        String    @default("PENDING")
   menuData      Json
   metabolicGoal String?
+  adminNotes    String?
+  approvedBy    String?
+  approvedAt    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
@@ -204,5 +212,17 @@ model Post {
   author         String        @default("Nutrity Global")
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+model PDFReportLog {
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  status         String        @default("GENERATED")
+  errorMessage   String?
+  timestamp      DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization   Organization? @relation(fields: [organizationId], references: [id])
 }

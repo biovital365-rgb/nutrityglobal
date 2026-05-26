@@ -426,6 +426,21 @@ export function AdminPanel({ user }: AdminPanelProps) {
                         onSaveUser={handleSaveUser}
                         setEditingUser={setEditingUser}
                         onDeleteFromCardex={(u) => { setDeleteTarget({ type: "users", id: u.id, name: u.name || u.email }); setShowCardexModal(false); }}
+                        onStatusChange={async (userId, status) => {
+                            try {
+                                await dbService.updateUserStatus(userId, status);
+                                // Refresh users list
+                                const orgId = user?.profile?.organization?.id;
+                                const refreshed = await dbService.getAllUsers(orgId);
+                                setUsers(refreshed);
+                                // Sync the open cardex state immediately
+                                setSelectedCardexUser((prev: any) => prev?.id === userId ? { ...prev, status } : prev);
+                                notify('success', `Estado actualizado a ${status}`);
+                            } catch (err) {
+                                console.error('updateUserStatus failed:', err);
+                                notify('error', 'Error al cambiar el estado del usuario');
+                            }
+                        }}
                     />
                 )}
 

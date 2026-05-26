@@ -89,8 +89,11 @@ export const dbService = {
     },
 
     // Alimentos con Auto-Sincronización y Depuración Silenciosa (Solución Definitiva)
-    async getFoods(organizationId?: string) {
-        let query = supabase.from('Food').select('*').is('deletedAt', null)
+    async getFoods(organizationId?: string, includeDeleted = false) {
+        let query = supabase.from('Food').select('*')
+        if (!includeDeleted) {
+            query = query.is('deletedAt', null)
+        }
         if (organizationId) {
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
         }
@@ -104,7 +107,7 @@ export const dbService = {
             for (const food of foodCatalog) {
                 await this.saveFood({ ...food, organizationId }, organizationId).catch(() => {});
             }
-            return this.getFoods(organizationId);
+            return this.getFoods(organizationId, includeDeleted);
         }
 
         // 2. Depuración Silenciosa de Duplicados (Sin necesidad de botón)
@@ -216,8 +219,11 @@ export const dbService = {
     },
 
     // Micronutrientes con Auto-Sincronización y Depuración Silenciosa
-    async getMicronutrients(organizationId?: string) {
-        let query = supabase.from('Micronutrient').select('*').is('deletedAt', null)
+    async getMicronutrients(organizationId?: string, includeDeleted = false) {
+        let query = supabase.from('Micronutrient').select('*')
+        if (!includeDeleted) {
+            query = query.is('deletedAt', null)
+        }
         if (organizationId) {
             query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
         }
@@ -231,7 +237,7 @@ export const dbService = {
             for (const micro of micronutrientsData) {
                 await this.saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(() => {});
             }
-            return this.getMicronutrients(organizationId);
+            return this.getMicronutrients(organizationId, includeDeleted);
         }
 
         // 2. Depuración Silenciosa
@@ -870,7 +876,7 @@ export const dbService = {
             .from('DailyMenu')
             .select('*')
             .eq('userId', internalId)
-            .eq('status', 'APPROVED')
+            .in('status', ['APPROVED', 'CHANGES_REQUESTED'])
             .order('weekStart', { ascending: false })
             .limit(7);
 
@@ -929,6 +935,26 @@ export const dbService = {
                 approvedBy: adminEmail,
                 adminNotes: notes,
                 updatedAt:  new Date().toISOString(),
+            })
+            .eq('userId', internalId)
+            .eq('weekStart', weekStart)
+            .select();
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Paciente solicita cambios en su menú semanal.
+     */
+    async requestMenuChanges(userId: string, weekStart: string, clientNotes: string) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('DailyMenu')
+            .update({
+                status: 'CHANGES_REQUESTED',
+                clientNotes: clientNotes,
+                updatedAt: new Date().toISOString(),
             })
             .eq('userId', internalId)
             .eq('weekStart', weekStart)

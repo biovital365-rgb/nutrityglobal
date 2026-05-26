@@ -31,17 +31,17 @@ export function BottomNav({ currentView, onNavigate, hasResults }: BottomNavProp
                             key={item.id}
                             onClick={() => !isDisabled && onNavigate(item.id)}
                             disabled={isDisabled}
-                            className={`relative flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all duration-300 ${isActive ? 'text-magenta' : 'text-slate-500'
+                            className={`relative flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all duration-300 ${isActive ? 'text-nutrity-accent' : 'text-slate-500'
                                 } ${isDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:text-white active:scale-90'}`}
                         >
                             <div className={`relative ${isActive ? 'scale-110' : 'scale-100'} transition-transform duration-300`}>
                                 {isActive && (
                                     <motion.div
                                         layoutId="nav-glow"
-                                        className="absolute inset-[-12px] bg-magenta/20 blur-xl rounded-full"
+                                        className="absolute inset-[-12px] bg-nutrity-accent/20 blur-xl rounded-full"
                                     />
                                 )}
-                                <Icon className={`w-6 h-6 ${isActive ? 'drop-shadow-[0_0_8px_rgba(219,39,119,0.5)]' : ''}`} />
+                                <Icon className={`w-6 h-6 ${isActive ? 'drop-shadow-[0_0_8px_rgba(172,214,31,0.5)]' : ''}`} />
                             </div>
                             <span className={`text-[10px] font-black uppercase tracking-widest transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-60'}`}>
                                 {item.label}
@@ -49,7 +49,7 @@ export function BottomNav({ currentView, onNavigate, hasResults }: BottomNavProp
                             {isActive && (
                                 <motion.div
                                     layoutId="nav-indicator"
-                                    className="absolute -bottom-1 w-1 h-1 bg-magenta rounded-full shadow-[0_0_8px_#db2777]"
+                                    className="absolute -bottom-1 w-1 h-1 bg-nutrity-accent rounded-full shadow-[0_0_8px_#acd61f]"
                                 />
                             )}
                         </button>

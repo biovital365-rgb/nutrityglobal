@@ -90,7 +90,7 @@ export function generateMetabolicPlan(data: OnboardingData): MetabolicPlan {
     
     pillars.push({
         ...mainFood,
-        color: "bg-nutrity-blue",
+        color: "bg-nutrity-primary",
         tag: "Nutrición"
     });
 
@@ -107,7 +107,7 @@ export function generateMetabolicPlan(data: OnboardingData): MetabolicPlan {
 
     pillars.push({
         ...selectedPNL,
-        color: "bg-red-400",
+        color: "bg-nutrity-accent",
         tag: "Mente"
     });
 
@@ -124,7 +124,7 @@ export function generateMetabolicPlan(data: OnboardingData): MetabolicPlan {
 
     pillars.push({
         ...selectedLifestyle,
-        color: "bg-orange-400",
+        color: "bg-nutrity-success",
         tag: "Cuerpo"
     });
 
@@ -144,10 +144,10 @@ export function generateMetabolicPlan(data: OnboardingData): MetabolicPlan {
 
     // 6. Holistic Stats para visualización
     const holisticStats = [
-        { label: "Vitalidad", value: data.condition === 'prevention' ? 85 : 65, color: "bg-blue-500" },
-        { label: "Metabolismo", value: data.activityLevel === 'active' ? 90 : (data.activityLevel === 'moderate' ? 60 : 30), color: "bg-orange-500" },
-        { label: "Regeneración", value: data.sleepQuality === 'good' ? 80 : (data.sleepQuality === 'fair' ? 50 : 20), color: "bg-indigo-500" },
-        { label: "Equilibrio", value: data.stressLevel === 'low' ? 85 : (data.stressLevel === 'moderate' ? 55 : 25), color: "bg-red-500" }
+        { label: "Vitalidad", value: data.condition === 'prevention' ? 85 : 65, color: "bg-nutrity-primary" },
+        { label: "Metabolismo", value: data.activityLevel === 'active' ? 90 : (data.activityLevel === 'moderate' ? 60 : 30), color: "bg-nutrity-accent" },
+        { label: "Regeneración", value: data.sleepQuality === 'good' ? 80 : (data.sleepQuality === 'fair' ? 50 : 20), color: "bg-nutrity-success" },
+        { label: "Equilibrio", value: data.stressLevel === 'low' ? 85 : (data.stressLevel === 'moderate' ? 55 : 25), color: "bg-nutrity-success/70" }
     ];
 
     // Mock trend data

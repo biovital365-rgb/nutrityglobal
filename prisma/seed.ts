@@ -1,15 +1,22 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import pg from 'pg'
 import { foodCatalog } from '../src/lib/food-data'
 import { micronutrientsData } from '../src/lib/micronutrients-data'
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL
-    }
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+
+// Configuración del adaptador para Prisma 7 + PostgreSQL
+const connectionString = process.env.DATABASE_URL
+const pool = new pg.Pool({ 
+  connectionString,
+  ssl: {
+    rejectUnauthorized: false
   }
 })
+const adapter = new PrismaPg(pool)
+const prisma = new PrismaClient({ adapter } as any)
 
 
 
@@ -45,7 +52,16 @@ async function main() {
         for (const food of foodCatalog) {
             await prisma.food.upsert({
                 where: { id: food.id },
-                update: {},
+                update: {
+                    name: food.name,
+                    scientificName: food.scientificName,
+                    image: food.image,
+                    category: food.category,
+                    description: food.description,
+                    metabolicBenefits: food.metabolicBenefits as any,
+                    nutrients: food.nutrients as any,
+                    recipes: food.recipes as any
+                },
                 create: {
                     id: food.id,
                     name: food.name,
@@ -70,7 +86,17 @@ async function main() {
         for (const m of micronutrientsData) {
             await prisma.micronutrient.upsert({
                 where: { id: m.id },
-                update: {},
+                update: {
+                    name: m.name,
+                    symbol: m.symbol,
+                    category: m.category,
+                    function: m.function,
+                    metabolicImpact: m.metabolicImpact,
+                    sources: m.sources as any,
+                    deficiencySigns: m.deficiencySigns as any,
+                    dailyDose: m.dailyDose,
+                    image: m.image
+                },
                 create: {
                     id: m.id,
                     name: m.name,
@@ -157,6 +183,7 @@ main()
         process.exit(1)
     })
     .finally(async () => {
+        await pool.end()
         await prisma.$disconnect()
     })
 

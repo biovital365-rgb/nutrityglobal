@@ -64,6 +64,13 @@
     *   Corrección de error de persistencia 401 (RLS) en `DailyMenu` mediante desactivación estratégica de RLS para flujos administrativos.
     *   Optimización de UX móvil con la inclusión del botón "Salir" (Logout) en la barra de navegación inferior y cabecera.
     *   Mejora de observabilidad técnica con logs detallados de errores de API/DB en el Panel Médico.
+    *   Corrección crítica de SSR en Next.js 16 para rutas dinámicas asíncronas (`params` es un Promise) y estabilización del Autenticador cruzado (Firebase/Supabase).
+
+- [x] **Fase 7: Experiencia Premium y UX/UI Disruptiva** (Completado)
+    *   **Diseño Responsive Pro-Max:** Optimización absoluta de pantallas para dispositivos móviles. Transformar la web en una PWA/App nativa desde el navegador.
+    *   **Arquitectura de Navegación Amigable:** Rediseño de menús (superiores e inferiores) para un flujo intuitivo, eliminando cualquier tipo de fricción para los pacientes.
+    *   **Alertas y Feedback Sensorial:** Integración de *toast notifications*, modales atractivos y estados de carga (loading states) que acompañen emocionalmente al usuario, guiándolo sin estrés tecnológico.
+    *   **SaaS Nivel 2:** Incorporación de acabados *glassmorphism*, tipografía *premium* (interlineado y legibilidad), e iteración de micro-animaciones para proyectar un estatus de software médico de élite.
 
 ## Decisiones Arquitectónicas Recientes
 1.  **Modelo Gemini 3**: La transición a la serie 3 es obligatoria en 2026. Se utiliza el sufijo `-preview` para asegurar el acceso a los últimos avances en razonamiento clínico.
@@ -71,6 +78,10 @@
 3.  **Logout Accesible**: Para PWAs y dispositivos móviles, el botón de salida debe estar en la zona de pulgar (Bottom Nav) para cumplir con estándares de accesibilidad modernos.
 4.  **Resolución Híbrida de Usuarios (Firebase/Supabase)**: En la función `getInternalId`, se implementó una estrategia robusta que prioriza la búsqueda por `firebaseUid` incluso si el identificador entrante es un UUID (como los generados por Supabase Auth). Esto garantiza la integridad referencial en tablas como `Evaluation` cuando el ID autogenerado difiere del proveedor de autenticación.
 5.  **Auto-Sincronización en SSR**: Las páginas críticas del servidor (como `dashboard/page.tsx`) llaman proactivamente a `syncUserProfile` para crear el registro en la base de datos si el usuario recién se autenticó, evitando errores 500 y garantizando que se guarde el perfil de salud.
+6.  **Next.js 15+ Params Promise**: Para evitar errores `404 Not Found` en rutas dinámicas (SSR y Generación de Metadatos), el objeto `params` de las rutas debe resolverse asíncronamente obligatoriamente (`const { slug } = await params;`).
+7.  **Unificación de Colores Corporativos**: Eliminación completa de colores prohibidos (`purple`, `violet`, `indigo`, `magenta`, `fuchsia`) en favor de la paleta de marca oficial (Teal `--color-nutrity-primary`, Vibrant Lime `--color-nutrity-accent`, y Emerald `--color-nutrity-success`).
+8.  **Generación de PDF Off-Screen**: Para evitar la alteración y desconfiguración visual del panel del paciente durante la generación del reporte, el componente `NutrityReportTemplate` se renderiza de forma aislada y oculta en coordenadas absolutas negativas. Se utiliza una resolución dual (`scale: 2`) combinando `html2canvas` y `jsPDF` en formato A4 estándar.
+9.  **Flujo Clínico Interactiva (Feedback Loop)**: Habilitación de la caja de texto en el menú semanal para pacientes, permitiendo actualizar el estado a `CHANGES_REQUESTED` y guardar las observaciones directamente en la tabla `DailyMenu` de Supabase, las cuales se listan en el panel administrativo del coach para re-generación o ajuste.
 
 ---
 
@@ -79,4 +90,21 @@
 - **Emotional-Driven AI**: La IA no solo prescribe dieta, sino que decodifica el síntoma biológico según la consciencia del usuario.
 - **Admin Maintenance**: El Admin Panel es ahora la herramienta principal para la salud del sistema y auditoría de diagnósticos.
 
--- Sesión Finalizada 11 Mayo 2026 --
+-- Sesión Finalizada 22 Mayo 2026 --
+
+---
+
+## Decisiones Arquitectónicas - Sesión 2 (22 Mayo 2026)
+
+10. **userId Resolution en updateUserProfile**: La función `updateUserProfile` ahora llama obligatoriamente a `getInternalId(userId)` antes de ejecutar el UPDATE en Supabase. Esto resuelve el bug de "perfil no guarda" para usuarios con firebaseUid distinto al UUID interno de la tabla `User`.
+11. **Profile Sync en Dashboard SSR**: `dashboard/page.tsx` ahora hace `setUser({ ...authUser, profile: dbProfile })` con el resultado de `syncUserProfile`. Esto garantiza que `user.profile.id` esté siempre disponible en `NutrityDashboard`, eliminando la guard silenciosa que bloqueaba el guardado de perfiles.
+12. **PDF Off-Screen Multi-Página**: El componente `NutrityReportTemplate` se renderiza off-screen con `position: absolute; left: -9999px` directamente en `dashboard/page.tsx`. Se usa `html2canvas (scale: 2)` + `jsPDF` con iteración sobre `[id^='pdf-page-']` para generar un PDF A4 multi-página con alta fidelidad.
+13. **Emotional-Driven AI (NMG V8)**: El `systemPrompt` de `getAICoachResponse` en `ai-service.ts` ahora incluye el protocolo NMG/Biodescodificación: decodificación de conflicto biológico para síntomas físicos + acción metabólica concreta + empoderamiento PNL. Modelo cambiado a `gemini-1.5-flash` por mayor estabilidad.
+14. **User Status Protocol Completo**: `AdminUsersTab.tsx` expone `onStatusChange` (prop opcional) con 3 botones pill (ACTIVE/OBSERVED/BLOCKED) en el cardex y un select en el modal de edición. El handler en `AdminPanel.tsx` llama `updateUserStatus`, refresca la lista y sincroniza el estado del cardex abierto en tiempo real.
+
+-- Fase PMV Experta SaaS (26 Mayo 2026) --
+15. **Corrección de Schema y Sincronización DB**: Se integró el modelo `PDFReportLog` directamente a Prisma para habilitar el guardado sin Errores 500 y mostrar analíticas reales en Admin Panel.
+16. **Prevención de Pérdida de Datos (DailyMenu)**: Se añadieron a Prisma campos operacionales críticos (`status`, `phase`, `approvedBy`, `adminNotes`, `weekStart`, `approvedAt`) en `DailyMenu` para evitar que un `npx prisma db push` elimine datos de producción en Supabase, alineando el ORM con los Server Actions.
+17. **Forzado de Rol y Plan ELITE en Sincronización**: Se ajustó `syncUserProfile` en `db-actions.ts` para que cualquier SuperAdmin pre-definido en el array sea forzado a mantener `role: 'ADMIN'` y `plan: 'ELITE'` sin importar su estado previo, previniendo que se muestre como 'Básico (FREE)' en la UI.
+18. **Auditoría de Descarga PDF**: El evento `handleGeneratePDF` en el Dashboard ahora ejecuta el Server Action `logPDFReport` con estado 'DOWNLOADED' o 'ERROR', habilitando la trazabilidad del SaaS en el panel de administrador.
+19. **Recuperación de Assets Base**: Se restablecieron las imágenes crudas en el directorio `public/` de Next.js (`tarwi.png`, `yacon.png`, etc.) copiándolas desde el root antiguo, eliminando los 404 Not Found en las consultas a la base de datos de Alimentos.
