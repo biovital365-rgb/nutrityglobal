@@ -97,7 +97,7 @@ model Measurement {
   status         String?
   timestamp      DateTime      @default(now())
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  user           User          @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Appointment {
@@ -112,7 +112,7 @@ model Appointment {
   createdAt      DateTime      @default(now())
   deletedAt      DateTime?
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  user           User          @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Evaluation {
@@ -123,7 +123,7 @@ model Evaluation {
   results        Json
   timestamp      DateTime      @default(now())
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  user           User          @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Course {
@@ -166,7 +166,7 @@ model Enrollment {
   enrolledAt     DateTime      @default(now())
   course         Course        @relation(fields: [courseId], references: [id])
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  user           User          @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model LessonProgress {
@@ -194,7 +194,7 @@ model DailyMenu {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
-  user          User      @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
 }
@@ -252,5 +252,5 @@ model BiologicalDiagnosis {
   createdAt              DateTime      @default(now())
   updatedAt              DateTime      @updatedAt
   organization           Organization? @relation(fields: [organizationId], references: [id])
-  user                   User          @relation(fields: [userId], references: [id])
+  user                   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

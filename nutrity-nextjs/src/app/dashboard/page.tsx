@@ -35,6 +35,7 @@ export default function DashboardPage() {
         setUser({ ...authUser, profile: dbProfile });
 
         let evalData = await getLatestEvaluation(authUser.id);
+        let actualPlan = null;
 
         // Recover guest evaluation if available
         const guestEvalStr = sessionStorage.getItem("guest_evaluation");
@@ -45,14 +46,23 @@ export default function DashboardPage() {
               const { saveEvaluation } = await import("@/actions/db-actions");
               await saveEvaluation(authUser.id, undefined, guestEval.data, guestEval.plan);
               sessionStorage.removeItem("guest_evaluation");
-              evalData = guestEval.plan;
+              actualPlan = guestEval.plan;
             }
           } catch (e) {
             console.error("Error recovering guest evaluation", e);
           }
         }
 
-        setEvaluation(evalData);
+        if (!actualPlan && evalData && evalData.results) {
+          actualPlan = evalData.results;
+        }
+
+        if (!actualPlan) {
+          router.push("/onboarding");
+          return;
+        }
+
+        setEvaluation(actualPlan);
       } catch (err) {
         console.error("Dashboard load error", err);
       }

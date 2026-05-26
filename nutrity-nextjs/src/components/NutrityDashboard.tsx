@@ -742,6 +742,62 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                     </motion.div>
                                 )}
 
+                                {/* COACH CALL TO ACTION */}
+                                {results?.coachCallToAction && (
+                                    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-gradient-to-r from-nutrity-primary to-nutrity-accent/80 p-6 md:p-8 rounded-3xl text-white shadow-xl relative overflow-hidden">
+                                        <div className="relative z-10 grid md:grid-cols-3 gap-6 items-center">
+                                            <div className="md:col-span-2 space-y-4">
+                                                <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                                                    <Brain className="w-3 h-3" /> Coach Funcional IA
+                                                </div>
+                                                <p className="text-sm md:text-base font-medium leading-relaxed">{results.coachCallToAction}</p>
+                                            </div>
+                                            <div className="flex flex-col gap-3">
+                                                <a href="https://calendly.com/biovital" target="_blank" rel="noopener noreferrer" className="bg-white text-nutrity-primary px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-nutrity-accent hover:text-white transition-all shadow-lg">
+                                                    <Calendar className="w-4 h-4" /> Agendar Cita
+                                                </a>
+                                                <button onClick={() => setActiveTab("academy")} className="bg-white/10 text-white border border-white/20 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/20 transition-all">
+                                                    <GraduationCap className="w-4 h-4" /> Ver Material
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {/* TIKTOK PÍLDORAS DE VALOR */}
+                                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white shadow-md">
+                                                <Play className="w-5 h-5 ml-0.5 text-white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-display font-bold text-xl leading-none">Píldoras de Valor</h3>
+                                                <p className="text-xs text-nutrity-gray-text mt-1">Conecta con BioVital.360</p>
+                                            </div>
+                                        </div>
+                                        <a href="https://www.tiktok.com/@biovital.360" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent hover:underline">Ir a TikTok</a>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {[
+                                            { id: 1, title: "¿Por qué no bajas de peso?", img: "https://images.unsplash.com/photo-1494597564530-871f2b93ac55?w=400&q=80", link: "https://www.tiktok.com/@biovital.360" },
+                                            { id: 2, title: "El secreto del Yacón", img: "https://images.unsplash.com/photo-1596422846543-74c6fc0e2418?w=400&q=80", link: "https://www.tiktok.com/@biovital.360" },
+                                            { id: 3, title: "Sana tu intestino", img: "https://images.unsplash.com/photo-1505253713660-8d4088c18ce8?w=400&q=80", link: "https://www.tiktok.com/@biovital.360" },
+                                            { id: 4, title: "Ansiedad y Glucosa", img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80", link: "https://www.tiktok.com/@biovital.360" }
+                                        ].map(video => (
+                                            <a key={video.id} href={video.link} target="_blank" rel="noopener noreferrer" className="group block relative aspect-[9/16] rounded-2xl overflow-hidden bg-nutrity-bg border border-nutrity-border shadow-sm hover:border-nutrity-accent transition-all">
+                                                <img src={video.img} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt={video.title} />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
+                                                    <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white mb-2 group-hover:bg-nutrity-accent transition-colors">
+                                                        <Play className="w-3.5 h-3.5 ml-0.5" />
+                                                    </div>
+                                                    <p className="text-white text-xs font-bold leading-tight">{video.title}</p>
+                                                </div>
+                                            </a>
+                                        ))}
+                                    </div>
+                                </motion.div>
+
                                 {/* Quick Actions Row */}
                                 <div className="grid md:grid-cols-3 gap-6">
                                     <div className="nutrity-card p-6 flex items-center gap-6 cursor-pointer hover:border-nutrity-accent transition-all group" onClick={handleAutoControl}>
@@ -930,7 +986,9 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
                                 {!selectedCourse ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {courses.map((course) => (
+                                        {courses.map((course) => {
+                                            const isEbook = course.category?.toLowerCase().includes('ebook') || course.category?.toLowerCase().includes('guía');
+                                            return (
                                             <div key={course.id} className="nutrity-card overflow-hidden group hover:border-nutrity-accent transition-all flex flex-col">
                                                 <div className="h-48 overflow-hidden relative">
                                                     <img src={getDirectImageUrl(course.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={course.title} />
@@ -940,7 +998,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                 <Shield className="w-3 h-3" /> Premium
                                                             </div>
                                                         )}
-                                                        <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">
+                                                        <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold text-nutrity-accent uppercase tracking-widest flex items-center gap-1.5">
+                                                            {isEbook ? <BookOpen className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                                                             {course.category}
                                                         </div>
                                                     </div>
@@ -956,13 +1015,23 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                     <div className="mt-auto pt-6 border-t border-nutrity-border flex items-center justify-between">
                                                         <div className="flex flex-col">
                                                             <div className="flex items-center gap-2 mb-1">
-                                                                <Play className="w-3 h-3 text-nutrity-accent" />
-                                                                <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">{course.lessons?.length || 6} Lecciones</span>
+                                                                {isEbook ? (
+                                                                    <BookOpen className="w-3 h-3 text-nutrity-accent" />
+                                                                ) : (
+                                                                    <Play className="w-3 h-3 text-nutrity-accent" />
+                                                                )}
+                                                                <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">
+                                                                    {isEbook ? 'Guía Descargable' : `${course.lessons?.length || 6} Lecciones`}
+                                                                </span>
                                                             </div>
                                                             <span className="text-lg font-bold text-nutrity-primary">${course.price} <span className="text-[10px] text-nutrity-gray-text">USD</span></span>
                                                         </div>
                                                         <button
                                                             onClick={async () => {
+                                                                if (isEbook && (course.price === 0 || user?.profile?.plan?.includes('ELITE'))) {
+                                                                    window.open(course.paypalUrl || '#', "_blank");
+                                                                    return;
+                                                                }
                                                                 const detailed = await dbService.getCourseWithLessons(course.id);
                                                                 if (course.price > 0 && !(user as any)?.profile?.plan?.includes('ELITE')) {
                                                                     const checkoutUrl = course.paypalUrl || "https://www.paypal.com/ncp/payment/CMG445X32EL2S";
@@ -973,12 +1042,15 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             }}
                                                             className="px-6 py-3 bg-nutrity-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-nutrity-primary/10 hover:bg-nutrity-accent transition-all"
                                                         >
-                                                            {course.price > 0 && !user?.profile?.plan?.includes('ELITE') ? 'Comprar Curso' : 'Iniciar Aprendizaje'}
+                                                            {course.price > 0 && !user?.profile?.plan?.includes('ELITE') 
+                                                                ? 'Comprar' 
+                                                                : (isEbook ? 'Descargar PDF' : 'Iniciar Aprendizaje')
+                                                            }
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )})}
                                     </div>
                                 ) : (
                                     <div className="space-y-8">

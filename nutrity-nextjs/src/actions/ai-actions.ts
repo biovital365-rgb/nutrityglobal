@@ -31,10 +31,11 @@ export async function generateAILifePlan(data: OnboardingData): Promise<Metaboli
     - Nivel de Consciencia en Biodescodificación: ${data.biodescodification || 'Básico'}
     ` : '';
 
-    const prompt = `Eres el Motor de Decodificación Biológica de Nutrity Global, experto en:
-    - Nueva Medicina Germánica (NMG) y conflictos biológicos programantes
-    - Nutrición Andina de Precisión (Tarwi, Yacón, Quinua, Maca, Sacha Inchi)
-    - Medicina Ayurvédica, MTC (Medicina Tradicional China), PNL Clínica, Naturopatía
+    const prompt = `Eres el Motor de Decodificación Biológica de Nutrity Global y un Médico/Coach Funcional Integrativo experto.
+    Basado en el NotebookLM de BioVital 365, dominas:
+    - Nueva Medicina Germánica (NMG) y conflictos biológicos programantes.
+    - Nutrición Andina de Precisión (Tarwi, Yacón, Quinua, Maca, Sacha Inchi).
+    - Medicina Ayurvédica (Doshas), MTC (Medicina Tradicional China, Los 5 Elementos), PNL Clínica, Naturopatía.
     
     DATOS DEL PACIENTE:
     - Nombre: ${data.name}
@@ -50,13 +51,17 @@ export async function generateAILifePlan(data: OnboardingData): Promise<Metaboli
 
     PROTOCOLO DE ANÁLISIS OBLIGATORIO:
 
-    A) DECODIFICACIÓN BIOLÓGICA (NMG): Si hay síntoma declarado, identifica:
-       - El CONFLICTO EMOCIONAL programante según la NMG (ej: Glucosa alta → Resistencia al cambio, páncreas como "dulzor de la vida")
-       - El ÓRGANO o tejido biológico afectado y su función emocional
+    A) DECODIFICACIÓN BIOLÓGICA (NMG) Y VISIÓN 360: Identifica:
+       - El CONFLICTO EMOCIONAL programante según la NMG (ej: Glucosa alta → Resistencia al cambio).
+       - El ÓRGANO o tejido biológico afectado y su función emocional.
        - La FASE biológica actual: ¿Estrés activo (SBS) o Reparación (PCL)?
-       - Abordaje desde al menos 3 disciplinas (MTC, Ayurveda, PNL, Naturopatía)
+       - Abordaje desde las 5 disciplinas (NMG, MTC, Ayurveda, PNL, Naturopatía). Relaciona el órgano con el Elemento de la MTC y el Dosha Ayurvédico.
 
     B) PLAN METABÓLICO: Genera el plan integral de remisión.
+
+    C) LLAMADO A LA ACCIÓN (COACH FUNCIONAL): 
+       - Deriva al paciente a agendar una cita en el Calendario del Coach.
+       - Sugiere 1-2 materiales de la Academia (eBooks o Cursos) con una breve orientación.
 
     RESPONDE con este JSON EXACTO:
     {
@@ -72,6 +77,7 @@ export async function generateAILifePlan(data: OnboardingData): Promise<Metaboli
       "trendData": [number x9] (curva proyectada de glucosa en 9 semanas),
       "holisticStats": [{ "label": string, "value": number (1-100), "color": string }],
       "superfoods": [string, string, string],
+      "coachCallToAction": string (texto persuasivo derivando al calendario del coach y recomendando material de la academia),
       "nmgDiagnosis": {
         "conflict": string (raíz emocional exacta según NMG),
         "organ": string (órgano/tejido afectado y su rol emocional),

@@ -620,13 +620,13 @@ export async function getLatestBiologicalDiagnosis(userId: string) {
 }
 
 export async function getLatestEvaluation(userId: string, organizationId?: string) {
-        const internalId = await getInternalId(userId);
-        const { data, error } = await supabase.from('Evaluation')
-            .select('*')
-            .eq('userId', internalId)
-            .order('createdAt', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+    const internalId = await getInternalId(userId);
+    const { data, error } = await supabase.from('Evaluation')
+        .select('*')
+        .eq('userId', internalId)
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
         if (error) throw error
         return data

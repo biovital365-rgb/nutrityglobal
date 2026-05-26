@@ -39,6 +39,7 @@ export const MetabolicPlanSchema = z.object({
     color: z.string()
   })).optional(),
   superfoods: z.array(z.string()).optional(),
+  coachCallToAction: z.string().optional(),
   // ── Diagnóstico NMG generado por IA ──
   nmgDiagnosis: z.object({
     conflict: z.string(),          // Raíz emocional del síntoma

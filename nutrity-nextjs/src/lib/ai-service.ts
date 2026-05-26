@@ -102,7 +102,7 @@ export async function generateAIWeeklyMenu(plan: MetabolicPlan, userName: string
  * AI Coach - Chat interactivo con contexto clínico
  */
 export async function getAICoachResponse(messages: any[], context: any) {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const systemPrompt = `Eres Nutrity Coach IA V8 — Experto en Medicina de Restauración Biológica, Nutrición Andina de Precisión y Nueva Medicina Germánica (NMG).
 
