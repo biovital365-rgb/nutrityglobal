@@ -673,6 +673,75 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                     <div className="absolute top-0 right-0 w-96 h-96 bg-nutrity-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                                 </div>
 
+                                {/* ── MAPA DE RUTA BIOLÓGICO NMG (sólo si la IA lo generó) ── */}
+                                {results?.nmgDiagnosis && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 16 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.2 }}
+                                        className="nutrity-card p-6 md:p-8 border-l-4 border-nutrity-accent space-y-6"
+                                    >
+                                        {/* Header */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-2xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent">
+                                                    <Stethoscope className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-nutrity-accent">Nueva Medicina Germánica · NMG</p>
+                                                    <h3 className="font-display font-bold text-lg leading-none">Mapa de Ruta Biológico</h3>
+                                                </div>
+                                            </div>
+                                            <span className={`text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border ${
+                                                results.nmgDiagnosis.phase === 'Estrés'
+                                                    ? 'border-amber-300 text-amber-600 bg-amber-50'
+                                                    : results.nmgDiagnosis.phase === 'Reparación'
+                                                    ? 'border-blue-300 text-blue-600 bg-blue-50'
+                                                    : 'border-nutrity-success text-nutrity-success bg-green-50'
+                                            }`}>
+                                                Fase: {results.nmgDiagnosis.phase}
+                                            </span>
+                                        </div>
+
+                                        {/* Conflicto raíz + órgano */}
+                                        <div className="grid sm:grid-cols-2 gap-4">
+                                            <div className="p-4 bg-nutrity-bg rounded-2xl space-y-1">
+                                                <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Raíz Emocional del Conflicto</p>
+                                                <p className="text-sm font-bold text-nutrity-primary">{results.nmgDiagnosis.conflict}</p>
+                                            </div>
+                                            <div className="p-4 bg-nutrity-bg rounded-2xl space-y-1">
+                                                <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Sistema Biológico Afectado</p>
+                                                <p className="text-sm font-bold text-nutrity-primary">{results.nmgDiagnosis.organ}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Enfoque holístico multi-disciplina */}
+                                        {results.nmgDiagnosis.holisticApproach?.length > 0 && (
+                                            <div className="space-y-3">
+                                                <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Protocolo Holístico Personalizado</p>
+                                                <div className="grid sm:grid-cols-2 gap-3">
+                                                    {results.nmgDiagnosis.holisticApproach.map((item: { discipline: string; recommendation: string }, idx: number) => (
+                                                        <div key={idx} className="flex gap-3 p-3 bg-nutrity-accent/5 border border-nutrity-accent/10 rounded-xl">
+                                                            <div className="w-6 h-6 rounded-lg bg-nutrity-accent/20 flex items-center justify-center shrink-0 mt-0.5">
+                                                                <Sparkles className="w-3 h-3 text-nutrity-accent" />
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-[8px] font-bold uppercase tracking-widest text-nutrity-accent">{item.discipline}</p>
+                                                                <p className="text-xs font-medium text-nutrity-primary leading-snug mt-0.5">{item.recommendation}</p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center gap-2 pt-2 border-t border-nutrity-border">
+                                            <Brain className="w-3.5 h-3.5 text-nutrity-accent" />
+                                            <p className="text-[9px] text-nutrity-gray-text">Generado por IA basado en tu Triaje Holístico · Actualiza tu diagnóstico completando un nuevo onboarding.</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+
                                 {/* Quick Actions Row */}
                                 <div className="grid md:grid-cols-3 gap-6">
                                     <div className="nutrity-card p-6 flex items-center gap-6 cursor-pointer hover:border-nutrity-accent transition-all group" onClick={handleAutoControl}>

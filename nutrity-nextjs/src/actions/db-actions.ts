@@ -527,15 +527,96 @@ export async function saveEvaluation(userId: string, organizationId: string | un
                 organizationId: organizationId || null,
                 data,
                 results
-            }, { onConflict: 'id' }) // Usamos 'id' porque 'userId' podría no ser único a nivel DB
+            }, { onConflict: 'id' })
             .select()
-            .single()
+            .single();
 
         if (error) {
             console.error('saveEvaluation error:', error);
             throw error;
         }
-        return saved
+        return saved;
+}
+
+
+// ── Diagnóstico NMG: Persistencia del Triaje Holístico ──────────────────────
+export async function saveBiologicalDiagnosis(
+    userId: string,
+    organizationId: string | undefined,
+    /** Campos del triaje (input del usuario) */
+    triaje: {
+        mainSymptom: string;
+        affectedSystem: string;
+        symptomDuration: string;
+        emotionalContext: string;
+    },
+    /** nmgDiagnosis generado por la IA */
+    nmgDiagnosis: {
+        conflict: string;
+        organ: string;
+        phase: string;
+        holisticApproach: Array<{ discipline: string; recommendation: string }>;
+    }
+) {
+    const internalId = await getInternalId(userId);
+
+    // Buscar si ya existe un diagnóstico para hacer upsert (1 por usuario)
+    const { data: existing } = await supabase
+        .from('BiologicalDiagnosis')
+        .select('id')
+        .eq('userId', internalId)
+        .maybeSingle();
+
+    const diagId = existing?.id || crypto.randomUUID();
+
+    const { data, error } = await supabase
+        .from('BiologicalDiagnosis')
+        .upsert({
+            id: diagId,
+            userId: internalId,
+            organizationId: organizationId || null,
+            // Síntomas del triaje
+            mainSymptom: triaje.mainSymptom,
+            affectedSystem: triaje.affectedSystem,
+            symptomDuration: triaje.symptomDuration,
+            emotionalContext: triaje.emotionalContext,
+            // Diagnóstico NMG generado por IA (JSON)
+            conflictRoot: nmgDiagnosis.conflict,
+            affectedOrgan: nmgDiagnosis.organ,
+            biologicalPhase: nmgDiagnosis.phase,
+            holisticProtocol: nmgDiagnosis.holisticApproach,
+            updatedAt: new Date().toISOString(),
+        }, { onConflict: 'id' })
+        .select()
+        .single();
+
+    if (error) {
+        // Log estructurado para auditoría — no bloquea el flujo principal
+        console.error('[NMG] saveBiologicalDiagnosis error:', {
+            userId: internalId,
+            error: error.message,
+            step: 'upsert BiologicalDiagnosis',
+        });
+        throw error;
+    }
+    return data;
+}
+
+export async function getLatestBiologicalDiagnosis(userId: string) {
+    const internalId = await getInternalId(userId);
+    const { data, error } = await supabase
+        .from('BiologicalDiagnosis')
+        .select('*')
+        .eq('userId', internalId)
+        .order('updatedAt', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        console.error('[NMG] getLatestBiologicalDiagnosis error:', error.message);
+        return null;
+    }
+    return data;
 }
 
 export async function getLatestEvaluation(userId: string, organizationId?: string) {
