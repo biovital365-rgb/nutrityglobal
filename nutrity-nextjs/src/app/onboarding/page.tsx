@@ -3,7 +3,7 @@
 import { NutrityOnboarding } from "@/components/NutrityOnboarding";
 import { useRouter } from "next/navigation";
 import { generateAILifePlan } from "@/actions/ai-actions";
-import { saveEvaluation } from "@/actions/db-actions";
+import { saveEvaluation, saveBiologicalDiagnosis } from "@/actions/db-actions";
 import { supabase } from "@/lib/supabase";
 
 export default function OnboardingPage() {
@@ -25,6 +25,27 @@ export default function OnboardingPage() {
       // Aseguramos incluir los datos de usuario si existen
       if (userId !== 'guest') {
         await saveEvaluation(userId, organizationId, data, plan);
+
+        // ── Persistir Triaje NMG + Diagnóstico IA ──
+        if (data.mainSymptom && plan?.nmgDiagnosis) {
+          try {
+            await saveBiologicalDiagnosis(
+              userId,
+              organizationId,
+              {
+                mainSymptom: data.mainSymptom,
+                affectedSystem: data.affectedSystem || '',
+                symptomDuration: data.symptomDuration || '',
+                emotionalContext: data.emotionalContext || '',
+              },
+              plan.nmgDiagnosis
+            );
+          } catch (nmgErr) {
+            // No crítico: el usuario igual accede al dashboard
+            console.warn('[NMG] Biological diagnosis not saved:', nmgErr);
+          }
+        }
+
         router.push("/dashboard");
       } else {
         console.warn("Evaluation not saved in DB: user is a guest");
