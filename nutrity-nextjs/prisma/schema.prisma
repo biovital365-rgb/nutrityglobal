@@ -8,19 +8,20 @@ datasource db {
 }
 
 model Organization {
-  id           String          @id @default(cuid())
-  name         String
-  createdAt    DateTime        @default(now())
-  appointments Appointment[]
-  courses      Course[]
-  enrollments  Enrollment[]
-  evaluations  Evaluation[]
-  foods        Food[]
-  measurements Measurement[]
-  micros       Micronutrient[]
-  Post         Post[]
-  pdfReports   PDFReportLog[]
-  users        User[]
+  id                   String                 @id @default(cuid())
+  name                 String
+  createdAt            DateTime               @default(now())
+  appointments         Appointment[]
+  biologicalDiagnoses  BiologicalDiagnosis[]
+  courses              Course[]
+  enrollments          Enrollment[]
+  evaluations          Evaluation[]
+  foods                Food[]
+  measurements         Measurement[]
+  micros               Micronutrient[]
+  Post                 Post[]
+  pdfReports           PDFReportLog[]
+  users                User[]
 }
 
 model User {
@@ -42,13 +43,14 @@ model User {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   deletedAt        DateTime?
-  appointments     Appointment[]
-  dailyMenus       DailyMenu[]
-  enrollments      Enrollment[]
-  evaluations      Evaluation[]
-  measurements     Measurement[]
-  pdfReports       PDFReportLog[]
-  organization     Organization? @relation(fields: [organizationId], references: [id])
+  appointments        Appointment[]
+  biologicalDiagnoses BiologicalDiagnosis[]
+  dailyMenus          DailyMenu[]
+  enrollments         Enrollment[]
+  evaluations         Evaluation[]
+  measurements        Measurement[]
+  pdfReports          PDFReportLog[]
+  organization        Organization? @relation(fields: [organizationId], references: [id])
 }
 
 model Food {
@@ -225,4 +227,30 @@ model PDFReportLog {
   createdAt      DateTime      @default(now())
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization   Organization? @relation(fields: [organizationId], references: [id])
+}
+
+// ─── TRIAJE HOLÍSTICO NMG ────────────────────────────────────────────────────
+// Almacena el síntoma principal del paciente + la decodificación biológica
+// que la IA genera durante el Onboarding. Permite audit trail clínico.
+model BiologicalDiagnosis {
+  id                     String        @id @default(cuid())
+  userId                 String
+  organizationId         String?
+  // Síntoma declarado por el paciente
+  mainSymptom            String        // ej: "Acidez estomacal", "Fatiga crónica"
+  affectedSystem         String        // ej: "Digestivo", "Inmune", "Hormonal"
+  symptomDuration        String?       // ej: "6 meses", "2 años"
+  emotionalContext       String?       // ej: "miedo al futuro", "conflicto de territorio"
+  // Resultado de la IA (NMG/Biodescodificación)
+  nmgConflict            String?       // La raíz emocional identificada
+  nmgOrgan               String?       // El órgano o sistema biológico involucrado
+  holisticApproach       Json?         // Array de disciplinas: MTC, Ayurveda, PNL, etc.
+  aiRawResponse          String?       // El texto íntegro de la IA para auditoría
+  // Control
+  phase                  String        @default("DIAGNOSIS") // DIAGNOSIS, INTERVENTION, REMISSION
+  isActive               Boolean       @default(true)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  organization           Organization? @relation(fields: [organizationId], references: [id])
+  user                   User          @relation(fields: [userId], references: [id])
 }

@@ -38,7 +38,17 @@ export const MetabolicPlanSchema = z.object({
     value: z.number(),
     color: z.string()
   })).optional(),
-  superfoods: z.array(z.string()).optional()
+  superfoods: z.array(z.string()).optional(),
+  // ── Diagnóstico NMG generado por IA ──
+  nmgDiagnosis: z.object({
+    conflict: z.string(),          // Raíz emocional del síntoma
+    organ: z.string(),             // Órgano / sistema afectado según NMG
+    phase: z.string(),             // Fase biológica (Estrés / Reparación / Remisión)
+    holisticApproach: z.array(z.object({
+      discipline: z.string(),      // NMG | MTC | Ayurveda | PNL | Naturopatía
+      recommendation: z.string()  // Acción concreta
+    }))
+  }).optional()
 });
 
 export const OnboardingDataSchema = z.object({
@@ -53,7 +63,13 @@ export const OnboardingDataSchema = z.object({
   sleepQuality: z.string().optional(),
   stressLevel: z.string().optional(),
   digestiveHealth: z.string().optional(),
-  waist: z.string().optional()
+  waist: z.string().optional(),
+  // ── NMG Triäje Holístico (Fase 1 - Diagnóstico) ──
+  mainSymptom: z.string().optional(),       // Síntoma principal declarado
+  affectedSystem: z.string().optional(),    // Sistema biológico afectado
+  symptomDuration: z.string().optional(),   // Cuánto tiempo lleva con el síntoma
+  emotionalContext: z.string().optional(),  // Contexto emocional percibido
+  biodescodification: z.string().optional(), // Nivel de consciencia en biodescodificación
 });
 
 export type WeeklyMenu = z.infer<typeof WeeklyMenuSchema>;
