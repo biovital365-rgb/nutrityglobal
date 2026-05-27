@@ -704,9 +704,16 @@ export async function saveCourse(course: Partial<Course>, organizationId?: strin
         const { lessons, ...courseData } = course;
         
         const payload = {
-            ...courseData,
+            id: courseData.id && courseData.id.length > 20 ? courseData.id : crypto.randomUUID(),
             organizationId: courseData.organizationId || organizationId || null,
-            id: courseData.id && courseData.id.length > 20 ? courseData.id : crypto.randomUUID()
+            title: courseData.title || '',
+            description: courseData.description || '',
+            thumbnail: courseData.thumbnail || '',
+            category: courseData.category || 'Bienestar',
+            price: Number(courseData.price) || 0,
+            paypalUrl: courseData.paypalUrl || null,
+            currency: courseData.currency || 'USD',
+            isPublished: courseData.isPublished !== undefined ? courseData.isPublished : true,
         };
 
         const { data, error } = await supabase
@@ -723,10 +730,15 @@ export async function saveCourse(course: Partial<Course>, organizationId?: strin
         // Handle lessons if they exist
         if (lessons && Array.isArray(lessons)) {
             // Upsert all lessons with the courseId
-            const lessonsPayload = lessons.map(lesson => ({
-                ...lesson,
+            const lessonsPayload = lessons.map((lesson, idx) => ({
+                id: lesson.id && lesson.id.length > 20 ? lesson.id : crypto.randomUUID(),
                 courseId: payload.id,
-                id: lesson.id && lesson.id.length > 20 ? lesson.id : crypto.randomUUID()
+                title: lesson.title || `Lección ${idx + 1}`,
+                description: lesson.description || null,
+                videoUrl: lesson.videoUrl || null,
+                duration: lesson.duration || null,
+                order: lesson.order !== undefined ? lesson.order : idx,
+                isFree: lesson.isFree || false
             }));
             
             if (lessonsPayload.length > 0) {
