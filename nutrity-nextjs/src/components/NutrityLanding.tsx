@@ -21,7 +21,7 @@ import {
     Scale,
     Apple
 } from "lucide-react";
-import { getPosts } from "@/actions/db-actions";
+import { getPosts, getLandingConfig } from "@/actions/db-actions";
 import type { Post } from "@/lib/types";
 
 interface NutrityLandingProps {
@@ -32,12 +32,17 @@ interface NutrityLandingProps {
 
 export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingProps) {
     const [recentPosts, setRecentPosts] = useState<Post[]>([]);
+    const [landingConfig, setLandingConfig] = useState<any>({});
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
         getPosts(undefined, true).then(posts => {
             setRecentPosts(posts.slice(0, 3));
         }).catch(err => console.error("Error fetching posts:", err));
+
+        getLandingConfig().then(config => {
+            if (config) setLandingConfig(config);
+        }).catch(err => console.error("Error fetching landing config:", err));
 
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
@@ -101,17 +106,17 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                                 <span className="text-[10px] md:text-xs font-bold text-[#c19b6c] uppercase tracking-[0.3em]">Guía Práctica Basada en Evidencia</span>
                             </div>
 
-                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold leading-[1.05] tracking-tight mb-6 text-[#012a4a]">
-                                REMISIÓN <br /> METABÓLICA
+                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold leading-[1.05] tracking-tight mb-6 text-[#012a4a] whitespace-pre-line">
+                                {landingConfig.heroTitle || "REMISIÓN \n METABÓLICA"}
                             </h1>
                             <h2 className="text-lg md:text-2xl font-bold tracking-widest text-[#1b3b36] mb-10 uppercase bg-[#1b3b36]/5 inline-block px-4 py-2 border-l-4 border-[#1b3b36]">
-                                De la Diabetes Tipo 2
+                                {landingConfig.heroSubtitle || "De la Diabetes Tipo 2"}
                             </h2>
 
                             <div className="flex items-start gap-4 mb-12">
                                 <div className="w-2 h-2 rounded-full bg-[#c19b6c] mt-2.5"></div>
-                                <p className="text-xl md:text-2xl text-[#2d3748] italic font-serif leading-relaxed">
-                                    Recuperando tu salud metabólica <br className="hidden md:block" /> con ciencia, hábitos y esperanza.
+                                <p className="text-xl md:text-2xl text-[#2d3748] italic font-serif leading-relaxed whitespace-pre-line">
+                                    {landingConfig.heroDescription || "Recuperando tu salud metabólica \n con ciencia, hábitos y esperanza."}
                                 </p>
                             </div>
 
@@ -120,7 +125,7 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                                     onClick={onStart}
                                     className="bg-[#c19b6c] text-[#012a4a] px-8 py-5 rounded-xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-[#c19b6c]/20 hover:scale-105 transition-all border border-[#c19b6c]"
                                 >
-                                    Comenzar mi Transformación
+                                    {landingConfig.ctaText || "Comenzar mi Transformación"}
                                     <ChevronRight className="w-5 h-5" />
                                 </button>
                             </div>

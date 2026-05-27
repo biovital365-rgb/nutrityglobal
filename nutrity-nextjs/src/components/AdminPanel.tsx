@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
     Utensils, Zap, ClipboardCheck, BookOpen,
     PlusCircle, Search, Shield, Users, Calendar,
-    FileText, Settings, Save, AlertTriangle, Loader2,
+    FileText, Settings, Save, AlertTriangle, Loader2, LayoutTemplate
 } from "lucide-react";
 import * as dbService from "@/actions/db-actions";
 import { FoodItem, Micronutrient, Course } from "@/lib/types";
@@ -19,6 +19,7 @@ import { AdminCalendarTab } from "./admin/AdminCalendarTab";
 import { AdminCrmTab } from "./admin/AdminCrmTab";
 import { AdminReportsTab } from "./admin/AdminReportsTab";
 import AdminBlogTab from "./admin/AdminBlogTab";
+import { AdminLandingTab } from "./admin/AdminLandingTab";
 import { DeleteConfirmModal } from "./admin/shared";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -39,7 +40,7 @@ interface AdminPanelProps {
     onBackToDashboard?: () => void;
 }
 
-type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm" | "calendar" | "reports" | "blog";
+type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm" | "calendar" | "reports" | "blog" | "landing";
 
 // ─── Empty templates ─────────────────────────────────────────────────────────
 const emptyFood: Partial<FoodItem> = {
@@ -69,6 +70,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [users, setUsers] = useState<any[]>([]);
     const [appointments, setAppointments] = useState<any[]>([]);
     const [pdfReports, setPdfReports] = useState<any[]>([]);
+    const [landingConfig, setLandingConfig] = useState<any>({});
 
     // Modal state for foods
     const [showFoodModal, setShowFoodModal] = useState(false);
@@ -106,13 +108,14 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const loadAll = useCallback(async () => {
         const orgId = user?.profile?.organization?.id;
         try {
-            const [foodData, microData, courseData, userData, appointmentData, reportData] = await Promise.all([
+            const [foodData, microData, courseData, userData, appointmentData, reportData, landingData] = await Promise.all([
                 dbService.getFoods(orgId).catch(() => []),
                 dbService.getMicronutrients(orgId).catch(() => []),
                 dbService.getCourses(orgId, showDeleted).catch(() => []),
                 dbService.getAllUsers(orgId, showDeleted).catch(() => []),
                 dbService.getAllAppointments(orgId, showDeleted).catch(() => []),
                 dbService.getPDFReports(orgId).catch(() => []),
+                dbService.getLandingConfig(orgId).catch(() => ({})),
             ]);
             setFoods(foodData);
             setMicros(microData);
@@ -120,6 +123,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
             setUsers(userData);
             setAppointments(appointmentData);
             setPdfReports(reportData);
+            setLandingConfig(landingData || {});
         } catch (err) {
             console.error("Admin data load error:", err);
             notify("error", "Error al cargar datos");
@@ -264,6 +268,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
         { id: "reports", icon: FileText, label: "Reportes PDF", count: pdfReports.length },
         { id: "crm", icon: Settings, label: "CRM Automático", count: users.length },
         { id: "blog", icon: BookOpen, label: "Blog", count: 0 },
+        { id: "landing", icon: LayoutTemplate, label: "Landing CMS", count: 1 },
     ];
 
     // ─── Filtered data ────────────────────────────────────────────────────────
@@ -317,7 +322,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
             </div>
 
             {/* Search + Add bar */}
-            {!["menu", "crm", "reports", "blog"].includes(section) && (
+            {!["menu", "crm", "reports", "blog", "landing"].includes(section) && (
                 <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
                     <div className="relative flex-1">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-nutrity-gray-text opacity-40" />
@@ -472,6 +477,25 @@ export function AdminPanel({ user }: AdminPanelProps) {
 
                 {section === "blog" && (
                     <AdminBlogTab user={user} />
+                )}
+
+                {section === "landing" && (
+                    <AdminLandingTab
+                        initialConfig={landingConfig}
+                        isSaving={isSaving}
+                        onSaveConfig={async (config) => {
+                            setIsSaving(true);
+                            try {
+                                await dbService.saveLandingConfig(config, user?.profile?.organization?.id);
+                                setLandingConfig(config);
+                                notify("success", "Configuración de Landing guardada");
+                            } catch {
+                                notify("error", "Error al guardar configuración");
+                            } finally {
+                                setIsSaving(false);
+                            }
+                        }}
+                    />
                 )}
             </AnimatePresence>
 

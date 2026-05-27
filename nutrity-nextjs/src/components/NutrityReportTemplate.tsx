@@ -119,21 +119,27 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                     <section className="grid grid-cols-2 gap-10 flex-1">
                         <div className="space-y-12">
                             <div>
-                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Proyección de Glucosa (90 días)</h5>
-                                <div className="h-48 flex items-end gap-3 bg-white p-8 rounded-[40px] border border-[hsla(136,19%,29%,0.05)] shadow-lg mb-4">
-                                    {results.trendData?.map((h: number, i: number) => (
-                                        <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                                            <div
-                                                style={{ height: `${h}%` }}
-                                                className={`w-full rounded-lg transition-all ${i === 8 ? "bg-[#60a5fa]" : "bg-[hsla(136,19%,29%,0.1)]"}`}
-                                            ></div>
-                                            <span className="text-[8px] font-bold opacity-20">M{i + 1}</span>
-                                        </div>
-                                    ))}
+                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Datos Clínicos y Descodificación</h5>
+                                <div className="bg-white p-8 rounded-[40px] border border-[hsla(136,19%,29%,0.05)] shadow-lg space-y-4 mb-4">
+                                    <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3">
+                                        <span className="text-[11px] font-bold uppercase opacity-60">Síntoma Principal</span>
+                                        <span className="text-sm font-black text-[#3d5a44] text-right max-w-[180px]">{results.nmg?.mainSymptom || results.rawAnswers?.healthFocus || "No especificado"}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3">
+                                        <span className="text-[11px] font-bold uppercase opacity-60">Biometría</span>
+                                        <span className="text-sm font-black text-[#3d5a44]">
+                                            {results.rawAnswers?.weight ? `${results.rawAnswers.weight} kg` : "--"} / {results.rawAnswers?.glucose ? `${results.rawAnswers.glucose} mg/dL` : "--"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3">
+                                        <span className="text-[11px] font-bold uppercase opacity-60">Contexto Emocional (DHS)</span>
+                                        <span className="text-[12px] font-black text-[#3d5a44] text-right max-w-[180px] leading-tight">{results.nmg?.emotionalContext || "No especificado"}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-[11px] font-bold uppercase opacity-60 text-[#60a5fa]">Conflicto Biológico</span>
+                                        <span className="text-[12px] font-black text-[#60a5fa] text-right max-w-[180px] leading-tight">{results.nmg?.conflictRoot || "Evaluando..."}</span>
+                                    </div>
                                 </div>
-                                <p className="text-[10px] text-[hsla(136,19%,29%,0.6)] leading-relaxed font-bold">
-                                    * Proyección basada en algoritmo de IA predictivo.
-                                </p>
                             </div>
 
                             {/* New Holistic Stats Section in PDF */}
