@@ -1026,27 +1026,33 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             </div>
                                                             <span className="text-lg font-bold text-nutrity-primary">${course.price} <span className="text-[10px] text-nutrity-gray-text">USD</span></span>
                                                         </div>
-                                                        <button
-                                                            onClick={async () => {
-                                                                if (isEbook && (course.price === 0 || user?.profile?.plan?.includes('ELITE'))) {
-                                                                    window.open(course.paypalUrl || '#', "_blank");
-                                                                    return;
-                                                                }
-                                                                const detailed = await dbService.getCourseWithLessons(course.id);
-                                                                if (course.price > 0 && !(user as any)?.profile?.plan?.includes('ELITE')) {
-                                                                    const checkoutUrl = course.paypalUrl || "https://www.paypal.com/ncp/payment/CMG445X32EL2S";
-                                                                    window.open(checkoutUrl, "_blank");
-                                                                } else {
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={async () => {
+                                                                    if (isEbook && (course.price === 0 || user?.profile?.plan?.includes('ELITE'))) {
+                                                                        window.open(course.paypalUrl || '#', "_blank");
+                                                                        return;
+                                                                    }
+                                                                    const detailed = await dbService.getCourseWithLessons(course.id);
                                                                     setSelectedCourse(detailed);
-                                                                }
-                                                            }}
-                                                            className="px-6 py-3 bg-nutrity-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-nutrity-primary/10 hover:bg-nutrity-accent transition-all"
-                                                        >
-                                                            {course.price > 0 && !user?.profile?.plan?.includes('ELITE') 
-                                                                ? 'Comprar' 
-                                                                : (isEbook ? 'Descargar PDF' : 'Iniciar Aprendizaje')
-                                                            }
-                                                        </button>
+                                                                }}
+                                                                className="px-6 py-3 bg-nutrity-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-nutrity-primary/10 hover:bg-nutrity-accent transition-all"
+                                                            >
+                                                                {isEbook ? 'Descargar PDF' : 'Iniciar Aprendizaje'}
+                                                            </button>
+                                                            {course.price > 0 && course.paypalUrl && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        const checkoutUrl = course.paypalUrl || "https://www.paypal.com/ncp/payment/CMG445X32EL2S";
+                                                                        window.open(checkoutUrl, "_blank");
+                                                                    }}
+                                                                    className="px-6 py-3 bg-amber-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all flex items-center justify-center"
+                                                                >
+                                                                    Comprar
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
