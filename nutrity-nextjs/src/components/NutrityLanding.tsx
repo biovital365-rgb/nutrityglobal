@@ -83,310 +83,202 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
 
             <main>
                 {/* Hero Section */}
-                <section className="relative min-h-screen pt-32 pb-20 px-6 flex items-center overflow-hidden">
+                <section className="relative min-h-screen pt-32 pb-20 px-6 flex items-center justify-center overflow-hidden text-center">
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80" 
-                            alt="Amanecer en las montañas" 
-                            className="w-full h-full object-cover object-top"
+                            src={landingConfig.heroImage || "/landing-img-5.jpg"} 
+                            alt="Hero Image" 
+                            className="w-full h-full object-cover object-top opacity-90"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#fbf8f1] via-[#fbf8f1]/90 to-transparent md:to-[#fbf8f1]/30"></div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f1] via-transparent to-[#fbf8f1]/50"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f1] via-[#fbf8f1]/80 to-transparent"></div>
+                        <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]"></div>
                     </div>
 
-                    <div className="max-w-7xl mx-auto w-full relative z-10 grid lg:grid-cols-2 gap-12 items-center">
+                    <div className="max-w-4xl mx-auto w-full relative z-10">
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 1 }}
-                            className="flex flex-col justify-center"
+                            className="flex flex-col items-center justify-center"
                         >
-                            <div className="inline-flex items-center gap-3 mb-8">
-                                <span className="w-12 h-[1px] bg-[#c19b6c]"></span>
+                            <div className="inline-flex items-center gap-3 mb-6">
+                                <span className="w-8 h-[1px] bg-[#c19b6c]"></span>
                                 <span className="text-[10px] md:text-xs font-bold text-[#c19b6c] uppercase tracking-[0.3em]">Guía Práctica Basada en Evidencia</span>
+                                <span className="w-8 h-[1px] bg-[#c19b6c]"></span>
                             </div>
 
-                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold leading-[1.05] tracking-tight mb-6 text-[#012a4a] whitespace-pre-line">
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight tracking-tight mb-4 text-[#012a4a] whitespace-pre-line">
                                 {landingConfig.heroTitle || "REMISIÓN \n METABÓLICA"}
                             </h1>
-                            <h2 className="text-lg md:text-2xl font-bold tracking-widest text-[#1b3b36] mb-10 uppercase bg-[#1b3b36]/5 inline-block px-4 py-2 border-l-4 border-[#1b3b36]">
+                            
+                            <h2 className="text-sm md:text-lg font-bold tracking-widest text-[#1b3b36] mb-8 uppercase bg-[#1b3b36]/5 inline-block px-4 py-2 border-l-4 border-r-4 border-[#1b3b36]">
                                 {landingConfig.heroSubtitle || "De la Diabetes Tipo 2"}
                             </h2>
 
-                            <div className="flex items-start gap-4 mb-12">
-                                <div className="w-2 h-2 rounded-full bg-[#c19b6c] mt-2.5"></div>
-                                <p className="text-xl md:text-2xl text-[#2d3748] italic font-serif leading-relaxed whitespace-pre-line">
-                                    {landingConfig.heroDescription || "Recuperando tu salud metabólica \n con ciencia, hábitos y esperanza."}
-                                </p>
-                            </div>
+                            <p className="text-base md:text-xl text-[#2d3748] italic font-serif leading-relaxed mb-10 max-w-2xl mx-auto">
+                                {landingConfig.heroDescription || "Recuperando tu salud metabólica con ciencia, hábitos y esperanza."}
+                            </p>
 
-                            <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                                <button
-                                    onClick={onStart}
-                                    className="bg-[#c19b6c] text-[#012a4a] px-8 py-5 rounded-xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-[#c19b6c]/20 hover:scale-105 transition-all border border-[#c19b6c]"
-                                >
-                                    {landingConfig.ctaText || "Comenzar mi Transformación"}
-                                    <ChevronRight className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 1.2, delay: 0.3 }}
-                            className="relative hidden lg:flex items-center justify-center"
-                        >
-                            <div className="relative w-64 h-64 rounded-full border border-[#c19b6c] flex items-center justify-center bg-[#fbf8f1]/80 backdrop-blur-md shadow-2xl p-4">
-                                <div className="absolute inset-2 border border-[#c19b6c]/40 rounded-full animate-[spin_20s_linear_infinite] border-dashed"></div>
-                                <div className="text-center z-10">
-                                    <Heart className="w-8 h-8 text-[#c19b6c] mx-auto mb-4" />
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#012a4a] leading-relaxed">
-                                        La ciencia <br /> confirma. <br /> Tu compromiso <br /> transforma.
-                                    </p>
-                                    <Leaf className="w-5 h-5 text-[#c19b6c] mx-auto mt-4" />
-                                </div>
-                            </div>
+                            <button
+                                onClick={onStart}
+                                className="bg-[#c19b6c] text-[#012a4a] px-8 py-4 rounded-xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-[#c19b6c]/20 hover:scale-105 transition-all border border-[#c19b6c] mx-auto"
+                            >
+                                {landingConfig.ctaText || "Comenzar mi Transformación"}
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
                         </motion.div>
                     </div>
                 </section>
 
                 {/* Doble Ciclo Infographic */}
                 <section id="doble-ciclo" className="py-24 bg-[#012a4a] text-[#fbf8f1] relative border-t border-[#c19b6c]/20 overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-6 relative z-10">
-                        <div className="text-center mb-20">
-                            <h2 className="text-[10px] md:text-xs font-bold text-[#c19b6c] uppercase tracking-[0.3em] mb-4">La Ciencia del Problema</h2>
-                            <h3 className="text-4xl md:text-6xl font-serif font-bold mb-6">El Doble Ciclo</h3>
-                            <p className="text-[#e6d3a8] text-lg font-serif italic max-w-2xl mx-auto">
-                                La resistencia a la insulina es provocada por un exceso crónico de energía y depósitos de grasa ectópica.
+                    <div className="max-w-5xl mx-auto px-6 relative z-10">
+                        <div className="text-center mb-12">
+                            <h2 className="text-[10px] md:text-xs font-bold text-[#c19b6c] uppercase tracking-[0.3em] mb-4">La Ciencia</h2>
+                            <h3 className="text-3xl md:text-5xl font-serif font-bold mb-6">El Doble Ciclo</h3>
+                            <p className="text-[#e6d3a8] text-sm md:text-base font-serif italic max-w-2xl mx-auto">
+                                Entendiendo la resistencia a la insulina desde sus raíces biológicas.
                             </p>
                         </div>
-
-                        <div className="grid md:grid-cols-2 gap-12 lg:gap-24 relative">
-                            {/* Ciclo 1 */}
-                            <motion.div 
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                className="bg-[#1b3b36]/40 p-8 md:p-12 rounded-[3rem] border border-[#c19b6c]/30 backdrop-blur-sm relative"
-                            >
-                                <div className="absolute -top-6 -left-6 w-16 h-16 bg-[#c19b6c] rounded-full flex items-center justify-center text-[#012a4a] font-serif font-bold text-2xl shadow-xl">1</div>
-                                <h4 className="text-2xl font-serif font-bold text-[#e6d3a8] mb-8 text-center border-b border-[#c19b6c]/20 pb-4">Ciclo del Hígado</h4>
-                                <div className="space-y-6 flex flex-col items-center">
-                                    <div className="bg-[#012a4a] w-full p-5 rounded-2xl text-center border border-white/10 shadow-lg">
-                                        <p className="font-bold text-sm uppercase tracking-wide">Exceso de Calorías Diarias</p>
-                                    </div>
-                                    <ArrowDown className="w-6 h-6 text-[#c19b6c]" />
-                                    <div className="bg-[#012a4a] w-full p-5 rounded-2xl text-center border border-white/10 shadow-lg relative">
-                                        <Droplets className="absolute top-1/2 -translate-y-1/2 left-4 w-6 h-6 text-[#c19b6c]/50" />
-                                        <p className="font-bold text-sm uppercase tracking-wide">Grasa en el Hígado</p>
-                                    </div>
-                                    <ArrowDown className="w-6 h-6 text-[#c19b6c]" />
-                                    <div className="bg-[#012a4a] w-full p-5 rounded-2xl text-center border border-white/10 shadow-lg">
-                                        <p className="font-bold text-sm uppercase tracking-wide text-[#c19b6c]">Resistencia a la Insulina Hepática</p>
-                                    </div>
-                                    <ArrowDown className="w-6 h-6 text-[#c19b6c]" />
-                                    <div className="bg-[#012a4a] w-full p-5 rounded-2xl text-center border border-white/10 shadow-lg">
-                                        <p className="font-bold text-sm uppercase tracking-wide">Producción Excesiva de Glucosa</p>
-                                    </div>
-                                </div>
-                            </motion.div>
-
-                            {/* Ciclo 2 */}
-                            <motion.div 
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: 0.2 }}
-                                className="bg-[#1b3b36]/40 p-8 md:p-12 rounded-[3rem] border border-[#c19b6c]/30 backdrop-blur-sm relative"
-                            >
-                                <div className="absolute -top-6 -left-6 w-16 h-16 bg-[#c19b6c] rounded-full flex items-center justify-center text-[#012a4a] font-serif font-bold text-2xl shadow-xl">2</div>
-                                <h4 className="text-2xl font-serif font-bold text-[#e6d3a8] mb-8 text-center border-b border-[#c19b6c]/20 pb-4">Ciclo del Páncreas</h4>
-                                <div className="space-y-6 flex flex-col items-center">
-                                    <div className="bg-[#012a4a] w-full p-5 rounded-2xl text-center border border-white/10 shadow-lg">
-                                        <p className="font-bold text-sm uppercase tracking-wide">Exceso de Glucosa en Sangre</p>
-                                    </div>
-                                    <ArrowDown className="w-6 h-6 text-[#c19b6c]" />
-                                    <div className="bg-[#012a4a] w-full p-5 rounded-2xl text-center border border-white/10 shadow-lg">
-                                        <p className="font-bold text-sm uppercase tracking-wide">Más Insulina Secretada</p>
-                                    </div>
-                                    <ArrowDown className="w-6 h-6 text-[#c19b6c]" />
-                                    <div className="bg-[#012a4a] w-full p-5 rounded-2xl text-center border border-white/10 shadow-lg relative">
-                                        <Droplets className="absolute top-1/2 -translate-y-1/2 left-4 w-6 h-6 text-[#c19b6c]/50" />
-                                        <p className="font-bold text-sm uppercase tracking-wide text-[#c19b6c]">Grasa en el Páncreas</p>
-                                    </div>
-                                    <ArrowDown className="w-6 h-6 text-[#c19b6c]" />
-                                    <div className="bg-[#012a4a] w-full p-5 rounded-2xl text-center border border-white/10 shadow-lg">
-                                        <p className="font-bold text-sm uppercase tracking-wide">Falla de las Células Beta</p>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </div>
+                        
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            className="flex justify-center"
+                        >
+                            <img 
+                                src={landingConfig.scienceImage || "/landing-img-1.jpg"} 
+                                alt="Ciencia y órganos" 
+                                className="w-full max-w-3xl rounded-3xl shadow-2xl border-4 border-[#1b3b36]"
+                            />
+                        </motion.div>
                     </div>
                 </section>
 
-                {/* Pilares de Alimentación y Plato Metabólico */}
+                {/* Pilares de Alimentación */}
                 <section id="alimentacion" className="py-24 bg-white relative">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="inline-flex items-center gap-3 mb-6">
-                            <span className="text-4xl font-serif text-[#c19b6c]">01</span>
+                    <div className="max-w-5xl mx-auto px-6 text-center">
+                        <div className="inline-flex items-center gap-3 mb-6 justify-center">
+                            <span className="text-3xl font-serif text-[#c19b6c]">01</span>
                             <div className="h-10 w-[2px] bg-[#c19b6c]"></div>
-                            <span className="text-[10px] md:text-xs font-bold text-[#1b3b36] uppercase tracking-[0.3em]">Alimentación que Sana</span>
+                            <span className="text-[10px] md:text-xs font-bold text-[#1b3b36] uppercase tracking-[0.3em]">Misión Metabólica</span>
                         </div>
                         
-                        <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
-                            <div>
-                                <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-[#012a4a] mb-6 leading-tight">
-                                    No se trata de comer menos, sino de comer <span className="italic text-[#1b3b36]">mejor</span>.
-                                </h2>
-                                <p className="text-lg text-[#2d3748] mb-10 leading-relaxed font-medium">
-                                    La alimentación es información. Cada comida le dice a tu cuerpo si debe almacenar grasa, inflamar tejidos o, por el contrario, utilizar la energía y regenerarse.
-                                </p>
+                        <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#012a4a] mb-6 leading-tight">
+                            Comer <span className="italic text-[#1b3b36]">mejor</span>, no menos.
+                        </h2>
+                        <p className="text-sm md:text-base text-[#2d3748] mb-12 max-w-2xl mx-auto">
+                            Cada comida le dice a tu cuerpo si debe almacenar grasa, inflamar tejidos o utilizar la energía y regenerarse.
+                        </p>
 
-                                <div className="grid sm:grid-cols-2 gap-6">
-                                    {[
-                                        { title: "Proteínas", desc: "Saciedad y preservación muscular.", icon: Flame },
-                                        { title: "Grasas Sanas", desc: "Hormonas y energía estable.", icon: Droplets },
-                                        { title: "Fibra", desc: "Salud intestinal y control de glucosa.", icon: Leaf },
-                                        { title: "Carbohidratos", desc: "De bajo índice glucémico.", icon: Apple }
-                                    ].map((item, i) => (
-                                        <div key={i} className="p-6 rounded-2xl border border-[#c19b6c]/20 bg-[#fbf8f1] hover:shadow-lg transition-shadow">
-                                            <item.icon className="w-8 h-8 text-[#c19b6c] mb-4" />
-                                            <h4 className="font-serif font-bold text-[#012a4a] text-lg mb-2">{item.title}</h4>
-                                            <p className="text-sm text-[#2d3748]">{item.desc}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                        <motion.div 
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="flex justify-center mb-12"
+                        >
+                            <img 
+                                src={landingConfig.missionImage || "/landing-img-3.jpg"} 
+                                alt="Misión Metabólica" 
+                                className="w-full max-w-2xl rounded-3xl shadow-xl"
+                            />
+                        </motion.div>
 
-                            {/* Plato Metabólico CSS Graphic */}
-                            <div className="relative flex justify-center items-center">
-                                <div className="absolute inset-0 bg-[#c19b6c]/10 blur-3xl rounded-full w-[400px] h-[400px] mx-auto"></div>
-                                <div className="w-[300px] h-[300px] md:w-[450px] md:h-[450px] rounded-full bg-white border-8 border-[#fbf8f1] shadow-2xl relative overflow-hidden flex">
-                                    <div className="w-1/2 h-full bg-[#1b3b36]/90 flex flex-col items-center justify-center text-center p-6 text-white border-r border-white/20">
-                                        <Leaf className="w-10 h-10 mb-3 opacity-80" />
-                                        <span className="font-serif font-bold text-2xl md:text-4xl">50%</span>
-                                        <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest mt-2">Vegetales y Fibra</span>
-                                    </div>
-                                    <div className="w-1/2 h-full flex flex-col">
-                                        <div className="h-1/2 w-full bg-[#012a4a]/90 flex flex-col items-center justify-center text-center p-4 text-white border-b border-white/20">
-                                            <Flame className="w-8 h-8 mb-2 opacity-80" />
-                                            <span className="font-serif font-bold text-xl md:text-3xl">25%</span>
-                                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-1">Proteína de Calidad</span>
-                                        </div>
-                                        <div className="h-1/2 w-full bg-[#c19b6c]/90 flex flex-col items-center justify-center text-center p-4 text-[#012a4a]">
-                                            <Apple className="w-8 h-8 mb-2 opacity-80" />
-                                            <span className="font-serif font-bold text-xl md:text-3xl">25%</span>
-                                            <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest mt-1">Carbohidratos Complejos</span>
-                                        </div>
-                                    </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                            {[
+                                { title: "Proteínas", desc: "Saciedad", icon: Flame },
+                                { title: "Grasas", desc: "Energía", icon: Droplets },
+                                { title: "Fibra", desc: "Control", icon: Leaf },
+                                { title: "Carbos", desc: "Calidad", icon: Apple }
+                            ].map((item, i) => (
+                                <div key={i} className="p-4 md:p-6 rounded-2xl border border-[#c19b6c]/20 bg-[#fbf8f1] hover:shadow-md transition-shadow text-center">
+                                    <item.icon className="w-6 h-6 md:w-8 md:h-8 text-[#c19b6c] mx-auto mb-3" />
+                                    <h4 className="font-serif font-bold text-[#012a4a] text-sm md:text-lg mb-1">{item.title}</h4>
+                                    <p className="text-xs text-[#2d3748]">{item.desc}</p>
                                 </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
                 </section>
 
                 {/* Movimiento como Medicina */}
                 <section id="movimiento" className="py-24 bg-[#fbf8f1] relative border-t border-[#c19b6c]/20">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="text-center mb-16">
+                    <div className="max-w-5xl mx-auto px-6">
+                        <div className="text-center mb-12">
                             <div className="inline-flex items-center gap-3 mb-6 justify-center">
-                                <span className="text-4xl font-serif text-[#c19b6c]">02</span>
+                                <span className="text-3xl font-serif text-[#c19b6c]">02</span>
                                 <div className="h-10 w-[2px] bg-[#c19b6c]"></div>
                                 <span className="text-[10px] md:text-xs font-bold text-[#1b3b36] uppercase tracking-[0.3em]">El Cuerpo en Acción</span>
                             </div>
-                            <h2 className="text-4xl md:text-6xl font-serif font-bold text-[#012a4a] mb-6">El Movimiento como Medicina</h2>
-                            <p className="text-lg text-[#2d3748] font-medium max-w-2xl mx-auto">
-                                El músculo es el principal órgano consumidor de glucosa. Activarlo es clave para sensibilizar el cuerpo a la insulina.
+                            <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#012a4a] mb-4">El Movimiento como Medicina</h2>
+                            <p className="text-sm md:text-base text-[#2d3748] max-w-2xl mx-auto">
+                                Activar tus músculos es clave para sensibilizar el cuerpo a la insulina.
                             </p>
                         </div>
 
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {[
-                                {
-                                    icon: Activity,
-                                    title: "Caminar",
-                                    subtitle: "La medicina subestimada",
-                                    desc: "Caminatas de 10 a 15 minutos después de las comidas pueden reducir significativamente la glucosa postprandial."
-                                },
-                                {
-                                    icon: Dumbbell,
-                                    title: "Fuerza",
-                                    subtitle: "Construye el motor",
-                                    desc: "Mejora la sensibilidad a la insulina creando más receptores musculares para almacenar energía."
-                                },
-                                {
-                                    icon: Heart,
-                                    title: "Aeróbico",
-                                    subtitle: "Salud cardiovascular",
-                                    desc: "Mejora la eficiencia mitocondrial y la quema de grasa a largo plazo."
-                                }
-                            ].map((item, i) => (
-                                <motion.div 
-                                    key={i}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: i * 0.2 }}
-                                    className="bg-white p-8 rounded-[2rem] border border-[#c19b6c]/20 shadow-xl hover:-translate-y-2 transition-transform text-center"
-                                >
-                                    <div className="w-16 h-16 mx-auto bg-[#c19b6c]/10 rounded-full flex items-center justify-center mb-6">
-                                        <item.icon className="w-8 h-8 text-[#c19b6c]" />
-                                    </div>
-                                    <h3 className="font-serif font-bold text-2xl text-[#012a4a] mb-2">{item.title}</h3>
-                                    <p className="text-[10px] font-bold text-[#c19b6c] uppercase tracking-widest mb-4">{item.subtitle}</p>
-                                    <p className="text-[#2d3748] leading-relaxed text-sm">{item.desc}</p>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Estrategias y Tabla Comparativa */}
-                <section id="estrategias" className="py-24 bg-white relative border-t border-[#c19b6c]/20">
-                    <div className="max-w-7xl mx-auto px-6">
-                        <div className="text-center mb-16">
-                            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#012a4a] mb-6">Enfoques Clínicos Respaldados</h2>
-                            <p className="text-[#2d3748] max-w-2xl mx-auto font-medium text-lg">
-                                Diversas estrategias han demostrado efectividad en ensayos clínicos para la remisión. En nuestra academia aprenderás cuál se adapta a ti.
-                            </p>
-                        </div>
-
-                        <div className="overflow-x-auto pb-8">
-                            <div className="min-w-[800px] border border-[#c19b6c]/20 rounded-3xl overflow-hidden shadow-lg">
-                                <div className="grid grid-cols-4 bg-[#012a4a] text-[#e6d3a8] p-6 text-xs font-bold uppercase tracking-widest">
-                                    <div>Estrategia</div>
-                                    <div>Enfoque Principal</div>
-                                    <div>Beneficio Clave</div>
-                                    <div>Evidencia Nivel</div>
-                                </div>
+                        <div className="grid lg:grid-cols-2 gap-12 items-center">
+                            <motion.div 
+                                initial={{ opacity: 0, x: -30 }}
+                                whileInView={{ opacity: 1, x: 0 }}
+                                viewport={{ once: true }}
+                            >
+                                <img 
+                                    src={landingConfig.habitsImage || "/landing-img-2.jpg"} 
+                                    alt="Hábitos de Movimiento" 
+                                    className="w-full rounded-3xl shadow-xl"
+                                />
+                            </motion.div>
+                            <div className="space-y-6">
                                 {[
-                                    { name: "Restricción Calórica (DiRECT)", focus: "Déficit agresivo inicial", benefit: "Reducción rápida de grasa ectópica", level: "Alta (Ensayo Clínico)" },
-                                    { name: "Low-Carb / Keto", focus: "Reducción drástica de CH", benefit: "Control inmediato de glucosa/insulina", level: "Alta (RCTs)" },
-                                    { name: "Ayuno Intermitente", focus: "Ventanas de alimentación", benefit: "Reducción de resistencia a la insulina", level: "Moderada/Alta" },
-                                    { name: "Dieta Mediterránea", focus: "Grasas sanas, fibra, antiinflamatoria", benefit: "Salud CV y sostenibilidad", level: "Muy Alta" }
-                                ].map((row, i) => (
-                                    <div key={i} className="grid grid-cols-4 p-6 border-t border-[#c19b6c]/10 bg-[#fbf8f1]/50 items-center text-sm">
-                                        <div className="font-serif font-bold text-[#012a4a] text-lg">{row.name}</div>
-                                        <div className="text-[#2d3748]">{row.focus}</div>
-                                        <div className="text-[#1b3b36] font-medium">{row.benefit}</div>
-                                        <div className="flex items-center gap-2">
-                                            <Shield className="w-4 h-4 text-[#c19b6c]" />
-                                            <span className="text-[#2d3748] font-bold text-xs uppercase tracking-wider">{row.level}</span>
+                                    { title: "Caminar", desc: "Reduce la glucosa postprandial.", icon: Activity },
+                                    { title: "Fuerza", desc: "Crea más receptores musculares.", icon: Dumbbell },
+                                    { title: "Cardio", desc: "Mejora la eficiencia mitocondrial.", icon: Heart }
+                                ].map((item, i) => (
+                                    <div key={i} className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-[#c19b6c]/10 shadow-sm">
+                                        <div className="w-12 h-12 bg-[#c19b6c]/10 rounded-full flex items-center justify-center shrink-0">
+                                            <item.icon className="w-6 h-6 text-[#c19b6c]" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-serif font-bold text-lg text-[#012a4a]">{item.title}</h4>
+                                            <p className="text-xs text-[#2d3748]">{item.desc}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        <div className="mt-12 text-center">
-                            <button
-                                onClick={onStart}
-                                className="bg-[#1b3b36] text-[#fbf8f1] px-10 py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-[#1b3b36]/20 hover:scale-105 transition-all inline-flex items-center gap-3"
-                            >
-                                Ingresar a la Academia <ChevronRight className="w-4 h-4" />
-                            </button>
+                {/* Estrategias */}
+                <section id="estrategias" className="py-24 bg-white relative border-t border-[#c19b6c]/20">
+                    <div className="max-w-5xl mx-auto px-6 text-center">
+                        <div className="mb-12">
+                            <h2 className="text-3xl md:text-5xl font-serif font-bold text-[#012a4a] mb-4">Enfoques Clínicos Respaldados</h2>
+                            <p className="text-[#2d3748] text-sm md:text-base max-w-2xl mx-auto">
+                                Estrategias comprobadas (Restricción Calórica, Low-Carb, Ayuno) personalizadas para tu éxito metabólico.
+                            </p>
                         </div>
+
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            className="flex justify-center mb-12"
+                        >
+                            <img 
+                                src={landingConfig.strategiesImage || "/landing-img-4.jpg"} 
+                                alt="Estrategias de Salud" 
+                                className="w-full max-w-3xl rounded-3xl shadow-xl border-4 border-white ring-1 ring-[#c19b6c]/20"
+                            />
+                        </motion.div>
+
+                        <button
+                            onClick={onStart}
+                            className="bg-[#1b3b36] text-[#fbf8f1] px-10 py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-[#1b3b36]/20 hover:scale-105 transition-all inline-flex items-center gap-3"
+                        >
+                            Ingresar a la Academia <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
                 </section>
 
