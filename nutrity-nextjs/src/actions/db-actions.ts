@@ -716,6 +716,7 @@ export async function saveCourse(course: Partial<Course>, organizationId?: strin
             paypalUrl: courseData.paypalUrl || null,
             currency: courseData.currency || 'USD',
             isPublished: courseData.isPublished !== undefined ? courseData.isPublished : true,
+            updatedAt: new Date().toISOString(),
         };
 
         const { data, error } = await supabase
