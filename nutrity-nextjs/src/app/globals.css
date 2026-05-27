@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-display: "Plus Jakarta Sans", "Outfit", sans-serif;
   --font-body: "Inter", sans-serif;
+  --font-serif: "Playfair Display", serif;
 
   /* Nutrity Global "Nature Biotech" Palette - Derived from Image */
   --color-nutrity-primary: hsl(175, 100%, 18%);
@@ -22,6 +23,14 @@
   /* Subtle Teal Border */
   --color-nutrity-highlight: hsl(64, 100%, 50%);
   /* Bright Yellow Spike */
+
+  /* Landing Page Premium Palette */
+  --color-landing-navy: #012a4a;
+  --color-landing-gold: #c19b6c;
+  --color-landing-gold-light: #e6d3a8;
+  --color-landing-forest: #1b3b36;
+  --color-landing-cream: #fbf8f1;
+  --color-landing-text: #2d3748;
 
   --radius-xl: 16px;
   --radius-lg: 12px;
