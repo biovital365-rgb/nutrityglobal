@@ -25,14 +25,14 @@ export function ReportTemplate({ results }: ReportTemplateProps) {
                 </div>
 
                 <div className="relative z-10 flex flex-col h-full items-center justify-center text-center">
-                    <div className="w-32 h-32 mb-10 rounded-[2.5rem] bg-gradient-to-tr from-[#db2777] to-[#ebb305] p-1 shadow-[0_20px_50px_rgba(219,39,119,0.3)]">
+                    <div className="w-32 h-32 mb-10 rounded-[2.5rem] bg-gradient-to-tr from-[#0d9488] to-[#ebb305] p-1 shadow-[0_20px_50px_rgba(20,184,166,0.3)]">
                         <div className="w-full h-full rounded-[2.3rem] bg-black flex items-center justify-center">
                             <Sparkles className="w-16 h-16 text-[#ebb305] drop-shadow-[0_0_10px_rgba(235,179,5,0.6)]" />
                         </div>
                     </div>
 
                     <h1 className="text-6xl font-black tracking-tighter mb-4 text-white">
-                        BioVital <span className="text-[#db2777]">365</span>
+                        BioVital <span className="text-[#0d9488]">365</span>
                     </h1>
                     <div className="w-48 h-1 bg-gradient-to-r from-transparent via-[#ebb305] to-transparent mb-12"></div>
 
@@ -67,7 +67,7 @@ export function ReportTemplate({ results }: ReportTemplateProps) {
 
             {/* PILLAR PAGES */}
             {[
-                { id: 'pdf-page-esencia', icon: Heart, label: 'Esencia (Alma)', value: results.essence, key: 'esencia', color: '#db2777' },
+                { id: 'pdf-page-esencia', icon: Heart, label: 'Esencia (Alma)', value: results.essence, key: 'esencia', color: '#0d9488' },
                 { id: 'pdf-page-mision', icon: Mountain, label: 'Misión de Vida', value: results.lifePath, key: 'mision', color: '#ebb305' },
                 { id: 'pdf-page-nombre', icon: Badge, label: 'Vibración del Nombre', value: results.nameVibration, key: 'nombre', color: '#06b6d4' },
                 { id: 'pdf-page-ano', icon: Calendar, label: 'Año Personal', value: results.personalYear, key: 'ano', color: '#f97316' },
@@ -154,7 +154,7 @@ export function ReportTemplate({ results }: ReportTemplateProps) {
             {/* PAGE 7: SYNTHESIS */}
             <div id="pdf-page-synthesis" className={pageStyle}>
                 <div className="flex items-center gap-4 mb-20">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#db2777] to-[#ebb305] flex items-center justify-center shadow-lg">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#0d9488] to-[#ebb305] flex items-center justify-center shadow-lg">
                         <Target className="w-8 h-8 text-black" />
                     </div>
                     <div>
@@ -184,7 +184,7 @@ export function ReportTemplate({ results }: ReportTemplateProps) {
                 </div>
 
                 <div className="mt-auto flex flex-col items-center gap-6 pt-12 border-t border-white/10">
-                    <Sparkles className="text-[#db2777] w-10 h-10 opacity-60 animate-pulse" />
+                    <Sparkles className="text-[#0d9488] w-10 h-10 opacity-60 animate-pulse" />
                     <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.5em]">
                         BioVital 365 • Mandala de Transformación • 2025
                     </p>

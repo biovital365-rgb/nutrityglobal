@@ -47,7 +47,7 @@ export function LandingPage({ onStart, onAuthClick, user }: LandingPageProps) {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8 p-3 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl relative group"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-magenta to-cyan opacity-0 group-hover:opacity-10 transition-opacity rounded-3xl blur-xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-teal to-cyan opacity-0 group-hover:opacity-10 transition-opacity rounded-3xl blur-xl"></div>
             <Sparkles className="w-10 h-10 text-gold shadow-[0_0_20px_rgba(235,179,5,0.4)]" />
           </motion.div>
 
@@ -57,7 +57,7 @@ export function LandingPage({ onStart, onAuthClick, user }: LandingPageProps) {
             transition={{ delay: 0.1 }}
             className="text-5xl font-black text-white leading-tight tracking-tighter mb-4"
           >
-            BioVital <span className="text-magenta">365</span>
+            BioVital <span className="text-teal">365</span>
           </motion.h1>
 
           <motion.p
@@ -74,7 +74,7 @@ export function LandingPage({ onStart, onAuthClick, user }: LandingPageProps) {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onStart}
-              className="w-full bg-gradient-to-r from-magenta to-gold hover:from-pink-500 hover:to-amber-400 text-white font-black py-4.5 rounded-2xl flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(219,39,119,0.3)] transition-all transform border border-white/20 text-lg uppercase tracking-widest"
+              className="w-full bg-gradient-to-r from-teal to-gold hover:from-teal-500 hover:to-amber-400 text-white font-black py-4.5 rounded-2xl flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(20,184,166,0.3)] transition-all transform border border-white/20 text-lg uppercase tracking-widest"
             >
               <Zap className="w-6 h-6" />
               Empezar Análisis
@@ -93,7 +93,7 @@ export function LandingPage({ onStart, onAuthClick, user }: LandingPageProps) {
 
             {user && (
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md flex items-center gap-4 text-left">
-                <div className="w-12 h-12 rounded-full bg-magenta/20 flex items-center justify-center text-magenta font-black text-xl border border-magenta/20 shadow-glow">
+                <div className="w-12 h-12 rounded-full bg-teal/20 flex items-center justify-center text-teal font-black text-xl border border-teal/20 shadow-glow">
                   {user.email?.[0].toUpperCase()}
                 </div>
                 <div>
@@ -106,8 +106,8 @@ export function LandingPage({ onStart, onAuthClick, user }: LandingPageProps) {
 
           {/* Floating Pillars Preview */}
           <div className="grid grid-cols-2 gap-4 w-full opacity-60 pointer-events-none scale-90 grayscale-[0.2]">
-            <div className="glass-panel p-4 rounded-2xl border-magenta/20 flex flex-col items-center gap-2">
-              <Heart className="w-6 h-6 text-magenta" />
+            <div className="glass-panel p-4 rounded-2xl border-teal/20 flex flex-col items-center gap-2">
+              <Heart className="w-6 h-6 text-teal" />
               <span className="text-[10px] text-white font-black uppercase tracking-widest">Esencia</span>
             </div>
             <div className="glass-panel p-4 rounded-2xl border-gold/20 flex flex-col items-center gap-2">

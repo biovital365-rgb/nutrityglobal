@@ -34,7 +34,7 @@ export function Onboarding({ onComplete, onBack }: OnboardingProps) {
     <div className="w-full max-w-md h-full min-h-screen relative flex flex-col bg-[#191022] overflow-hidden shadow-2xl mx-auto">
       {/* Background Effects */}
       <div className="absolute top-[-10%] left-[-20%] w-[500px] h-[500px] bg-accent/20 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-20%] w-[400px] h-[400px] bg-purple-900/20 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-20%] w-[400px] h-[400px] bg-teal-900/20 rounded-full blur-[100px] pointer-events-none"></div>
       
       {/* Header / Progress */}
       <header className="relative z-10 pt-8 pb-2 px-6">
@@ -50,8 +50,8 @@ export function Onboarding({ onComplete, onBack }: OnboardingProps) {
         
         {/* Progress Bar */}
         <div className="flex w-full flex-row items-center justify-center gap-2">
-          <div className="h-1.5 flex-1 rounded-full bg-accent purple-glow"></div>
-          <div className={cn("h-1.5 flex-1 rounded-full border border-white/5", step >= 2 ? "bg-accent purple-glow" : "bg-[#231e30]")}></div>
+          <div className="h-1.5 flex-1 rounded-full bg-accent teal-glow"></div>
+          <div className={cn("h-1.5 flex-1 rounded-full border border-white/5", step >= 2 ? "bg-accent teal-glow" : "bg-[#231e30]")}></div>
           <div className="h-1.5 flex-1 rounded-full bg-[#231e30] border border-white/5"></div>
           <div className="h-1.5 flex-1 rounded-full bg-[#231e30] border border-white/5"></div>
         </div>
@@ -69,7 +69,7 @@ export function Onboarding({ onComplete, onBack }: OnboardingProps) {
               className="flex flex-col"
             >
               <div className="flex flex-col items-center justify-center mb-6">
-                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4 border border-accent/20 purple-glow">
+                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mb-4 border border-accent/20 teal-glow">
                   <Calendar className="text-accent w-8 h-8" />
                 </div>
                 <h1 className="text-slate-100 text-2xl font-bold text-center tracking-tight mb-2">Tu Origen Cósmico</h1>
@@ -143,7 +143,7 @@ export function Onboarding({ onComplete, onBack }: OnboardingProps) {
         <button 
           onClick={handleNext}
           disabled={(step === 1 && !dob) || (step === 2 && name.length < 3)}
-          className="w-full h-14 bg-accent hover:bg-accent/90 text-white font-bold rounded-xl purple-glow transition-all duration-300 flex items-center justify-center gap-2 group transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-14 bg-accent hover:bg-accent/90 text-white font-bold rounded-xl teal-glow transition-all duration-300 flex items-center justify-center gap-2 group transform active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span>Continuar</span>
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

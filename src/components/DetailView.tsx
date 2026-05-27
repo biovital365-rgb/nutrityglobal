@@ -37,14 +37,14 @@ export function DetailView({ pillar, results, onBack }: DetailViewProps) {
     };
 
     const colorMap: Record<string, string> = {
-      esencia: '#db2777', // Magenta
+      esencia: '#0d9488', // teal
       mision: '#ebb305',  // Gold
       nombre: '#06b6d4',  // Cyan
       ano: '#f97316',     // Orange
       regalo: '#84cc16'   // Green
     };
 
-    const currentColor = colorMap[pillar] || '#db2777';
+    const currentColor = colorMap[pillar] || '#0d9488';
 
     return {
       title: titles[pillar] || "Análisis",
