@@ -383,6 +383,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [foods, setFoods] = useState<FoodItem[]>([]);
     const [micros, setMicros] = useState<Micronutrient[]>([]);
     const [courses, setCourses] = useState<Course[]>([]);
+    const [activeLesson, setActiveLesson] = useState<any>(null);
     const [lessonProgress, setLessonProgress] = useState<Record<string, boolean>>({});
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -1035,10 +1036,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                     }
                                                                     const detailed = await dbService.getCourseWithLessons(course.id);
                                                                     setSelectedCourse(detailed);
+                                                                    if (detailed?.lessons && detailed.lessons.length > 0) {
+                                                                        setActiveLesson(detailed.lessons.sort((a: any, b: any) => a.order - b.order)[0]);
+                                                                    }
                                                                 }}
-                                                                className="px-6 py-3 bg-nutrity-primary text-white text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-nutrity-primary/10 hover:bg-nutrity-accent transition-all"
+                                                                className="px-4 py-2.5 bg-nutrity-primary text-white text-[9px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-nutrity-primary/10 hover:bg-nutrity-accent transition-all flex-1 text-center"
                                                             >
-                                                                {isEbook ? 'Descargar PDF' : 'Iniciar Aprendizaje'}
+                                                                {isEbook ? 'Descargar' : 'Iniciar'}
                                                             </button>
                                                             {course.price > 0 && course.paypalUrl && (
                                                                 <button
@@ -1047,7 +1051,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                         const checkoutUrl = course.paypalUrl || "https://www.paypal.com/ncp/payment/CMG445X32EL2S";
                                                                         window.open(checkoutUrl, "_blank");
                                                                     }}
-                                                                    className="px-6 py-3 bg-amber-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all flex items-center justify-center"
+                                                                    className="px-4 py-2.5 bg-amber-500 text-white text-[9px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all flex-1 text-center"
                                                                 >
                                                                     Comprar
                                                                 </button>
@@ -1060,25 +1064,41 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                     </div>
                                 ) : (
                                     <div className="space-y-8">
-                                        <button onClick={() => setSelectedCourse(null)} className="flex items-center gap-2 text-nutrity-accent font-bold text-xs uppercase tracking-widest hover:underline mb-4">
+                                        <button onClick={() => { setSelectedCourse(null); setActiveLesson(null); }} className="flex items-center gap-2 text-nutrity-accent font-bold text-xs uppercase tracking-widest hover:underline mb-4">
                                             <ArrowLeft className="w-4 h-4" /> Volver al Catálogo
                                         </button>
                                         <div className="grid lg:grid-cols-3 gap-8">
                                             <div className="lg:col-span-2 space-y-6">
-                                                <div className="aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl relative group cursor-pointer">
-                                                    <img src={getDirectImageUrl(selectedCourse.thumbnail)} className="w-full h-full object-cover opacity-60" alt="Image" referrerPolicy="no-referrer" />
-                                                    <div className="absolute inset-0 flex items-center justify-center">
-                                                        <Play className="w-20 h-20 text-white/20 group-hover:scale-110 group-hover:text-nutrity-accent transition-all duration-300" />
-                                                        <div className="absolute bottom-8 left-8 right-8 text-white">
-                                                            <p className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent mb-2">Reproduciendo ahora</p>
-                                                            <h3 className="text-2xl font-bold">Introducción al Protocolo de Remisión</h3>
-                                                        </div>
-                                                    </div>
+                                                <div className="aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl relative group">
+                                                    {activeLesson?.videoUrl ? (
+                                                        <iframe 
+                                                            src={activeLesson.videoUrl.includes('youtube.com/watch') 
+                                                                ? activeLesson.videoUrl.replace('watch?v=', 'embed/') 
+                                                                : activeLesson.videoUrl.includes('youtu.be') 
+                                                                    ? activeLesson.videoUrl.replace('youtu.be/', 'youtube.com/embed/') 
+                                                                    : activeLesson.videoUrl}
+                                                            title={activeLesson?.title || "Video Player"}
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                            allowFullScreen
+                                                            className="w-full h-full border-0"
+                                                        />
+                                                    ) : (
+                                                        <>
+                                                            <img src={getDirectImageUrl(selectedCourse.thumbnail)} className="w-full h-full object-cover opacity-60" alt="Image" referrerPolicy="no-referrer" />
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <Play className="w-20 h-20 text-white/20" />
+                                                                <div className="absolute bottom-8 left-8 right-8 text-white">
+                                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent mb-2">Selecciona una lección</p>
+                                                                    <h3 className="text-2xl font-bold">{selectedCourse.title}</h3>
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    )}
                                                 </div>
                                                 <div className="space-y-4">
-                                                    <h3 className="text-xl font-bold">Acerca de esta lección</h3>
+                                                    <h3 className="text-xl font-bold">{activeLesson ? activeLesson.title : "Acerca de esta lección"}</h3>
                                                     <p className="text-sm text-nutrity-gray-text leading-relaxed font-medium">
-                                                        Este curso ha sido diseñado bajo los principios de la Medicina de Restauración. No se trata de contar calorías, sino de entender cómo los alimentos actúan como moléculas de señalización para reprogramar tu inteligencia biológica y revertir la disfunción metabólica.
+                                                        {activeLesson?.description ? activeLesson.description : selectedCourse.description}
                                                     </p>
                                                 </div>
                                             </div>
@@ -1088,19 +1108,20 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                     {selectedCourse.lessons?.sort((a, b) => a.order - b.order).map((lesson, idx) => (
                                                         <div key={lesson.id}
                                                             onClick={async () => {
+                                                                setActiveLesson(lesson);
                                                                 if ((user?.id || user?.uid)) {
                                                                     const newStatus = !lessonProgress[lesson.id];
                                                                     await dbService.toggleLessonProgress(user?.id, lesson.id, newStatus);
                                                                     setLessonProgress(prev => ({ ...prev, [lesson.id]: newStatus }));
                                                                 }
                                                             }}
-                                                            className={`p-4 rounded-2xl border transition-all cursor-pointer ${lessonProgress[lesson.id] ? 'bg-nutrity-success/5 border-nutrity-success/30 opacity-70' : (idx === 0 ? 'bg-nutrity-accent/5 border-nutrity-accent' : 'bg-white border-nutrity-border hover:border-nutrity-accent/30')}`}>
+                                                            className={`p-4 rounded-2xl border transition-all cursor-pointer ${activeLesson?.id === lesson.id ? 'ring-2 ring-nutrity-accent shadow-md' : ''} ${lessonProgress[lesson.id] ? 'bg-nutrity-success/5 border-nutrity-success/30 opacity-70' : 'bg-white border-nutrity-border hover:border-nutrity-accent/30'}`}>
                                                             <div className="flex gap-4">
-                                                                <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center font-bold text-xs ${lessonProgress[lesson.id] ? 'bg-nutrity-success text-white' : (idx === 0 ? 'bg-nutrity-accent text-white' : 'bg-nutrity-bg text-nutrity-gray-text')}`}>
+                                                                <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center font-bold text-xs ${lessonProgress[lesson.id] ? 'bg-nutrity-success text-white' : (activeLesson?.id === lesson.id ? 'bg-nutrity-accent text-white' : 'bg-nutrity-bg text-nutrity-gray-text')}`}>
                                                                     {lessonProgress[lesson.id] ? <CheckCircle2 className="w-4 h-4" /> : lesson.order}
                                                                 </div>
                                                                 <div>
-                                                                    <h4 className={`text-sm font-bold leading-snug ${lessonProgress[lesson.id] ? 'text-nutrity-gray-text line-through' : (idx === 0 ? 'text-nutrity-primary' : 'text-nutrity-gray-text')}`}>{lesson.title}</h4>
+                                                                    <h4 className={`text-sm font-bold leading-snug ${lessonProgress[lesson.id] ? 'text-nutrity-gray-text line-through' : (activeLesson?.id === lesson.id ? 'text-nutrity-primary' : 'text-nutrity-gray-text')}`}>{lesson.title}</h4>
                                                                     <div className="flex items-center gap-3 mt-2">
                                                                         <span className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest">15:00 min</span>
                                                                         {lesson.isFree ? (
