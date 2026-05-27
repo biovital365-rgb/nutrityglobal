@@ -128,8 +128,8 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                                 <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6 flex items-center gap-2"><Target className="w-4 h-4"/> Descubriendo la Raíz</h5>
                                 <div className="bg-white p-8 rounded-[40px] border border-[hsla(136,19%,29%,0.05)] shadow-lg space-y-4 mb-4">
                                     <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3 items-center">
-                                        <span className="text-[11px] font-bold uppercase opacity-60">Lo que tu cuerpo expresa</span>
-                                        <span className="text-sm font-black text-[#1b3b36] text-right max-w-[180px] leading-tight">{results.nmg?.mainSymptom || results.rawAnswers?.healthFocus || "Desequilibrio General"}</span>
+                                        <span className="text-[11px] font-bold uppercase opacity-60">Sistema Biológico</span>
+                                        <span className="text-sm font-black text-[#1b3b36] text-right max-w-[180px] leading-tight">{results.nmgDiagnosis?.organ || results.rawAnswers?.healthFocus || "Desequilibrio General"}</span>
                                     </div>
                                     <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3 items-center">
                                         <span className="text-[11px] font-bold uppercase opacity-60">Tus marcadores</span>
@@ -138,12 +138,12 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                                         </span>
                                     </div>
                                     <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3 items-center">
-                                        <span className="text-[11px] font-bold uppercase opacity-60">Emoción subyacente</span>
-                                        <span className="text-[12px] font-black text-[#1b3b36] text-right max-w-[180px] leading-tight">{results.nmg?.emotionalContext || "Estrés Acumulado"}</span>
+                                        <span className="text-[11px] font-bold uppercase opacity-60">Raíz Emocional</span>
+                                        <span className="text-[12px] font-black text-[#1b3b36] text-right max-w-[180px] leading-tight">{results.nmgDiagnosis?.conflict || "Estrés Acumulado"}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
-                                        <span className="text-[11px] font-bold uppercase opacity-60 text-[#c19b6c]">Raíz a sanar</span>
-                                        <span className="text-[12px] font-black text-[#c19b6c] text-right max-w-[180px] leading-tight">{results.nmg?.conflictRoot || "Liberación de cargas emocionales"}</span>
+                                        <span className="text-[11px] font-bold uppercase opacity-60 text-[#c19b6c]">Fase Actual</span>
+                                        <span className="text-[12px] font-black text-[#c19b6c] text-right max-w-[180px] leading-tight">{results.nmgDiagnosis?.phase || "Fase de Resolución"}</span>
                                     </div>
                                 </div>
                             </div>
@@ -310,97 +310,169 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                 </div>
             </div>
 
-            {/* PAGE 4: METABOLIC CATALOG SNAPSHOT */}
+            {/* PAGE 4: WEEKLY MENU & ALIENADOS */}
             <div id="pdf-page-4" className={pageStyle}>
                 <div className="relative z-10 h-full flex flex-col border-[1px] border-[hsla(136,19%,29%,0.1)] p-12">
-                    <header className="flex justify-between items-center mb-16 pb-8 border-b border-[hsla(136,19%,29%,0.1)]">
+                    <header className="flex justify-between items-center mb-10 pb-6 border-b border-[hsla(136,19%,29%,0.1)]">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-[#c19b6c1a] rounded-xl flex items-center justify-center">
                                 <BookOpen className="w-7 h-7 text-[#c19b6c]" />
                             </div>
-                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">03. Aliados y Carta de tu Coach</h3>
+                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">03. Tu Protocolo Nutricional</h3>
                         </div>
                     </header>
 
-                    <div className="grid grid-cols-2 gap-10 flex-1">
-                        <div className="space-y-8">
+                    <div className="flex-1 space-y-8">
+                        {/* Superfoods Mini-Cards */}
+                        <div className="flex gap-6">
                             {results.superfoods && results.superfoods.length > 0 ? (
                                 results.superfoods.slice(0, 2).map((superfood: string, index: number) => (
-                                    <div key={index} className="bg-white p-8 rounded-[40px] border border-[#1b3b36]/5 shadow-xl space-y-6">
-                                        <div className="w-full h-32 bg-[#fbf8f1] rounded-[24px] flex items-center justify-center border border-[#1b3b36]/10">
-                                            <Leaf className="w-12 h-12 text-[#c19b6c] opacity-50" />
+                                    <div key={index} className="flex-1 bg-white p-4 rounded-3xl border border-[#1b3b36]/5 shadow-sm flex items-center gap-4">
+                                        <div className="w-16 h-16 bg-[#fbf8f1] rounded-2xl flex items-center justify-center shrink-0">
+                                            <Leaf className="w-8 h-8 text-[#c19b6c]" />
                                         </div>
-                                        <div className="space-y-1">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Súper Alimento Recomendado</span>
-                                            <h5 className="text-2xl font-black text-[#1b3b36] capitalize">{superfood}</h5>
-                                        </div>
-                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">Impacto Integrativo</p>
-                                            <p className="font-bold text-sm text-[#1b3b36]">Ideal para potenciar tu metabolismo celular y reducir la inflamación sistémica.</p>
+                                        <div>
+                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#c19b6c]">Súper Alimento Recomendado</span>
+                                            <h5 className="text-lg font-black text-[#1b3b36] capitalize leading-tight mt-1">{superfood}</h5>
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <>
-                                    <div className="bg-white p-8 rounded-[40px] border border-[#1b3b36]/5 shadow-xl space-y-6">
-                                        <img src="/tarwi_pills_premium_1772251779199.png" className="w-full h-32 object-cover rounded-[24px]"  alt="Image"/>
-                                        <div className="space-y-1">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Alimento Base</span>
-                                            <h5 className="text-2xl font-black text-[#1b3b36]">Tarwi (Chocho)</h5>
-                                        </div>
-                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">Impacto</p>
-                                            <p className="font-bold text-sm text-[#1b3b36]">Alta Sensibilidad Insulínica</p>
-                                        </div>
+                                <div className="flex-1 bg-white p-4 rounded-3xl border border-[#1b3b36]/5 shadow-sm flex items-center gap-4">
+                                    <img src="/tarwi_pills_premium_1772251779199.png" className="w-16 h-16 object-cover rounded-2xl" alt="Image"/>
+                                    <div>
+                                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#c19b6c]">Alimento Base</span>
+                                        <h5 className="text-lg font-black text-[#1b3b36] leading-tight mt-1">Tarwi (Chocho)</h5>
                                     </div>
-                                    <div className="bg-white p-8 rounded-[40px] border border-[#1b3b36]/5 shadow-xl space-y-6">
-                                        <img src="/quinua_negra_bowl_premium_1772251795891.png" className="w-full h-32 object-cover rounded-[24px]"  alt="Image"/>
-                                        <div className="space-y-1">
-                                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Antioxidante Maestro</span>
-                                            <h5 className="text-2xl font-black text-[#1b3b36]">Quinua Negra</h5>
-                                        </div>
-                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">Impacto</p>
-                                            <p className="font-bold text-sm text-[#1b3b36]">Protección Celular</p>
-                                        </div>
-                                    </div>
-                                </>
+                                </div>
                             )}
                         </div>
 
-                        <div className="bg-[#1b3b36] p-12 rounded-[50px] text-white flex flex-col relative overflow-hidden shadow-2xl">
-                            <div className="absolute top-0 right-0 p-10">
-                                <Star className="w-16 h-16 text-[#c19b6c] opacity-20" />
-                            </div>
-                            <h5 className="text-3xl font-black mb-8 leading-tight">Carta de tu <br /><span className="text-[#c19b6c]">Coach Integrativo</span></h5>
-                            <div className="flex-1 space-y-8">
-                                <div className="space-y-3">
-                                    <p className="text-lg opacity-90 leading-relaxed font-medium">
-                                        Querido paciente, quiero que sepas algo fundamental: <strong className="text-white">tu diagnóstico no es tu destino.</strong>
-                                    </p>
-                                    <p className="text-lg opacity-90 leading-relaxed font-medium">
-                                        Este reporte es simplemente un mapa que nos muestra dónde estás hoy, pero tú eres quien decide hacia dónde vamos mañana. Pierde el miedo; tu cuerpo fue diseñado con una inteligencia asombrosa para sanarse a sí mismo cuando le quitamos las interferencias (físicas y emocionales).
+                        {/* Weekly Menu */}
+                        <div className="bg-white rounded-[40px] border border-[#1b3b36]/5 shadow-xl p-8 flex-1 flex flex-col">
+                            <h4 className="text-[13px] font-black uppercase tracking-[0.5em] text-[#c19b6c] mb-6">Dieta Semanal Metabólica</h4>
+                            
+                            {results.weeklyMenu ? (
+                                <div className="grid grid-cols-2 gap-4 flex-1">
+                                    {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map((day) => {
+                                        const menuData = results.weeklyMenu[day];
+                                        if (!menuData) return null;
+                                        return (
+                                            <div key={day} className="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex flex-col justify-between">
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <h6 className="text-[12px] font-black uppercase tracking-widest text-[#1b3b36]">{day}</h6>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <span className="text-[9px] font-black uppercase text-[#c19b6c] block mb-0.5">Desayuno</span>
+                                                        <p className="text-[11px] font-medium leading-tight text-[#1b3b36]">{menuData.breakfast}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[9px] font-black uppercase text-[#c19b6c] block mb-0.5">Almuerzo</span>
+                                                        <p className="text-[11px] font-medium leading-tight text-[#1b3b36]">{menuData.lunch}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[9px] font-black uppercase text-[#c19b6c] block mb-0.5">Cena</span>
+                                                        <p className="text-[11px] font-medium leading-tight text-[#1b3b36]">{menuData.dinner}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex-1 flex flex-col items-center justify-center text-center p-10 bg-slate-50 rounded-3xl border border-dashed border-[#1b3b36]/20">
+                                    <Activity className="w-12 h-12 text-[#c19b6c] mb-4 opacity-50" />
+                                    <h5 className="text-xl font-black text-[#1b3b36] mb-2">Menú Aún No Generado</h5>
+                                    <p className="text-sm font-medium text-[hsla(136,19%,29%,0.8)] max-w-sm">
+                                        Por favor, dirígete a la pestaña "Menú" en tu Dashboard para que la Inteligencia Artificial genere tu dieta metabólica personalizada.
                                     </p>
                                 </div>
-                                <div className="space-y-3">
-                                    <p className="text-sm font-black uppercase tracking-widest text-[#c19b6c]">EL SIGUIENTE PASO</p>
-                                    <p className="text-lg opacity-90 leading-relaxed font-medium">
-                                        {results.coachCallToAction || "Respira profundo, abraza este proceso con compasión y agenda tu sesión con nosotros para comenzar juntos esta hermosa transformación. ¡Estamos contigo!"}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="mt-auto pt-10 border-t border-white/10">
-                                <div className="flex justify-between items-center">
-                                    <div className="text-[9px] font-black uppercase tracking-[0.3em] opacity-50">Compromiso BioVital</div>
-                                    <div className="font-serif italic text-2xl font-light text-[#c19b6c]">BioVital_Coach</div>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 
-                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-30 py-8 border-t border-[#1b3b36]/5">
+                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-30 py-6 border-t border-[#1b3b36]/5">
+                        <span>YOUR HEALING JOURNEY | CONFIDENTIAL</span>
+                        <span>04 / 05</span>
+                    </footer>
+                </div>
+            </div>
+
+            {/* PAGE 5: RAW ANSWERS (EL DIAGNÓSTICO TEXTUAL) */}
+            <div id="pdf-page-5" className={pageStyle}>
+                <div className="relative z-10 h-full flex flex-col border-[1px] border-[hsla(136,19%,29%,0.1)] p-12">
+                    <header className="flex justify-between items-center mb-12 pb-6 border-b border-[hsla(136,19%,29%,0.1)]">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-[#1b3b36] rounded-xl flex items-center justify-center shadow-lg">
+                                <Activity className="w-7 h-7 text-[#c19b6c]" />
+                            </div>
+                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">04. Resultados de tu Triaje Holístico</h3>
+                        </div>
+                    </header>
+
+                    <div className="flex-1">
+                        <div className="bg-[#1b3b36] p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden mb-10">
+                            <div className="absolute top-0 right-0 p-10">
+                                <Target className="w-16 h-16 text-[#c19b6c] opacity-20" />
+                            </div>
+                            <h4 className="text-[13px] font-black uppercase tracking-[0.5em] text-[#c19b6c] mb-4 relative z-10">Transparencia Total</h4>
+                            <p className="text-xl leading-relaxed font-medium text-white/90 italic relative z-10 max-w-2xl">
+                                "La información que proporcionaste es la base de nuestra estrategia. Aquí está el registro exacto de tu estado biológico al momento del diagnóstico."
+                            </p>
+                        </div>
+
+                        {results.rawAnswers ? (
+                            <div className="bg-white rounded-[40px] border border-[#1b3b36]/5 shadow-xl p-10">
+                                <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                                    {Object.entries(results.rawAnswers).map(([key, value], idx) => {
+                                        // Filtramos campos vacíos o muy técnicos que no aportan visualmente
+                                        if (!value || key === 'name' || typeof value === 'object') return null;
+                                        
+                                        // Diccionario amigable para las keys de rawAnswers
+                                        const labels: Record<string, string> = {
+                                            age: "Edad",
+                                            weight: "Peso (kg)",
+                                            height: "Estatura (cm)",
+                                            glucose: "Nivel de Glucosa",
+                                            healthFocus: "Enfoque de Salud",
+                                            condition: "Condición / Patología",
+                                            energyLevel: "Nivel de Energía",
+                                            stressLevel: "Nivel de Estrés",
+                                            sleepQuality: "Calidad de Sueño",
+                                            digestiveHealth: "Salud Digestiva",
+                                            activityLevel: "Nivel de Actividad",
+                                            bloodType: "Tipo de Sangre",
+                                            mainSymptom: "Síntoma Principal",
+                                            affectedSystem: "Sistema Afectado",
+                                            symptomDuration: "Duración del Síntoma",
+                                            emotionalContext: "Contexto Emocional Percibido",
+                                            biodescodification: "Conocimiento en Biodescodificación"
+                                        };
+                                        
+                                        const label = labels[key] || key;
+                                        
+                                        return (
+                                            <div key={idx} className="border-b border-[#1b3b36]/5 pb-3">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-[#c19b6c] mb-1">{label}</p>
+                                                <p className="text-sm font-bold text-[#1b3b36] leading-tight capitalize">{String(value)}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-slate-50 p-10 rounded-[40px] border border-dashed border-[#1b3b36]/20 text-center">
+                                <p className="text-sm font-medium text-[hsla(136,19%,29%,0.8)]">
+                                    No hay datos en el formulario de triaje para mostrar.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-30 py-6 border-t border-[#1b3b36]/5">
                         <span>END OF REPORT | BIOVITAL GLOBAL TECHNOLOGIES</span>
-                        <span>04 / 04</span>
+                        <span>05 / 05</span>
                     </footer>
                 </div>
             </div>
