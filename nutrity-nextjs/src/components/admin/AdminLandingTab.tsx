@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Save, Loader2, LayoutTemplate, Type, FileText } from "lucide-react";
+import { Save, Loader2, LayoutTemplate, Type, FileText, Image as ImageIcon } from "lucide-react";
 
 interface AdminLandingTabProps {
   isSaving: boolean;
@@ -16,6 +16,11 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
     heroSubtitle: "De la Diabetes Tipo 2",
     heroDescription: "Recuperando tu salud metabólica con ciencia, no con dietas restrictivas.",
     ctaText: "Comenzar mi Transformación",
+    heroImage: "/landing-img-5.jpg",
+    scienceImage: "/landing-img-1.jpg",
+    missionImage: "/landing-img-3.jpg",
+    habitsImage: "/landing-img-2.jpg",
+    strategiesImage: "/landing-img-4.jpg",
   });
 
   useEffect(() => {
@@ -118,6 +123,34 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
             />
           </div>
 
+          <div className="border-t border-nutrity-border pt-6 mt-6">
+            <h4 className="text-lg font-bold text-nutrity-dark mb-4 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-nutrity-accent" />
+              Imágenes de la Landing Page
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[
+                { name: "heroImage", label: "Imagen Hero (Mujer en montaña)" },
+                { name: "scienceImage", label: "Imagen Ciencia (Órganos flotando)" },
+                { name: "missionImage", label: "Imagen Misión (Monitor PC)" },
+                { name: "habitsImage", label: "Imagen Alimentación (Mujer estirando)" },
+                { name: "strategiesImage", label: "Imagen Estrategias (Mujer en parque)" },
+              ].map((field) => (
+                <div key={field.name} className="space-y-2">
+                  <label className="text-xs font-bold text-nutrity-gray-text uppercase tracking-widest">{field.label}</label>
+                  <input
+                    type="text"
+                    name={field.name}
+                    value={(formData as any)[field.name]}
+                    onChange={handleChange}
+                    className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent outline-none transition-all"
+                    placeholder="URL o ruta de imagen (ej. /landing-img-1.jpg)"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="pt-6 border-t border-nutrity-border flex justify-end">
             <button
               type="submit"
@@ -137,3 +170,4 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
     </motion.div>
   );
 }
+
