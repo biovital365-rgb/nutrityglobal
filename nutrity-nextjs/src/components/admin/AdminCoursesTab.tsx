@@ -4,6 +4,7 @@ import { Loader2, Pencil, Trash2, Save, X } from "lucide-react";
 import { Course } from "@/lib/types";
 import { getDirectImageUrl } from "@/lib/utils";
 import { FieldInput } from "./shared";
+import { Plus, GripVertical } from "lucide-react";
 
 interface AdminCoursesTabProps {
     courses: Course[];
@@ -104,6 +105,129 @@ export function AdminCoursesTab({
                                 </div>
                                 <FieldInput label="Thumbnail URL" value={editingCourse.thumbnail || ""} onChange={(v) => setEditingCourse(p => ({ ...p, thumbnail: v }))} placeholder="https://images.unsplash.com/..." />
                                 <FieldInput label="Enlace de Pago PayPal (NCP)" value={editingCourse.paypalUrl || ""} onChange={(v) => setEditingCourse(p => ({ ...p, paypalUrl: v }))} placeholder="https://www.paypal.com/ncp/payment/..." />
+
+                                {/* ─── Lessons Section ─── */}
+                                <div className="pt-6 border-t border-nutrity-border">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h4 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest">Lecciones del Curso</h4>
+                                            <p className="text-xs text-nutrity-gray-text/70 mt-1">Añade hasta 12 lecciones con video y descripción.</p>
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => {
+                                                const currentLessons = editingCourse.lessons || [];
+                                                if (currentLessons.length >= 12) return;
+                                                setEditingCourse(p => ({
+                                                    ...p,
+                                                    lessons: [
+                                                        ...currentLessons,
+                                                        {
+                                                            id: crypto.randomUUID(),
+                                                            courseId: p.id || '',
+                                                            title: `Lección ${currentLessons.length + 1}`,
+                                                            description: '',
+                                                            videoUrl: '',
+                                                            duration: '10 min',
+                                                            order: currentLessons.length,
+                                                            isFree: false
+                                                        }
+                                                    ]
+                                                }))
+                                            }}
+                                            disabled={(editingCourse.lessons?.length || 0) >= 12}
+                                            className="flex items-center gap-2 px-3 py-1.5 bg-nutrity-accent/10 text-nutrity-accent text-xs font-bold rounded-lg hover:bg-nutrity-accent hover:text-white transition-colors disabled:opacity-50"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Añadir Lección
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                        {(editingCourse.lessons || []).map((lesson, idx) => (
+                                            <div key={lesson.id} className="p-4 bg-slate-50 border border-nutrity-border rounded-xl space-y-3 relative group">
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newLessons = [...(editingCourse.lessons || [])];
+                                                        newLessons.splice(idx, 1);
+                                                        setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                    }}
+                                                    className="absolute top-4 right-4 p-1.5 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                                <div className="flex gap-4">
+                                                    <div className="flex-1 space-y-3">
+                                                        <div className="flex gap-4">
+                                                            <div className="flex-1">
+                                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">Título de la Lección</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={lesson.title}
+                                                                    onChange={(e) => {
+                                                                        const newLessons = [...(editingCourse.lessons || [])];
+                                                                        newLessons[idx] = { ...lesson, title: e.target.value };
+                                                                        setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                    }}
+                                                                    className="w-full bg-white border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all"
+                                                                    placeholder="Ej: Introducción a la Dieta..."
+                                                                    required
+                                                                />
+                                                            </div>
+                                                            <div className="w-32">
+                                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">Duración</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={lesson.duration}
+                                                                    onChange={(e) => {
+                                                                        const newLessons = [...(editingCourse.lessons || [])];
+                                                                        newLessons[idx] = { ...lesson, duration: e.target.value };
+                                                                        setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                    }}
+                                                                    className="w-full bg-white border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all"
+                                                                    placeholder="10 min"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">URL del Video (YouTube/Drive)</label>
+                                                            <input
+                                                                type="url"
+                                                                value={lesson.videoUrl}
+                                                                onChange={(e) => {
+                                                                    const newLessons = [...(editingCourse.lessons || [])];
+                                                                    newLessons[idx] = { ...lesson, videoUrl: e.target.value };
+                                                                    setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                }}
+                                                                className="w-full bg-white border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all"
+                                                                placeholder="https://..."
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">Descripción Breve</label>
+                                                            <textarea
+                                                                value={lesson.description || ''}
+                                                                onChange={(e) => {
+                                                                    const newLessons = [...(editingCourse.lessons || [])];
+                                                                    newLessons[idx] = { ...lesson, description: e.target.value };
+                                                                    setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                }}
+                                                                className="w-full bg-white border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all h-20 resize-none"
+                                                                placeholder="En esta lección aprenderás..."
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {(editingCourse.lessons?.length || 0) === 0 && (
+                                            <div className="text-center py-6 border-2 border-dashed border-nutrity-border rounded-xl">
+                                                <p className="text-sm text-nutrity-gray-text">Aún no hay lecciones creadas para este curso.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
 
                                 <button type="submit" disabled={isSaving}
                                     className="w-full mt-4 bg-nutrity-primary text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-nutrity-primary/10 hover:bg-nutrity-accent transition-all disabled:opacity-50 flex items-center justify-center gap-3">
