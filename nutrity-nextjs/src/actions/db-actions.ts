@@ -1229,3 +1229,63 @@ export async function deletePost(id: string) {
   if (error) { console.error('Error deleting post:', error); throw new Error(error.message); }
   return true;
 }
+
+// --- LANDING PAGE CMS ---
+export async function getLandingConfig(organizationId?: string) {
+  const { data, error } = await supabase
+    .from('Post')
+    .select('content')
+    .eq('slug', 'landing-page-config')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching landing config:', error);
+    return null;
+  }
+  
+  if (data?.content) {
+    try {
+      return JSON.parse(data.content);
+    } catch (e) {
+      console.error('Error parsing landing config JSON', e);
+      return null;
+    }
+  }
+  return null;
+}
+
+export async function saveLandingConfig(configData: any, organizationId?: string) {
+  const stringifiedContent = JSON.stringify(configData);
+  
+  // First see if it exists
+  const { data: existing } = await supabase
+    .from('Post')
+    .select('id')
+    .eq('slug', 'landing-page-config')
+    .maybeSingle();
+
+  const id = existing?.id || crypto.randomUUID();
+
+  const payload = {
+    id,
+    title: 'Configuración de la Landing Page',
+    slug: 'landing-page-config',
+    content: stringifiedContent,
+    category: 'SYSTEM',
+    isPublished: true,
+    organizationId: organizationId || null,
+    updatedAt: new Date().toISOString()
+  };
+
+  const { data, error } = await supabase
+    .from('Post')
+    .upsert(payload, { onConflict: 'id' })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error saving landing config:', error);
+    throw new Error(error.message);
+  }
+  return data;
+}

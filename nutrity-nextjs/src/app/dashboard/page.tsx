@@ -5,7 +5,7 @@ import { NutrityReportTemplate } from "@/components/NutrityReportTemplate";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { getLatestEvaluation } from "@/actions/db-actions";
+import { getLatestEvaluation, getLatestBiologicalDiagnosis } from "@/actions/db-actions";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -53,8 +53,14 @@ export default function DashboardPage() {
           }
         }
 
+        let nmgData = await getLatestBiologicalDiagnosis(authUser.id);
+
         if (!actualPlan && evalData && evalData.results) {
-          actualPlan = evalData.results;
+          actualPlan = {
+            ...evalData.results,
+            rawAnswers: evalData.data,
+            nmg: nmgData
+          };
         }
 
         if (!actualPlan) {
