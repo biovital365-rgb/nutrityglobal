@@ -96,100 +96,130 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
             {/* PAGE 2: CLINICAL ANALYSIS & PROJECTION */}
             <div id="pdf-page-2" className={pageStyle}>
                 <div className="relative z-10 h-full flex flex-col border-[1px] border-[hsla(136,19%,29%,0.1)] p-12">
-                    <header className="flex justify-between items-center mb-20 pb-10 border-b border-[hsla(136,19%,29%,0.1)]">
+                    <header className="flex justify-between items-center mb-16 pb-8 border-b border-[hsla(136,19%,29%,0.1)]">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-[#c19b6c1a] rounded-xl flex items-center justify-center">
                                 <Brain className="w-7 h-7 text-[#c19b6c]" />
                             </div>
-                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">01. Análisis de Biología Computacional</h3>
+                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">01. Tu Camino Hacia la Sanación</h3>
                         </div>
-                        <div className="bg-[#c19b6c] text-white px-6 py-2 rounded-full font-black text-sm uppercase">
-                            Score de Remisión: {results.remissionScore}%
+                        <div className="bg-[#c19b6c] text-white px-6 py-2 rounded-full font-black text-sm uppercase shadow-md">
+                            Potencial de Remisión: {results.remissionScore || 90}%
                         </div>
                     </header>
 
-                    <section className="mb-20">
-                        <div className="bg-white p-14 rounded-[60px] border border-[hsla(136,19%,29%,0.05)] shadow-2xl relative overflow-hidden flex flex-col items-center text-center">
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-[hsla(214,95%,80%,0.3)]"></div>
-                            <div className="absolute top-0 right-0 w-48 h-48 bg-[hsla(214,95%,80%,0.05)] rounded-bl-[120px]"></div>
-                            <div className="flex items-center gap-4 mb-8">
+                    <section className="mb-16">
+                        <div className="bg-white p-12 rounded-[50px] border border-[hsla(136,19%,29%,0.05)] shadow-xl relative overflow-hidden flex flex-col items-center text-center">
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-[hsla(33,40%,58%,0.3)]"></div>
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-[hsla(33,40%,58%,0.05)] rounded-bl-[120px]"></div>
+                            <div className="flex items-center gap-4 mb-6 relative z-10">
                                 <Award className="w-8 h-8 text-[#c19b6c]" />
-                                <h4 className="text-2xl font-black">Evaluación Médica de la IA</h4>
+                                <h4 className="text-2xl font-black text-[#1b3b36]">El Mensaje de tu Cuerpo</h4>
                             </div>
-                            <p className="text-2xl leading-[1.6] text-[hsla(136,19%,29%,0.9)] font-medium italic tracking-tight">
-                                "{results.insight}"
+                            <p className="text-xl leading-[1.6] text-[hsla(136,19%,29%,0.9)] font-medium italic tracking-tight relative z-10">
+                                "{results.insight || "Tu cuerpo está buscando el equilibrio. Estás en el momento perfecto para iniciar tu sanación profunda."}"
                             </p>
                         </div>
                     </section>
 
                     <section className="grid grid-cols-2 gap-10 flex-1">
-                        <div className="space-y-12">
+                        <div className="space-y-10">
                             <div>
-                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6">Datos Clínicos y Descodificación</h5>
+                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6 flex items-center gap-2"><Target className="w-4 h-4"/> Descubriendo la Raíz</h5>
                                 <div className="bg-white p-8 rounded-[40px] border border-[hsla(136,19%,29%,0.05)] shadow-lg space-y-4 mb-4">
-                                    <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3">
-                                        <span className="text-[11px] font-bold uppercase opacity-60">Síntoma Principal</span>
-                                        <span className="text-sm font-black text-[#1b3b36] text-right max-w-[180px]">{results.nmg?.mainSymptom || results.rawAnswers?.healthFocus || "No especificado"}</span>
+                                    <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3 items-center">
+                                        <span className="text-[11px] font-bold uppercase opacity-60">Lo que tu cuerpo expresa</span>
+                                        <span className="text-sm font-black text-[#1b3b36] text-right max-w-[180px] leading-tight">{results.nmg?.mainSymptom || results.rawAnswers?.healthFocus || "Desequilibrio General"}</span>
                                     </div>
-                                    <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3">
-                                        <span className="text-[11px] font-bold uppercase opacity-60">Biometría</span>
+                                    <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3 items-center">
+                                        <span className="text-[11px] font-bold uppercase opacity-60">Tus marcadores</span>
                                         <span className="text-sm font-black text-[#1b3b36]">
                                             {results.rawAnswers?.weight ? `${results.rawAnswers.weight} kg` : "--"} / {results.rawAnswers?.glucose ? `${results.rawAnswers.glucose} mg/dL` : "--"}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3">
-                                        <span className="text-[11px] font-bold uppercase opacity-60">Contexto Emocional (DHS)</span>
-                                        <span className="text-[12px] font-black text-[#1b3b36] text-right max-w-[180px] leading-tight">{results.nmg?.emotionalContext || "No especificado"}</span>
+                                    <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3 items-center">
+                                        <span className="text-[11px] font-bold uppercase opacity-60">Emoción subyacente</span>
+                                        <span className="text-[12px] font-black text-[#1b3b36] text-right max-w-[180px] leading-tight">{results.nmg?.emotionalContext || "Estrés Acumulado"}</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-[11px] font-bold uppercase opacity-60 text-[#c19b6c]">Conflicto Biológico</span>
-                                        <span className="text-[12px] font-black text-[#c19b6c] text-right max-w-[180px] leading-tight">{results.nmg?.conflictRoot || "Evaluando..."}</span>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[11px] font-bold uppercase opacity-60 text-[#c19b6c]">Raíz a sanar</span>
+                                        <span className="text-[12px] font-black text-[#c19b6c] text-right max-w-[180px] leading-tight">{results.nmg?.conflictRoot || "Liberación de cargas emocionales"}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* New Holistic Stats Section in PDF */}
                             <div>
-                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6">Análisis Bio-Integral</h5>
-                                <div className="grid grid-cols-2 gap-6">
-                                    {results.holisticStats?.map((stat: any, index: number) => (
-                                        <div key={index} className="space-y-2">
-                                            <div className="flex justify-between items-end">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-[#1b3b36]">{stat.label}</span>
-                                                <span className="text-[10px] font-black text-[#c19b6c]">{stat.value}%</span>
+                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6 flex items-center gap-2"><Leaf className="w-4 h-4"/> Tus Pilares de Salud</h5>
+                                {results.holisticStats && results.holisticStats.length > 0 ? (
+                                    <div className="grid grid-cols-2 gap-6 bg-white p-6 rounded-[30px] shadow-sm border border-[#1b3b36]/5">
+                                        {results.holisticStats.map((stat: any, index: number) => (
+                                            <div key={index} className="space-y-2">
+                                                <div className="flex justify-between items-end">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-[#1b3b36]">{stat.label}</span>
+                                                    <span className="text-[10px] font-black text-[#c19b6c]">{stat.value}%</span>
+                                                </div>
+                                                <div className="h-1.5 bg-[hsla(136,19%,29%,0.05)] rounded-full overflow-hidden">
+                                                    <div 
+                                                        className={`h-full ${stat.color === 'bg-[#c19b6c]' ? 'bg-[#c19b6c]' : 'bg-[#1b3b36]'}`} 
+                                                        style={{ width: `${stat.value}%` }}
+                                                    ></div>
+                                                </div>
                                             </div>
-                                            <div className="h-1.5 bg-[hsla(136,19%,29%,0.05)] rounded-full overflow-hidden">
-                                                <div 
-                                                    className={`h-full ${stat.color === 'bg-[#c19b6c]' ? 'bg-[#c19b6c]' : 'bg-[#1b3b36]'}`} 
-                                                    style={{ width: `${stat.value}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="bg-[#1b3b36]/5 p-6 rounded-[30px] border border-[#1b3b36]/10">
+                                        <p className="text-sm text-[#1b3b36] font-medium leading-relaxed italic">
+                                            "La verdadera salud se construye equilibrando tu mente, tus emociones, tu alimentación y tu entorno. Estás dando el primer gran paso."
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
                         <div className="space-y-8">
-                            <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6">Pilares de Intervención</h5>
+                            <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6 flex items-center gap-2"><Heart className="w-4 h-4"/> Áreas de Intervención</h5>
                             <div className="space-y-4">
-                                {(results.pillars || []).map((pillar: any, i: number) => (
-                                    <div key={i} className="flex items-center gap-6 p-6 bg-white rounded-[30px] border border-[hsla(136,19%,29%,0.05)] shadow-sm">
-                                        <div className={`w-12 h-12 ${pillar.color} rounded-2xl flex items-center justify-center shrink-0`}>
-                                            <Activity className="w-6 h-6 text-white" />
+                                {results.pillars && results.pillars.length > 0 ? (
+                                    results.pillars.map((pillar: any, i: number) => (
+                                        <div key={i} className="flex items-center gap-6 p-6 bg-white rounded-[30px] border border-[hsla(136,19%,29%,0.05)] shadow-sm">
+                                            <div className={`w-12 h-12 ${pillar.color || 'bg-[#1b3b36]'} rounded-2xl flex items-center justify-center shrink-0`}>
+                                                <Activity className="w-6 h-6 text-white" />
+                                            </div>
+                                            <div>
+                                                <h6 className="font-black text-sm uppercase tracking-wider text-[#1b3b36]">{pillar.title}</h6>
+                                                <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">{pillar.desc}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h6 className="font-black text-sm uppercase tracking-wider">{pillar.title}</h6>
-                                            <p className="text-[11px] opacity-60 font-medium leading-tight">{pillar.desc}</p>
+                                    ))
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-6 p-6 bg-white rounded-[30px] border border-[hsla(136,19%,29%,0.05)] shadow-sm">
+                                            <div className="w-12 h-12 bg-[#1b3b36] rounded-2xl flex items-center justify-center shrink-0">
+                                                <Activity className="w-6 h-6 text-white" />
+                                            </div>
+                                            <div>
+                                                <h6 className="font-black text-sm uppercase tracking-wider text-[#1b3b36]">Nutrición Integrativa</h6>
+                                                <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">Alimentación consciente para restaurar tu balance celular.</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                        <div className="flex items-center gap-6 p-6 bg-white rounded-[30px] border border-[hsla(136,19%,29%,0.05)] shadow-sm">
+                                            <div className="w-12 h-12 bg-[#c19b6c] rounded-2xl flex items-center justify-center shrink-0">
+                                                <Activity className="w-6 h-6 text-white" />
+                                            </div>
+                                            <div>
+                                                <h6 className="font-black text-sm uppercase tracking-wider text-[#1b3b36]">Gestión Emocional</h6>
+                                                <p className="text-[11px] opacity-70 font-medium leading-tight mt-1">Liberación de estrés y patrones que afectan tu metabolismo.</p>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </section>
 
-                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-20 py-8 border-t border-[hsla(136,19%,29%,0.05)]">
-                        <span>NUTRITY MASTER CORE v4.5 | LICENSE_ID: {Math.random().toString(36).substring(7).toUpperCase()}</span>
+                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-30 py-8 border-t border-[hsla(136,19%,29%,0.05)]">
+                        <span>NUTRITY MASTER CORE | COMPASSIONATE CARE PROTOCOL</span>
                         <span>02 / 04</span>
                     </footer>
                 </div>
@@ -198,81 +228,83 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
             {/* PAGE 3: DETAILED COACH RECOMMENDATIONS */}
             <div id="pdf-page-3" className={pageStyle}>
                 <div className="relative z-10 h-full flex flex-col border-[1px] border-[hsla(136,19%,29%,0.1)] p-12">
-                    <header className="flex justify-between items-center mb-20 pb-10 border-b border-[hsla(136,19%,29%,0.1)]">
+                    <header className="flex justify-between items-center mb-16 pb-8 border-b border-[hsla(136,19%,29%,0.1)]">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-[#1b3b36] rounded-xl flex items-center justify-center shadow-lg">
                                 <Zap className="w-7 h-7 text-[#c19b6c]" />
                             </div>
-                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">02. Guía Ejecutiva de Implementación</h3>
+                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">02. Tus Primeros Pasos</h3>
                         </div>
                     </header>
 
                     <section className="space-y-12">
                         <div className="space-y-6">
-                            <h4 className="text-[13px] font-black uppercase tracking-[0.5em] text-[#c19b6c]">Protocolo de Acción Prioritario</h4>
+                            <h4 className="text-[13px] font-black uppercase tracking-[0.5em] text-[#c19b6c]">Tu Acción Transformadora</h4>
                             <div className="bg-[#1b3b36] text-white p-12 rounded-[50px] shadow-2xl relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-8">
-                                    <Heart className="w-12 h-12 text-[#c19b6c] opacity-20" />
+                                    <Heart className="w-16 h-16 text-[#c19b6c] opacity-20" />
                                 </div>
-                                <h5 className="text-3xl font-black mb-8 leading-tight">Optimización mediante <br /><span className="text-[#c19b6c]">{results.pillars?.[0]?.title || "Superalimentos"}</span></h5>
-                                <div className="space-y-6 text-xl leading-relaxed font-medium text-white/90 italic">
+                                <h5 className="text-3xl font-black mb-6 leading-tight">Enfócate en: <br /><span className="text-[#c19b6c]">{results.pillars?.[0]?.title || "Tu Bienestar Integral"}</span></h5>
+                                <div className="space-y-6 text-xl leading-relaxed font-medium text-white/90 italic relative z-10">
                                     <p>
-                                        "{results.pillars?.[0]?.desc || "Cargando protocolo personalizado..."}"
+                                        "{results.pillars?.[0]?.desc || "Cada pequeño cambio que hagas hoy sumará enormemente a tu vitalidad de mañana. Comienza observando tus hábitos con compasión, sin juzgarte."}"
                                     </p>
                                     <p>
-                                        "Tu segundo pilar de acción es: **{results.pillars?.[1]?.title || "Enfoque metabólico"}**. {results.pillars?.[1]?.desc || "Estamos optimizando tu seguimiento."}"
+                                        "Tu cuerpo es increíblemente sabio. Todo síntoma es un mensaje, no un castigo. Escúchalo y acompáñalo."
                                     </p>
                                 </div>
                             </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-8">
-                            <div className="p-10 rounded-[40px] bg-white border border-nutrity-border/50 shadow-xl space-y-6">
+                            <div className="p-10 rounded-[40px] bg-white border border-[#1b3b36]/10 shadow-xl space-y-6">
                                 <div className="flex items-center gap-4 mb-2">
                                     <Clock className="w-7 h-7 text-[#c19b6c]" />
-                                    <h5 className="text-xl font-black uppercase tracking-widest">Ritmo Circadiano</h5>
+                                    <h5 className="text-xl font-black uppercase tracking-widest text-[#1b3b36]">{results.pillars?.[1]?.title || "Armonía Diaria"}</h5>
                                 </div>
-                                <ul className="space-y-4">
-                                    {[
-                                        "Cena obligatoria antes de las 19:30.",
-                                        "Exposición a luz solar mínima 10 min al despertar.",
-                                        "Suplementación con Magnesio + Cacao 30 min antes de dormir."
-                                    ].map((list, i) => (
-                                        <li key={i} className="flex gap-4 text-sm font-bold text-[hsla(136,19%,29%,0.7)]">
-                                            <div className="w-5 h-5 rounded-full bg-[hsla(214,95%,80%,0.1)] flex items-center justify-center shrink-0 mt-0.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[#c19b6c]"></div>
-                                            </div>
-                                            {list}
-                                        </li>
-                                    ))}
-                                </ul>
+                                <p className="text-sm font-medium text-[hsla(136,19%,29%,0.8)] leading-relaxed">
+                                    {results.pillars?.[1]?.desc || "Establece horarios regulares para tus comidas y respeta tus horas de descanso. Un cuerpo relajado absorbe mejor los nutrientes y sana más rápido."}
+                                </p>
+                                {results.biodescodificacionRecommendations && results.biodescodificacionRecommendations.length > 0 && (
+                                    <ul className="space-y-3 mt-4 pt-4 border-t border-[#1b3b36]/5">
+                                        {results.biodescodificacionRecommendations.slice(0,2).map((rec: string, i: number) => (
+                                            <li key={i} className="flex gap-3 text-sm font-bold text-[hsla(136,19%,29%,0.8)] leading-snug">
+                                                <div className="w-4 h-4 rounded-full bg-[#c19b6c]/10 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#c19b6c]"></div>
+                                                </div>
+                                                {rec}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
 
-                            <div className="p-10 rounded-[40px] bg-white border border-nutrity-border/50 shadow-xl space-y-6">
+                            <div className="p-10 rounded-[40px] bg-white border border-[#1b3b36]/10 shadow-xl space-y-6">
                                 <div className="flex items-center gap-4 mb-2">
-                                    <TrendingDown className="text-red-400 w-7 h-7" />
-                                    <h5 className="text-xl font-black uppercase tracking-widest">Inhibidores Glucémicos</h5>
+                                    <Star className="text-[#c19b6c] w-7 h-7" />
+                                    <h5 className="text-xl font-black uppercase tracking-widest text-[#1b3b36]">{results.pillars?.[2]?.title || "Nutrición Consciente"}</h5>
                                 </div>
-                                <ul className="space-y-4">
-                                    {[
-                                        "Evitar jugos de fruta, incluso naturales.",
-                                        "Sustituir papa por Oca morada horneada.",
-                                        "Uso de Maíz Morado concentrado como antioxidante renal."
-                                    ].map((list, i) => (
-                                        <li key={i} className="flex gap-4 text-sm font-bold text-[hsla(136,19%,29%,0.7)]">
-                                            <div className="w-5 h-5 rounded-full bg-[hsla(0,100%,50%,0.1)] flex items-center justify-center shrink-0 mt-0.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
-                                            </div>
-                                            {list}
-                                        </li>
-                                    ))}
-                                </ul>
+                                <p className="text-sm font-medium text-[hsla(136,19%,29%,0.8)] leading-relaxed">
+                                    {results.pillars?.[2]?.desc || "La comida es información para tus células. Elige alimentos naturales, vivos y llenos de color para reducir la inflamación y elevar tu energía."}
+                                </p>
+                                {results.biodescodificacionRecommendations && results.biodescodificacionRecommendations.length > 2 && (
+                                    <ul className="space-y-3 mt-4 pt-4 border-t border-[#1b3b36]/5">
+                                        {results.biodescodificacionRecommendations.slice(2,4).map((rec: string, i: number) => (
+                                            <li key={i} className="flex gap-3 text-sm font-bold text-[hsla(136,19%,29%,0.8)] leading-snug">
+                                                <div className="w-4 h-4 rounded-full bg-[#1b3b36]/10 flex items-center justify-center shrink-0 mt-0.5">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#1b3b36]"></div>
+                                                </div>
+                                                {rec}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         </div>
                     </section>
 
-                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-20 py-8 border-t border-nutrity-border/50">
-                        <span>EXECUTIVE SUMMARY | CLINICAL PROTOCOL | CONFIDENTIAL</span>
+                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-30 py-8 border-t border-[#1b3b36]/5">
+                        <span>YOUR HEALING JOURNEY | CONFIDENTIAL</span>
                         <span>03 / 04</span>
                     </footer>
                 </div>
@@ -281,85 +313,93 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
             {/* PAGE 4: METABOLIC CATALOG SNAPSHOT */}
             <div id="pdf-page-4" className={pageStyle}>
                 <div className="relative z-10 h-full flex flex-col border-[1px] border-[hsla(136,19%,29%,0.1)] p-12">
-                    <header className="flex justify-between items-center mb-20 pb-10 border-b border-[hsla(136,19%,29%,0.1)]">
+                    <header className="flex justify-between items-center mb-16 pb-8 border-b border-[hsla(136,19%,29%,0.1)]">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-[#c19b6c1a] rounded-xl flex items-center justify-center">
                                 <BookOpen className="w-7 h-7 text-[#c19b6c]" />
                             </div>
-                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">03. Protocolo de Superalimentos</h3>
+                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">03. Aliados y Carta de tu Coach</h3>
                         </div>
                     </header>
 
                     <div className="grid grid-cols-2 gap-10 flex-1">
-                        <div className="space-y-10">
-                            <div className="bg-white p-10 rounded-[50px] border border-[#1b3b36]/5 shadow-xl space-y-8">
-                                <img src="/tarwi_pills_premium_1772251779199.png" className="w-full h-48 object-cover rounded-[30px]"  alt="Image"/>
-                                <div className="space-y-2">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Alimento Base</span>
-                                    <h5 className="text-3xl font-black text-[#1b3b36]">Tarwi (Chocho)</h5>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-slate-50 p-4 rounded-2xl">
-                                        <p className="text-[9px] font-black uppercase opacity-30 mb-1">Impacto</p>
-                                        <p className="font-bold text-sm text-[#1b3b36]">Alta Sensibilidad Insulínica</p>
+                        <div className="space-y-8">
+                            {results.superfoods && results.superfoods.length > 0 ? (
+                                results.superfoods.slice(0, 2).map((superfood: string, index: number) => (
+                                    <div key={index} className="bg-white p-8 rounded-[40px] border border-[#1b3b36]/5 shadow-xl space-y-6">
+                                        <div className="w-full h-32 bg-[#fbf8f1] rounded-[24px] flex items-center justify-center border border-[#1b3b36]/10">
+                                            <Leaf className="w-12 h-12 text-[#c19b6c] opacity-50" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Súper Alimento Recomendado</span>
+                                            <h5 className="text-2xl font-black text-[#1b3b36] capitalize">{superfood}</h5>
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">Impacto Integrativo</p>
+                                            <p className="font-bold text-sm text-[#1b3b36]">Ideal para potenciar tu metabolismo celular y reducir la inflamación sistémica.</p>
+                                        </div>
                                     </div>
-                                    <div className="bg-slate-50 p-4 rounded-2xl">
-                                        <p className="text-[9px] font-black uppercase opacity-30 mb-1">Dosis Sugerida</p>
-                                        <p className="font-bold text-sm text-[#1b3b36]">30g Pre-Comida</p>
+                                ))
+                            ) : (
+                                <>
+                                    <div className="bg-white p-8 rounded-[40px] border border-[#1b3b36]/5 shadow-xl space-y-6">
+                                        <img src="/tarwi_pills_premium_1772251779199.png" className="w-full h-32 object-cover rounded-[24px]"  alt="Image"/>
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Alimento Base</span>
+                                            <h5 className="text-2xl font-black text-[#1b3b36]">Tarwi (Chocho)</h5>
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">Impacto</p>
+                                            <p className="font-bold text-sm text-[#1b3b36]">Alta Sensibilidad Insulínica</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-white p-10 rounded-[50px] border border-[#1b3b36]/5 shadow-xl space-y-8">
-                                <img src="/quinua_negra_bowl_premium_1772251795891.png" className="w-full h-48 object-cover rounded-[30px]"  alt="Image"/>
-                                <div className="space-y-2">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Antioxidante Maestro</span>
-                                    <h5 className="text-3xl font-black text-[#1b3b36]">Quinua Negra</h5>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-slate-50 p-4 rounded-2xl">
-                                        <p className="text-[9px] font-black uppercase opacity-30 mb-1">Impacto</p>
-                                        <p className="font-bold text-sm text-[#1b3b36]">Protección Celular</p>
+                                    <div className="bg-white p-8 rounded-[40px] border border-[#1b3b36]/5 shadow-xl space-y-6">
+                                        <img src="/quinua_negra_bowl_premium_1772251795891.png" className="w-full h-32 object-cover rounded-[24px]"  alt="Image"/>
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Antioxidante Maestro</span>
+                                            <h5 className="text-2xl font-black text-[#1b3b36]">Quinua Negra</h5>
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <p className="text-[9px] font-black uppercase opacity-40 mb-1">Impacto</p>
+                                            <p className="font-bold text-sm text-[#1b3b36]">Protección Celular</p>
+                                        </div>
                                     </div>
-                                    <div className="bg-slate-50 p-4 rounded-2xl">
-                                        <p className="text-[9px] font-black uppercase opacity-30 mb-1">Dosis Sugerida</p>
-                                        <p className="font-bold text-sm text-[#1b3b36]">Dosis Diaria 50g</p>
-                                    </div>
-                                </div>
-                            </div>
+                                </>
+                            )}
                         </div>
 
-                        <div className="bg-[#1b3b36] p-12 rounded-[60px] text-white flex flex-col relative overflow-hidden">
+                        <div className="bg-[#1b3b36] p-12 rounded-[50px] text-white flex flex-col relative overflow-hidden shadow-2xl">
                             <div className="absolute top-0 right-0 p-10">
-                                <AlertCircle className="w-12 h-12 text-[#c19b6c] animate-pulse" />
+                                <Star className="w-16 h-16 text-[#c19b6c] opacity-20" />
                             </div>
-                            <h5 className="text-3xl font-black mb-10 leading-tight">Nota Crítica para <br />el Especialista</h5>
-                            <div className="flex-1 space-y-10">
-                                <div className="space-y-4">
-                                    <p className="text-sm font-black uppercase tracking-widest text-[#c19b6c]">ADVERTENCIA</p>
-                                    <p className="text-lg opacity-80 leading-relaxed font-medium">
-                                        Si los niveles de glucosa en ayunas descienden de 85 mg/dL sistemáticamente, reduzca el consumo de extracto de yacón a la mitad para evitar hipoglucemias reactivas.
+                            <h5 className="text-3xl font-black mb-8 leading-tight">Carta de tu <br /><span className="text-[#c19b6c]">Coach Integrativo</span></h5>
+                            <div className="flex-1 space-y-8">
+                                <div className="space-y-3">
+                                    <p className="text-lg opacity-90 leading-relaxed font-medium">
+                                        Querido paciente, quiero que sepas algo fundamental: <strong className="text-white">tu diagnóstico no es tu destino.</strong>
+                                    </p>
+                                    <p className="text-lg opacity-90 leading-relaxed font-medium">
+                                        Este reporte es simplemente un mapa que nos muestra dónde estás hoy, pero tú eres quien decide hacia dónde vamos mañana. Pierde el miedo; tu cuerpo fue diseñado con una inteligencia asombrosa para sanarse a sí mismo cuando le quitamos las interferencias (físicas y emocionales).
                                     </p>
                                 </div>
-                                <div className="space-y-4">
-                                    <p className="text-sm font-black uppercase tracking-widest text-[#c19b6c]">SEGUIMIENTO</p>
-                                    <p className="text-lg opacity-80 leading-relaxed font-medium">
-                                        Próxima evaluación predictiva de la IA programada en 15 días. Es imperativo subir los datos de peso y glucosa post-prandial diariamente al portal Nutrity.
+                                <div className="space-y-3">
+                                    <p className="text-sm font-black uppercase tracking-widest text-[#c19b6c]">EL SIGUIENTE PASO</p>
+                                    <p className="text-lg opacity-90 leading-relaxed font-medium">
+                                        {results.coachCallToAction || "Respira profundo, abraza este proceso con compasión y agenda tu sesión con nosotros para comenzar juntos esta hermosa transformación. ¡Estamos contigo!"}
                                     </p>
                                 </div>
                             </div>
-                            <div className="mt-auto pt-10">
-                                <div className="w-full h-px bg-white opacity-10 mb-6"></div>
+                            <div className="mt-auto pt-10 border-t border-white/10">
                                 <div className="flex justify-between items-center">
-                                    <div className="text-[8px] font-black uppercase tracking-[0.3em]">Authorized Digital Signature</div>
-                                    <div className="font-serif italic text-2xl font-light opacity-60">IA_METABOLIC_CORE</div>
+                                    <div className="text-[9px] font-black uppercase tracking-[0.3em] opacity-50">Compromiso BioVital</div>
+                                    <div className="font-serif italic text-2xl font-light text-[#c19b6c]">BioVital_Coach</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-20 py-8 border-t border-[#1b3b36]/5">
-                        <span>END OF EXECUTIVE REPORT | BIOVITAL GLOBAL TECHNOLOGIES</span>
+                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-30 py-8 border-t border-[#1b3b36]/5">
+                        <span>END OF REPORT | BIOVITAL GLOBAL TECHNOLOGIES</span>
                         <span>04 / 04</span>
                     </footer>
                 </div>
