@@ -281,7 +281,7 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                     <div className="grid grid-cols-2 gap-10 flex-1">
                         <div className="space-y-10">
                             <div className="bg-white p-10 rounded-[50px] border border-[#3d5a44]/5 shadow-xl space-y-8">
-                                <img src="/tarwi_pills_premium_1772251779199.png" className="w-full h-48 object-cover rounded-[30px]" />
+                                <img src="/tarwi_pills_premium_1772251779199.png" className="w-full h-48 object-cover rounded-[30px]"  alt="Image"/>
                                 <div className="space-y-2">
                                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#60a5fa]">Alimento Base</span>
                                     <h5 className="text-3xl font-black text-[#3d5a44]">Tarwi (Chocho)</h5>
@@ -299,7 +299,7 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                             </div>
 
                             <div className="bg-white p-10 rounded-[50px] border border-[#3d5a44]/5 shadow-xl space-y-8">
-                                <img src="/quinua_negra_bowl_premium_1772251795891.png" className="w-full h-48 object-cover rounded-[30px]" />
+                                <img src="/quinua_negra_bowl_premium_1772251795891.png" className="w-full h-48 object-cover rounded-[30px]"  alt="Image"/>
                                 <div className="space-y-2">
                                     <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#60a5fa]">Antioxidante Maestro</span>
                                     <h5 className="text-3xl font-black text-[#3d5a44]">Quinua Negra</h5>

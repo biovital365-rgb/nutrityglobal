@@ -7,45 +7,53 @@ datasource db {
 }
 
 model Organization {
-  id           String          @id @default(cuid())
-  name         String
-  createdAt    DateTime        @default(now())
-  appointments Appointment[]
-  courses      Course[]
-  enrollments  Enrollment[]
-  evaluations  Evaluation[]
-  foods        Food[]
-  measurements Measurement[]
-  micros       Micronutrient[]
-  Post         Post[]
-  users        User[]
+  id                  String                @id @default(cuid())
+  name                String
+  createdAt           DateTime              @default(now())
+  appointments        Appointment[]
+  biologicalDiagnoses BiologicalDiagnosis[]
+  courses             Course[]
+  enrollments         Enrollment[]
+  evaluations         Evaluation[]
+  foods               Food[]
+  measurements        Measurement[]
+  micros              Micronutrient[]
+  Post                Post[]
+  pdfReports          PDFReportLog[]
+  users               User[]
 }
 
 model User {
-  id               String        @id @default(uuid())
-  firebaseUid      String?       @unique
-  email            String        @unique
-  name             String?
-  role             String        @default("USER")
-  plan             String        @default("FREE")
-  stripeCustomerId String?       @unique
-  subscriptionId   String?       @unique
-  organizationId   String?
-  phone            String?
-  address          String?
-  age              String?
-  occupation       String?
-  maritalStatus    String?
-  socialMedia      String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  deletedAt        DateTime?
-  appointments     Appointment[]
-  dailyMenus       DailyMenu[]
-  enrollments      Enrollment[]
-  evaluations      Evaluation[]
-  measurements     Measurement[]
-  organization     Organization? @relation(fields: [organizationId], references: [id])
+  id                  String                @id @default(uuid())
+  firebaseUid         String?               @unique
+  email               String                @unique
+  name                String?
+  role                String                @default("USER")
+  plan                String                @default("FREE")
+  stripeCustomerId    String?               @unique
+  subscriptionId      String?               @unique
+  organizationId      String?
+  phone               String?
+  address             String?
+  age                 String?
+  occupation          String?
+  maritalStatus       String?
+  socialMedia         String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  deletedAt           DateTime?
+  appointments        Appointment[]
+  biologicalDiagnoses BiologicalDiagnosis[]
+  dailyMenus          DailyMenu[]
+  enrollments         Enrollment[]
+  evaluations         Evaluation[]
+  measurements        Measurement[]
+  pdfReports          PDFReportLog[]
+  organization        Organization?         @relation(fields: [organizationId], references: [id])
+
+  @@index([stripeCustomerId])
+  @@index([subscriptionId])
+  @@index([organizationId])
 }
 
 model Food {
@@ -62,6 +70,8 @@ model Food {
   deletedAt         DateTime?
   organizationId    String?
   organization      Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }
 
 model Micronutrient {
@@ -79,6 +89,8 @@ model Micronutrient {
   deletedAt       DateTime?
   organizationId  String?
   organization    Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }
 
 model Measurement {
@@ -92,7 +104,11 @@ model Measurement {
   status         String?
   timestamp      DateTime      @default(now())
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  user           User          @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+
+  @@index([userId])
+  @@index([organizationId])
 }
 
 model Appointment {
@@ -107,7 +123,10 @@ model Appointment {
   createdAt      DateTime      @default(now())
   deletedAt      DateTime?
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  user           User          @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([organizationId])
 }
 
 model Evaluation {
@@ -118,7 +137,11 @@ model Evaluation {
   results        Json
   timestamp      DateTime      @default(now())
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  user           User          @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+
+  @@index([userId])
+  @@index([organizationId])
 }
 
 model Course {
@@ -138,6 +161,8 @@ model Course {
   organization   Organization? @relation(fields: [organizationId], references: [id])
   enrollments    Enrollment[]
   lessons        Lesson[]
+
+  @@index([organizationId])
 }
 
 model Lesson {
@@ -151,6 +176,8 @@ model Lesson {
   isFree      Boolean  @default(false)
   createdAt   DateTime @default(now())
   course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
 }
 
 model Enrollment {
@@ -161,7 +188,12 @@ model Enrollment {
   enrolledAt     DateTime      @default(now())
   course         Course        @relation(fields: [courseId], references: [id])
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  user           User          @relation(fields: [userId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([courseId])
 }
 
 model LessonProgress {
@@ -170,32 +202,36 @@ model LessonProgress {
   lessonId  String
   completed Boolean  @default(false)
   updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
   @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
 }
 
 model DailyMenu {
   id            String    @id @default(cuid())
   userId        String
   date          String
+  weekStart     String?
+  phase         String?
+  status        String    @default("PENDING")
   menuData      Json
   metabolicGoal String?
-  weekStart     String?
-  status        String    @default("PENDING")
-  approvedAt    DateTime? @db.Timestamp(6)
-  approvedBy    String?
   adminNotes    String?
-  clientNotes   String?
-  createdAt     DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime  @updatedAt @db.Timestamp(6)
-  deletedAt     DateTime? @db.Timestamp(6)
-  user          User      @relation(fields: [userId], references: [id])
+  approvedBy    String?
+  approvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
+  @@index([userId])
 }
 
 model Post {
-  id             String        @id
+  id             String        @id @default(cuid())
   organizationId String?
   title          String
   slug           String        @unique
@@ -208,6 +244,52 @@ model Post {
   isPremium      Boolean       @default(false)
   author         String        @default("Nutrity Global")
   createdAt      DateTime      @default(now())
-  updatedAt      DateTime
-  Organization   Organization? @relation(fields: [organizationId], references: [id])
+  updatedAt      DateTime      @updatedAt
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
+}
+
+model PDFReportLog {
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  status         String        @default("GENERATED")
+  errorMessage   String?
+  timestamp      DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([userId])
+  @@index([organizationId])
+}
+
+// ─── TRIAJE HOLÍSTICO NMG ────────────────────────────────────────────────────
+// Almacena el síntoma principal del paciente + la decodificación biológica
+// que la IA genera durante el Onboarding. Permite audit trail clínico.
+model BiologicalDiagnosis {
+  id               String        @id @default(cuid())
+  userId           String
+  organizationId   String?
+  // Síntoma declarado por el paciente
+  mainSymptom      String // ej: "Acidez estomacal", "Fatiga crónica"
+  affectedSystem   String // ej: "Digestivo", "Inmune", "Hormonal"
+  symptomDuration  String? // ej: "6 meses", "2 años"
+  emotionalContext String? // ej: "miedo al futuro", "conflicto de territorio"
+  // Resultado de la IA (NMG/Biodescodificación)
+  nmgConflict      String? // La raíz emocional identificada
+  nmgOrgan         String? // El órgano o sistema biológico involucrado
+  holisticApproach Json? // Array de disciplinas: MTC, Ayurveda, PNL, etc.
+  aiRawResponse    String? // El texto íntegro de la IA para auditoría
+  // Control
+  phase            String        @default("DIAGNOSIS") // DIAGNOSIS, INTERVENTION, REMISSION
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  organization     Organization? @relation(fields: [organizationId], references: [id])
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([organizationId])
 }

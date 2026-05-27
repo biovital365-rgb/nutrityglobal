@@ -58,7 +58,7 @@ export function AdminFoodsTab({
                                     <tr key={food.id} className={`hover:bg-slate-50 transition-colors group ${(food as any).deletedAt ? "opacity-50" : ""}`}>
                                         <td className="py-4 px-6">
                                             <div className="w-12 h-12 rounded-xl overflow-hidden bg-nutrity-bg">
-                                                <img src={getDirectImageUrl(food.image)} className="w-full h-full object-cover" alt={food.name} />
+                                                <img src={getDirectImageUrl(food.image)} className="w-full h-full object-cover" alt={food.name} referrerPolicy="no-referrer" />
                                             </div>
                                         </td>
                                         <td className="py-4 px-6">
