@@ -40,6 +40,8 @@ export interface Course {
     category: string
     price: number
     paypalUrl?: string
+    currency?: string
+    isPublished?: boolean
     lessons?: Lesson[]
     deletedAt?: string
 }
