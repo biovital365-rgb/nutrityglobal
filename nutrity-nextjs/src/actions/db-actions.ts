@@ -701,10 +701,12 @@ export async function getCourseWithLessons(courseId: string) {
 }
 
 export async function saveCourse(course: Partial<Course>, organizationId?: string) {
+        const { lessons, ...courseData } = course;
+        
         const payload = {
-            ...course,
-            organizationId: course.organizationId || organizationId || null,
-            id: course.id && course.id.length > 20 ? course.id : crypto.randomUUID()
+            ...courseData,
+            organizationId: courseData.organizationId || organizationId || null,
+            id: courseData.id && courseData.id.length > 20 ? courseData.id : crypto.randomUUID()
         };
 
         const { data, error } = await supabase
@@ -717,6 +719,28 @@ export async function saveCourse(course: Partial<Course>, organizationId?: strin
             console.error('saveCourse error:', error);
             throw error;
         }
+        
+        // Handle lessons if they exist
+        if (lessons && Array.isArray(lessons)) {
+            // Upsert all lessons with the courseId
+            const lessonsPayload = lessons.map(lesson => ({
+                ...lesson,
+                courseId: payload.id,
+                id: lesson.id && lesson.id.length > 20 ? lesson.id : crypto.randomUUID()
+            }));
+            
+            if (lessonsPayload.length > 0) {
+                const { error: lessonsError } = await supabase
+                    .from('Lesson')
+                    .upsert(lessonsPayload);
+                    
+                if (lessonsError) {
+                    console.error('saveCourse lessons error:', lessonsError);
+                    // Non-fatal, we still saved the course
+                }
+            }
+        }
+        
         return data as Course
 }
 
