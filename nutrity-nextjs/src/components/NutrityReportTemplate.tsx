@@ -8,7 +8,7 @@ interface ReportTemplateProps {
 
 export function NutrityReportTemplate({ results }: ReportTemplateProps) {
     // 1000px width and 1414px height gives a perfect A4 ratio (1:1.414)
-    const pageStyle = "w-[1000px] h-[1414px] bg-[#fdfcf9] text-[#3d5a44] p-20 flex flex-col relative overflow-hidden mb-0 shadow-none";
+    const pageStyle = "w-[1000px] h-[1414px] bg-[#fbf8f1] text-[#1b3b36] p-20 flex flex-col relative overflow-hidden mb-0 shadow-none";
     const name = results.name || "Paciente Nutrity";
 
     return (
@@ -22,40 +22,46 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                 <div className="relative z-10 flex flex-col h-full border-[1px] border-[hsla(136,19%,29%,0.1)] p-12">
                     <header className="flex items-center justify-between mb-40">
                         <div className="flex items-center gap-5">
-                            <div className="w-20 h-20 bg-[#3d5a44] rounded-[24px] flex items-center justify-center shadow-2xl shadow-[#3d5a44]/30">
+                            <div className="w-20 h-20 bg-[#1b3b36] rounded-[24px] flex items-center justify-center shadow-2xl shadow-[#1b3b36]/30">
                                 <Activity className="w-10 h-10 text-white" />
                             </div>
                             <div>
-                                <h2 className="text-4xl font-black tracking-tighter text-[#3d5a44]">Nutrity Global</h2>
-                                <p className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa]">Metabolic Artificial Intelligence</p>
+                                <h2 className="text-4xl font-black tracking-tighter text-[#1b3b36]">Nutrity Global</h2>
+                                <p className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Metabolic Artificial Intelligence</p>
                             </div>
                         </div>
                         <div className="text-right">
                             <div className="bg-[hsla(136,19%,29%,0.05)] px-4 py-2 rounded-xl">
                                 <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Estatus del Reporte</p>
-                                <p className="font-bold text-[#3d5a44]">EJECUTIVO / CONFIDENCIAL</p>
+                                <p className="font-bold text-[#1b3b36]">EJECUTIVO / CONFIDENCIAL</p>
                             </div>
                         </div>
                     </header>
 
                     <div className="flex-1 flex flex-col justify-center">
                         <div className="space-y-4 mb-12">
-                            <div className="w-32 h-2 bg-[#60a5fa]"></div>
-                            <span className="text-[16px] font-black uppercase tracking-[0.6em] text-[#60a5fa] block">Plan de Remisión Personalizado</span>
+                            <div className="w-32 h-2 bg-[#c19b6c]"></div>
+                            <span className="text-[16px] font-black uppercase tracking-[0.6em] text-[#c19b6c] block">Plan de Remisión Personalizado</span>
                         </div>
 
-                        <h1 className="text-[85px] font-black leading-[0.85] mb-12 tracking-tighter text-[#3d5a44]">
+                        <h1 className="text-[85px] font-black leading-[0.85] mb-12 tracking-tighter text-[#1b3b36]">
                             Master <br />
                             Metabólico <br />
-                            <span className="text-[#60a5fa]">2025</span>
+                            <span className="text-[#c19b6c]">2025</span>
                         </h1>
 
-                        <div className="h-px bg-[hsla(136,19%,29%,0.1)] w-full mb-12"></div>
+                        <div className="h-px bg-[hsla(136,19%,29%,0.1)] w-full mb-8"></div>
+                        <div className="bg-[#1b3b36]/5 p-6 rounded-2xl mb-12 border-l-4 border-[#c19b6c]">
+                            <p className="text-[12px] font-bold text-[#1b3b36] leading-relaxed">
+                                <strong>Tecnología NutrityGlobal AI</strong><br/>
+                                Nuestra IA Metabólica procesa tu biometría, contexto emocional (NMG) y hábitos diarios para generar algoritmos de precisión, diseñando tu ruta hacia la remisión metabólica en tiempo real.
+                            </p>
+                        </div>
 
                         <div className="grid grid-cols-2 gap-16 max-w-3xl">
                             <div className="space-y-2">
                                 <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-40">Titular del Plan</p>
-                                <p className="text-4xl font-black text-[#3d5a44]">{name}</p>
+                                <p className="text-4xl font-black text-[#1b3b36]">{name}</p>
                             </div>
                             <div className="space-y-2">
                                 <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-40">Diagnóstico IA</p>
@@ -72,16 +78,16 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                     <footer className="mt-auto flex justify-between items-end pt-12 border-t border-[hsla(136,19%,29%,0.1)]">
                         <div className="space-y-6">
                             <div className="flex items-center gap-4 bg-white px-8 py-4 rounded-[20px] border border-[hsla(136,19%,29%,0.1)] shrink-0 shadow-sm">
-                                <Shield className="w-6 h-6 text-[#60a5fa]" />
+                                <Shield className="w-6 h-6 text-[#c19b6c]" />
                                 <div className="leading-tight">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#3d5a44]">DATA SECURITY PROTOCOL</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#1b3b36]">DATA SECURITY PROTOCOL</p>
                                     <p className="text-[9px] opacity-40 font-bold uppercase tracking-widest">AES-256 / HIPAA COMPLIANT SYSTEM</p>
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
                             <p className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-30">Fecha de Certificación</p>
-                            <p className="text-2xl font-black text-[#3d5a44]">{new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                            <p className="text-2xl font-black text-[#1b3b36]">{new Date().toLocaleString('es-ES', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                     </footer>
                 </div>
@@ -92,12 +98,12 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                 <div className="relative z-10 h-full flex flex-col border-[1px] border-[hsla(136,19%,29%,0.1)] p-12">
                     <header className="flex justify-between items-center mb-20 pb-10 border-b border-[hsla(136,19%,29%,0.1)]">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-[#60a5fa1a] rounded-xl flex items-center justify-center">
-                                <Brain className="w-7 h-7 text-[#60a5fa]" />
+                            <div className="w-12 h-12 bg-[#c19b6c1a] rounded-xl flex items-center justify-center">
+                                <Brain className="w-7 h-7 text-[#c19b6c]" />
                             </div>
-                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#3d5a44]">01. Análisis de Biología Computacional</h3>
+                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">01. Análisis de Biología Computacional</h3>
                         </div>
-                        <div className="bg-[#60a5fa] text-white px-6 py-2 rounded-full font-black text-sm uppercase">
+                        <div className="bg-[#c19b6c] text-white px-6 py-2 rounded-full font-black text-sm uppercase">
                             Score de Remisión: {results.remissionScore}%
                         </div>
                     </header>
@@ -107,7 +113,7 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-[hsla(214,95%,80%,0.3)]"></div>
                             <div className="absolute top-0 right-0 w-48 h-48 bg-[hsla(214,95%,80%,0.05)] rounded-bl-[120px]"></div>
                             <div className="flex items-center gap-4 mb-8">
-                                <Award className="w-8 h-8 text-[#60a5fa]" />
+                                <Award className="w-8 h-8 text-[#c19b6c]" />
                                 <h4 className="text-2xl font-black">Evaluación Médica de la IA</h4>
                             </div>
                             <p className="text-2xl leading-[1.6] text-[hsla(136,19%,29%,0.9)] font-medium italic tracking-tight">
@@ -119,42 +125,42 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                     <section className="grid grid-cols-2 gap-10 flex-1">
                         <div className="space-y-12">
                             <div>
-                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Datos Clínicos y Descodificación</h5>
+                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6">Datos Clínicos y Descodificación</h5>
                                 <div className="bg-white p-8 rounded-[40px] border border-[hsla(136,19%,29%,0.05)] shadow-lg space-y-4 mb-4">
                                     <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3">
                                         <span className="text-[11px] font-bold uppercase opacity-60">Síntoma Principal</span>
-                                        <span className="text-sm font-black text-[#3d5a44] text-right max-w-[180px]">{results.nmg?.mainSymptom || results.rawAnswers?.healthFocus || "No especificado"}</span>
+                                        <span className="text-sm font-black text-[#1b3b36] text-right max-w-[180px]">{results.nmg?.mainSymptom || results.rawAnswers?.healthFocus || "No especificado"}</span>
                                     </div>
                                     <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3">
                                         <span className="text-[11px] font-bold uppercase opacity-60">Biometría</span>
-                                        <span className="text-sm font-black text-[#3d5a44]">
+                                        <span className="text-sm font-black text-[#1b3b36]">
                                             {results.rawAnswers?.weight ? `${results.rawAnswers.weight} kg` : "--"} / {results.rawAnswers?.glucose ? `${results.rawAnswers.glucose} mg/dL` : "--"}
                                         </span>
                                     </div>
                                     <div className="flex justify-between border-b border-[hsla(136,19%,29%,0.05)] pb-3">
                                         <span className="text-[11px] font-bold uppercase opacity-60">Contexto Emocional (DHS)</span>
-                                        <span className="text-[12px] font-black text-[#3d5a44] text-right max-w-[180px] leading-tight">{results.nmg?.emotionalContext || "No especificado"}</span>
+                                        <span className="text-[12px] font-black text-[#1b3b36] text-right max-w-[180px] leading-tight">{results.nmg?.emotionalContext || "No especificado"}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-[11px] font-bold uppercase opacity-60 text-[#60a5fa]">Conflicto Biológico</span>
-                                        <span className="text-[12px] font-black text-[#60a5fa] text-right max-w-[180px] leading-tight">{results.nmg?.conflictRoot || "Evaluando..."}</span>
+                                        <span className="text-[11px] font-bold uppercase opacity-60 text-[#c19b6c]">Conflicto Biológico</span>
+                                        <span className="text-[12px] font-black text-[#c19b6c] text-right max-w-[180px] leading-tight">{results.nmg?.conflictRoot || "Evaluando..."}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* New Holistic Stats Section in PDF */}
                             <div>
-                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Análisis Bio-Integral</h5>
+                                <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6">Análisis Bio-Integral</h5>
                                 <div className="grid grid-cols-2 gap-6">
                                     {results.holisticStats?.map((stat: any, index: number) => (
                                         <div key={index} className="space-y-2">
                                             <div className="flex justify-between items-end">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-[#3d5a44]">{stat.label}</span>
-                                                <span className="text-[10px] font-black text-[#60a5fa]">{stat.value}%</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-[#1b3b36]">{stat.label}</span>
+                                                <span className="text-[10px] font-black text-[#c19b6c]">{stat.value}%</span>
                                             </div>
                                             <div className="h-1.5 bg-[hsla(136,19%,29%,0.05)] rounded-full overflow-hidden">
                                                 <div 
-                                                    className={`h-full ${stat.color === 'bg-blue-500' ? 'bg-[#60a5fa]' : 'bg-[#3d5a44]'}`} 
+                                                    className={`h-full ${stat.color === 'bg-[#c19b6c]' ? 'bg-[#c19b6c]' : 'bg-[#1b3b36]'}`} 
                                                     style={{ width: `${stat.value}%` }}
                                                 ></div>
                                             </div>
@@ -165,7 +171,7 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                         </div>
 
                         <div className="space-y-8">
-                            <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#60a5fa] mb-6">Pilares de Intervención</h5>
+                            <h5 className="text-[12px] font-black uppercase tracking-[0.4em] text-[#c19b6c] mb-6">Pilares de Intervención</h5>
                             <div className="space-y-4">
                                 {(results.pillars || []).map((pillar: any, i: number) => (
                                     <div key={i} className="flex items-center gap-6 p-6 bg-white rounded-[30px] border border-[hsla(136,19%,29%,0.05)] shadow-sm">
@@ -194,21 +200,21 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                 <div className="relative z-10 h-full flex flex-col border-[1px] border-[hsla(136,19%,29%,0.1)] p-12">
                     <header className="flex justify-between items-center mb-20 pb-10 border-b border-[hsla(136,19%,29%,0.1)]">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-[#3d5a44] rounded-xl flex items-center justify-center shadow-lg">
-                                <Zap className="w-7 h-7 text-[#60a5fa]" />
+                            <div className="w-12 h-12 bg-[#1b3b36] rounded-xl flex items-center justify-center shadow-lg">
+                                <Zap className="w-7 h-7 text-[#c19b6c]" />
                             </div>
-                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#3d5a44]">02. Guía Ejecutiva de Implementación</h3>
+                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">02. Guía Ejecutiva de Implementación</h3>
                         </div>
                     </header>
 
                     <section className="space-y-12">
                         <div className="space-y-6">
-                            <h4 className="text-[13px] font-black uppercase tracking-[0.5em] text-[#60a5fa]">Protocolo de Acción Prioritario</h4>
-                            <div className="bg-[#3d5a44] text-white p-12 rounded-[50px] shadow-2xl relative overflow-hidden">
+                            <h4 className="text-[13px] font-black uppercase tracking-[0.5em] text-[#c19b6c]">Protocolo de Acción Prioritario</h4>
+                            <div className="bg-[#1b3b36] text-white p-12 rounded-[50px] shadow-2xl relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-8">
-                                    <Heart className="w-12 h-12 text-[#60a5fa] opacity-20" />
+                                    <Heart className="w-12 h-12 text-[#c19b6c] opacity-20" />
                                 </div>
-                                <h5 className="text-3xl font-black mb-8 leading-tight">Optimización mediante <br /><span className="text-[#60a5fa]">{results.pillars?.[0]?.title || "Superalimentos"}</span></h5>
+                                <h5 className="text-3xl font-black mb-8 leading-tight">Optimización mediante <br /><span className="text-[#c19b6c]">{results.pillars?.[0]?.title || "Superalimentos"}</span></h5>
                                 <div className="space-y-6 text-xl leading-relaxed font-medium text-white/90 italic">
                                     <p>
                                         "{results.pillars?.[0]?.desc || "Cargando protocolo personalizado..."}"
@@ -223,7 +229,7 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                         <div className="grid grid-cols-2 gap-8">
                             <div className="p-10 rounded-[40px] bg-white border border-nutrity-border/50 shadow-xl space-y-6">
                                 <div className="flex items-center gap-4 mb-2">
-                                    <Clock className="w-7 h-7 text-[#60a5fa]" />
+                                    <Clock className="w-7 h-7 text-[#c19b6c]" />
                                     <h5 className="text-xl font-black uppercase tracking-widest">Ritmo Circadiano</h5>
                                 </div>
                                 <ul className="space-y-4">
@@ -234,7 +240,7 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                                     ].map((list, i) => (
                                         <li key={i} className="flex gap-4 text-sm font-bold text-[hsla(136,19%,29%,0.7)]">
                                             <div className="w-5 h-5 rounded-full bg-[hsla(214,95%,80%,0.1)] flex items-center justify-center shrink-0 mt-0.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[#60a5fa]"></div>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-[#c19b6c]"></div>
                                             </div>
                                             {list}
                                         </li>
@@ -277,66 +283,66 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                 <div className="relative z-10 h-full flex flex-col border-[1px] border-[hsla(136,19%,29%,0.1)] p-12">
                     <header className="flex justify-between items-center mb-20 pb-10 border-b border-[hsla(136,19%,29%,0.1)]">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-[#60a5fa1a] rounded-xl flex items-center justify-center">
-                                <BookOpen className="w-7 h-7 text-[#60a5fa]" />
+                            <div className="w-12 h-12 bg-[#c19b6c1a] rounded-xl flex items-center justify-center">
+                                <BookOpen className="w-7 h-7 text-[#c19b6c]" />
                             </div>
-                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#3d5a44]">03. Protocolo de Superalimentos</h3>
+                            <h3 className="text-2xl font-black uppercase tracking-widest text-[#1b3b36]">03. Protocolo de Superalimentos</h3>
                         </div>
                     </header>
 
                     <div className="grid grid-cols-2 gap-10 flex-1">
                         <div className="space-y-10">
-                            <div className="bg-white p-10 rounded-[50px] border border-[#3d5a44]/5 shadow-xl space-y-8">
+                            <div className="bg-white p-10 rounded-[50px] border border-[#1b3b36]/5 shadow-xl space-y-8">
                                 <img src="/tarwi_pills_premium_1772251779199.png" className="w-full h-48 object-cover rounded-[30px]"  alt="Image"/>
                                 <div className="space-y-2">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#60a5fa]">Alimento Base</span>
-                                    <h5 className="text-3xl font-black text-[#3d5a44]">Tarwi (Chocho)</h5>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Alimento Base</span>
+                                    <h5 className="text-3xl font-black text-[#1b3b36]">Tarwi (Chocho)</h5>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-4 rounded-2xl">
                                         <p className="text-[9px] font-black uppercase opacity-30 mb-1">Impacto</p>
-                                        <p className="font-bold text-sm text-[#3d5a44]">Alta Sensibilidad Insulínica</p>
+                                        <p className="font-bold text-sm text-[#1b3b36]">Alta Sensibilidad Insulínica</p>
                                     </div>
                                     <div className="bg-slate-50 p-4 rounded-2xl">
                                         <p className="text-[9px] font-black uppercase opacity-30 mb-1">Dosis Sugerida</p>
-                                        <p className="font-bold text-sm text-[#3d5a44]">30g Pre-Comida</p>
+                                        <p className="font-bold text-sm text-[#1b3b36]">30g Pre-Comida</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-white p-10 rounded-[50px] border border-[#3d5a44]/5 shadow-xl space-y-8">
+                            <div className="bg-white p-10 rounded-[50px] border border-[#1b3b36]/5 shadow-xl space-y-8">
                                 <img src="/quinua_negra_bowl_premium_1772251795891.png" className="w-full h-48 object-cover rounded-[30px]"  alt="Image"/>
                                 <div className="space-y-2">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#60a5fa]">Antioxidante Maestro</span>
-                                    <h5 className="text-3xl font-black text-[#3d5a44]">Quinua Negra</h5>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#c19b6c]">Antioxidante Maestro</span>
+                                    <h5 className="text-3xl font-black text-[#1b3b36]">Quinua Negra</h5>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="bg-slate-50 p-4 rounded-2xl">
                                         <p className="text-[9px] font-black uppercase opacity-30 mb-1">Impacto</p>
-                                        <p className="font-bold text-sm text-[#3d5a44]">Protección Celular</p>
+                                        <p className="font-bold text-sm text-[#1b3b36]">Protección Celular</p>
                                     </div>
                                     <div className="bg-slate-50 p-4 rounded-2xl">
                                         <p className="text-[9px] font-black uppercase opacity-30 mb-1">Dosis Sugerida</p>
-                                        <p className="font-bold text-sm text-[#3d5a44]">Dosis Diaria 50g</p>
+                                        <p className="font-bold text-sm text-[#1b3b36]">Dosis Diaria 50g</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-[#3d5a44] p-12 rounded-[60px] text-white flex flex-col relative overflow-hidden">
+                        <div className="bg-[#1b3b36] p-12 rounded-[60px] text-white flex flex-col relative overflow-hidden">
                             <div className="absolute top-0 right-0 p-10">
-                                <AlertCircle className="w-12 h-12 text-[#60a5fa] animate-pulse" />
+                                <AlertCircle className="w-12 h-12 text-[#c19b6c] animate-pulse" />
                             </div>
                             <h5 className="text-3xl font-black mb-10 leading-tight">Nota Crítica para <br />el Especialista</h5>
                             <div className="flex-1 space-y-10">
                                 <div className="space-y-4">
-                                    <p className="text-sm font-black uppercase tracking-widest text-[#60a5fa]">ADVERTENCIA</p>
+                                    <p className="text-sm font-black uppercase tracking-widest text-[#c19b6c]">ADVERTENCIA</p>
                                     <p className="text-lg opacity-80 leading-relaxed font-medium">
                                         Si los niveles de glucosa en ayunas descienden de 85 mg/dL sistemáticamente, reduzca el consumo de extracto de yacón a la mitad para evitar hipoglucemias reactivas.
                                     </p>
                                 </div>
                                 <div className="space-y-4">
-                                    <p className="text-sm font-black uppercase tracking-widest text-[#60a5fa]">SEGUIMIENTO</p>
+                                    <p className="text-sm font-black uppercase tracking-widest text-[#c19b6c]">SEGUIMIENTO</p>
                                     <p className="text-lg opacity-80 leading-relaxed font-medium">
                                         Próxima evaluación predictiva de la IA programada en 15 días. Es imperativo subir los datos de peso y glucosa post-prandial diariamente al portal Nutrity.
                                     </p>
@@ -352,7 +358,7 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                         </div>
                     </div>
 
-                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-20 py-8 border-t border-[#3d5a44]/5">
+                    <footer className="mt-auto flex justify-between items-center text-[10px] font-black opacity-20 py-8 border-t border-[#1b3b36]/5">
                         <span>END OF EXECUTIVE REPORT | BIOVITAL GLOBAL TECHNOLOGIES</span>
                         <span>04 / 04</span>
                     </footer>
