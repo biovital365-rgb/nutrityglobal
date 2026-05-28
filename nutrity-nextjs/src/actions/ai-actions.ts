@@ -2,12 +2,21 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { WeeklyMenuSchema, MetabolicPlanSchema, type OnboardingData, type WeeklyMenu, type MetabolicPlan } from "../lib/schemas";
+import { supabase } from "@/lib/supabase";
+import { getInternalId, getPendingMenu } from "./db-actions";
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const menuModel = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
+    generationConfig: {
+        responseMimeType: "application/json",
+    }
+});
+
+const menuModelFallback = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
     generationConfig: {
         responseMimeType: "application/json",
     }
@@ -196,4 +205,169 @@ export async function getAICoachResponse(messages: any[], context: any) {
 
     const result = await chat.sendMessage(messages[messages.length - 1].text);
     return result.response.text();
+}
+
+export async function generateAIWeeklyMenuSecure(userId: string, phase: string): Promise<any> {
+    try {
+        // 1. Fetch User Data
+        const { data: user, error: userError } = await supabase
+            .from('User')
+            .select('id, name, age')
+            .eq('id', userId)
+            .maybeSingle();
+            
+        if (userError || !user) {
+            throw new Error(userError?.message || "Usuario no encontrado");
+        }
+
+        // 2. Fetch Latest Evaluation
+        const { data: evaluations } = await supabase
+            .from('Evaluation')
+            .select('results')
+            .eq('userId', userId)
+            .order('timestamp', { ascending: false })
+            .limit(1);
+            
+        const metabolicPlan = evaluations?.[0]?.results as any || null;
+
+        // 3. Fetch Latest BiologicalDiagnosis
+        const { data: diagnoses } = await supabase
+            .from('BiologicalDiagnosis')
+            .select('*')
+            .eq('userId', userId)
+            .order('createdAt', { ascending: false })
+            .limit(1);
+            
+        const diagnosis = diagnoses?.[0] || null;
+
+        // 4. Construct AI Prompt Context
+        const userName = user.name || "Paciente Nutrity";
+        const userAge = user.age || "No especificada";
+        
+        let promptContext = `Paciente: ${userName} (Edad: ${userAge})\n`;
+        
+        if (metabolicPlan) {
+            promptContext += `Fase Metabólica Actual: ${metabolicPlan.phase || 'No especificada'}\n`;
+            promptContext += `Meta Clínica Global: ${metabolicPlan.meta || 'No especificada'}\n`;
+            if (metabolicPlan.superfoods && Array.isArray(metabolicPlan.superfoods)) {
+                promptContext += `Superalimentos Recomendados: ${metabolicPlan.superfoods.join(", ")}\n`;
+            }
+        }
+        
+        if (diagnosis) {
+            promptContext += `Diagnóstico Biológico (Triaje Holístico - NMG):\n`;
+            promptContext += `- Síntoma Principal: ${diagnosis.mainSymptom}\n`;
+            promptContext += `- Sistema Afectado: ${diagnosis.affectedSystem}\n`;
+            if (diagnosis.symptomDuration) promptContext += `- Duración: ${diagnosis.symptomDuration}\n`;
+            if (diagnosis.emotionalContext) promptContext += `- Contexto Emocional: ${diagnosis.emotionalContext}\n`;
+            if (diagnosis.nmgConflict) promptContext += `- Raíz Emocional: ${diagnosis.nmgConflict}\n`;
+            if (diagnosis.nmgOrgan) promptContext += `- Órgano Afectado: ${diagnosis.nmgOrgan}\n`;
+        }
+
+        const prompt = `Eres un Coach de Nutrición Clínica y Chef de Precisión Metabólica para Nutrity Global.
+Tu tarea es generar un plan de menú semanal (lunes a domingo) personalizado y alineado exactamente a las necesidades de remisión metabólica del paciente.
+
+INFORMACIÓN DEL PACIENTE:
+${promptContext}
+
+FASE SELECCIONADA PARA ESTE MENÚ SEMANAL: Fase ${phase}
+
+REGLAS NUTRICIONALES DE LA FASE SELECCIONADA (${phase}):
+- Fase Iniciación: Menú muy bajo en azúcares y carbohidratos refinados, altamente antiinflamatorio, fácil de digerir. Excelente control de glucosa postprandial.
+- Fase Intermedia: Introducción de carbohidratos complejos de bajo índice glucémico, mayor variedad, flexibilidad metabólica controlada.
+- Fase Avanzada: Optimización hormonal, regeneración celular profunda y mantenimiento a largo plazo.
+
+DIRECTRICES DEL MENÚ:
+1. Usa superalimentos andinos obligatoriamente: Quinua, Kiwicha, Cañihua, Maca, Aguaymanto, Tarwi, Sacha Inchi, Cacao puro, Oca Morada.
+2. Si el paciente presenta síntomas digestivos en su diagnóstico (ej. colon irritable, acidez, hinchazón), adapta los alimentos para que sean suaves para el intestino (comidas cocidas, fáciles de digerir, caldos antiinflamatorios).
+3. Si el paciente presenta un conflicto biológico o estrés (ej. resistencia, desvalorización, miedo), incorpora micronutrientes y superalimentos adaptógenos (como maca o cacao puro) que apoyen el sistema nervioso.
+4. El campo "metabolicGoal" de cada día debe ser ultra-específico y explicar por qué este menú apoya al paciente ese día (ej. "Estabilización de glucosa matutina con Tarwi", "Apoyo digestivo antiinflamatorio con Yacón").
+
+Genera un JSON con este formato exacto:
+{
+  "lunes": { "breakfast": "...", "lunch": "...", "snack": "...", "dinner": "...", "metabolicGoal": "..." },
+  "martes": { "breakfast": "...", "lunch": "...", "snack": "...", "dinner": "...", "metabolicGoal": "..." },
+  "miercoles": { "breakfast": "...", "lunch": "...", "snack": "...", "dinner": "...", "metabolicGoal": "..." },
+  "jueves": { "breakfast": "...", "lunch": "...", "snack": "...", "dinner": "...", "metabolicGoal": "..." },
+  "viernes": { "breakfast": "...", "lunch": "...", "snack": "...", "dinner": "...", "metabolicGoal": "..." },
+  "sabado": { "breakfast": "...", "lunch": "...", "snack": "...", "dinner": "...", "metabolicGoal": "..." },
+  "domingo": { "breakfast": "...", "lunch": "...", "snack": "...", "dinner": "...", "metabolicGoal": "..." }
+}
+
+Responde estrictamente en JSON. Sin markdown, sin explicaciones adicionales.`;
+
+        // 5. Generate with Gemini with fallback to 1.5-flash
+        let result;
+        try {
+            console.log("Intentando generar menú con gemini-2.5-flash...");
+            result = await menuModel.generateContent(prompt);
+        } catch (e: any) {
+            console.warn("Fallo con gemini-2.5-flash, intentando fallback con gemini-1.5-flash. Error:", e);
+            result = await menuModelFallback.generateContent(prompt);
+        }
+        
+        const text = result.response.text();
+        const cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
+        const json = JSON.parse(cleanText);
+        const parsedMenu = WeeklyMenuSchema.parse(json);
+
+        // 6. Map and Save in DB
+        const internalId = await getInternalId(userId);
+        
+        // "menú para la semana siguiente, desde el día siguiente a la generación por 7 días"
+        // Starting tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const weekStartStr = tomorrow.toISOString().split("T")[0]; // YYYY-MM-DD representing first day (tomorrow)
+
+        const weekdayKeys = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        const rows = [];
+        
+        for (let i = 0; i < 7; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() + 1 + i); // 1 to 7 days offset
+            const dateStr = d.toISOString().split('T')[0];
+            const dayOfWeekName = weekdayKeys[d.getDay()]; // e.g. "viernes"
+            
+            const dayData = parsedMenu[dayOfWeekName as keyof typeof parsedMenu] || {};
+            
+            rows.push({
+                id: crypto.randomUUID(),
+                userId: internalId,
+                date: dateStr,
+                weekStart: weekStartStr,
+                phase,
+                status: 'PENDING',
+                menuData: {
+                    breakfast:    dayData.breakfast    || '',
+                    lunch:        dayData.lunch        || '',
+                    dinner:       dayData.dinner       || '',
+                    snack:        dayData.snack        || '',
+                },
+                metabolicGoal: dayData.metabolicGoal || '',
+                updatedAt: new Date().toISOString(),
+            });
+        }
+
+        // Eliminar semana previa para este usuario si existe (re-generación)
+        await supabase
+            .from('DailyMenu')
+            .delete()
+            .eq('userId', internalId)
+            .eq('weekStart', weekStartStr);
+
+        const { data: inserted, error: insertError } = await supabase
+            .from('DailyMenu')
+            .insert(rows)
+            .select();
+
+        if (insertError) throw insertError;
+
+        // Retornar los días guardados como pendientes para refrescar el UI
+        const saved = await getPendingMenu(userId);
+        return { success: true, menuDays: saved };
+    } catch (error: any) {
+        console.error("Secure AI Weekly Menu generation failed:", error);
+        return { success: false, error: error.message || String(error) };
+    }
 }

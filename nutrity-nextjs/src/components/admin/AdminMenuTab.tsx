@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Loader2, Pencil, Trash2, Save, X, PlusCircle, ChefHat, Sparkles, ThumbsUp, ThumbsDown } from "lucide-react";
 import * as dbService from "@/actions/db-actions";
+import { generateAIWeeklyMenuSecure } from "@/actions/ai-actions";
 
 interface AdminMenuTabProps {
     users: any[];
@@ -48,44 +49,16 @@ export function AdminMenuTab({ users, isSaving: _isSaving, adminEmail, notify }:
         if (!confirm(`¿Generar menú con IA para fase ${menuPhase}? Se reemplazará el menú actual pendiente.`)) return;
         setIsGeneratingAIMenu(true);
         try {
-            const { GoogleGenerativeAI } = await import("@google/generative-ai");
-            const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY as string);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-            const prompt = `Eres un coach de nutrición clínica especializado en Remisión Metabólica con superalimentos andinos.
-Genera un plan de menú semanal personalizado para un paciente en Fase ${menuPhase} del protocolo Nutrity.
-
-REGLAS:
-- Usa superalimentos andinos: Quinua, Kiwicha, Cañihua, Maca, Aguaymanto, Tarwi, Sacha Inchi, Cacao puro, Oca Morada.
-- Adapta las porciones y preparaciones a la fase ${menuPhase}.
-- Fase Iniciación: bajo en azúcar, antiinflamatorio, fácil digestión.
-- Fase Intermedia: mayor variedad, flexibilidad metabólica.
-- Fase Avanzada: optimización hormonal y regeneración celular.
-
-Responde SOLO con JSON válido, sin texto adicional:
-{
-  "lunes":    {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
-  "martes":   {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
-  "miercoles":{"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
-  "jueves":   {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
-  "viernes":  {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
-  "sabado":   {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."},
-  "domingo":  {"breakfast":"...","lunch":"...","dinner":"...","snack":"...","metabolicGoal":"..."}
-}`;
-            const result = await model.generateContent(prompt);
-            const rawText = result.response.text();
-            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error("La IA no devolvió un JSON válido");
-            const days = JSON.parse(jsonMatch[0]);
-            const weekStart = new Date();
-            weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
-            const weekStartStr = weekStart.toISOString().split("T")[0];
-            await dbService.saveWeeklyMenu(selectedMenuUser.id, weekStartStr, menuPhase, days);
-            const saved = await dbService.getPendingMenu(selectedMenuUser.id);
-            setMenuWeekDays(saved);
-            notify("success", "Menú generado con IA. Revisa y aprueba.");
+            const res = await generateAIWeeklyMenuSecure(selectedMenuUser.id, menuPhase);
+            if (res.success) {
+                setMenuWeekDays(res.menuDays);
+                notify("success", "Menú semanal generado con IA de forma segura.");
+            } else {
+                throw new Error(res.error || "Fallo en el servidor al generar menú");
+            }
         } catch (e: any) {
             const errMsg = e.message || "Error desconocido";
-            notify("error", `Error al generar: ${errMsg.substring(0, 50)}...`);
+            notify("error", `Error al generar: ${errMsg.substring(0, 80)}...`);
         } finally {
             setIsGeneratingAIMenu(false);
         }
