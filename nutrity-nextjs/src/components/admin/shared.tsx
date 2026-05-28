@@ -97,3 +97,43 @@ export function DeleteConfirmModal({ itemName, onConfirm, onCancel }: {
         </AnimatePresence>
     );
 }
+
+// ─── Base64ImageUpload ────────────────────────────────────────────────────────
+export function Base64ImageUpload({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64String = reader.result as string;
+            onChange(base64String);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    return (
+        <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">{label}</label>
+            <div className="flex gap-3 items-center">
+                {value && (value.startsWith("data:image") || value.startsWith("/") || value.startsWith("http")) ? (
+                    <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-nutrity-border bg-nutrity-bg">
+                        <img src={value} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                ) : null}
+                <div className="flex-1">
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-nutrity-accent/10 file:text-nutrity-accent hover:file:bg-nutrity-accent/20 cursor-pointer"
+                    />
+                </div>
+            </div>
+            <input
+                type="text" value={value} onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder || "O ingresa la URL de la imagen..."}
+                className="w-full mt-2 bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 transition-all opacity-70 hover:opacity-100"
+            />
+        </div>
+    );
+}

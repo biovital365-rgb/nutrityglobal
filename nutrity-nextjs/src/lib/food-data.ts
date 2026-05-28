@@ -1,6 +1,9 @@
 export interface FeedRecipe {
     title: string;
-    instructions: string[];
+    image?: string;
+    ingredients?: string[];
+    preparation?: string[];
+    instructions?: string[];
 }
 
 export interface FoodItem {

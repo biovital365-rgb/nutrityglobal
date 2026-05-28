@@ -44,7 +44,8 @@ import {
     LogOut,
     User,
     Trash2,
-    Pencil
+    Pencil,
+    AlertTriangle
 } from "lucide-react";
 import { PricingTable } from './PricingTable';
 import { Course, Micronutrient } from "../lib/types";
@@ -136,6 +137,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [showApptModal, setShowApptModal] = useState(false);
     const [showMeasureModal, setShowMeasureModal] = useState(false);
     const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
+    const [selectedMicro, setSelectedMicro] = useState<Micronutrient | null>(null);
     const [foodSearch, setFoodSearch] = useState("");
     const [microSearch, setMicroSearch] = useState("");
     const [selectedDay, setSelectedDay] = useState("lunes");
@@ -415,6 +417,26 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         };
         loadSupabaseData();
     }, [user?.id, organizationId]);
+
+    // Refetch catalog data when returning to foods or micronutrients tabs
+    // This ensures any changes made in the Admin Panel are reflected immediately
+    useEffect(() => {
+        if (activeTab === "foods" || activeTab === "micronutrients") {
+            const refreshCatalog = async () => {
+                try {
+                    const [foodData, microData] = await Promise.all([
+                        dbService.getFoods(organizationId),
+                        dbService.getMicronutrients(organizationId)
+                    ]);
+                    if (foodData.length > 0) setFoods(foodData);
+                    if (microData.length > 0) setMicros(microData);
+                } catch (err) {
+                    console.error("Error refreshing catalog data:", err);
+                }
+            };
+            refreshCatalog();
+        }
+    }, [activeTab, organizationId]);
 
     useEffect(() => {
         setChatMessages([
@@ -936,7 +958,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {filteredMicros.map((micro) => (
-                                        <div key={micro.id} className="nutrity-card p-8 hover:border-nutrity-accent transition-all group relative overflow-hidden">
+                                        <div key={micro.id} onClick={() => setSelectedMicro(micro)} className="nutrity-card p-8 hover:border-nutrity-accent transition-all group relative overflow-hidden cursor-pointer">
                                             <div className="flex items-center justify-between mb-6">
                                                 <div className="w-12 h-12 rounded-xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent group-hover:scale-110 transition-transform overflow-hidden">
                                                     {micro.image ? (
@@ -1754,15 +1776,14 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         key="food-modal"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[200] bg-nutrity-primary/60 backdrop-blur-md flex justify-end"
+                        className="fixed inset-0 z-[200] bg-nutrity-primary/80 backdrop-blur-sm flex items-center justify-center p-4"
                     >
                         <motion.div
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="bg-white w-full max-w-lg h-full overflow-y-auto shadow-2xl relative flex flex-col"
+                            className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl relative flex flex-col"
                         >
                             <button onClick={() => setSelectedFood(null)} className="absolute top-6 right-6 p-2 rounded-full bg-white/50 backdrop-blur-md text-nutrity-primary hover:bg-white z-10 transition-all shadow-sm"><X className="w-5 h-5" /></button>
 
@@ -1823,25 +1844,127 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         </h3>
                                         <div className="space-y-4">
                                             {selectedFood.recipes.map((recipe, idx) => (
-                                                <div key={idx} className="bg-white p-5 rounded-2xl border border-nutrity-border shadow-sm">
-                                                    <h4 className="font-bold text-nutrity-primary mb-3 flex items-center gap-2">
-                                                        <span className="w-6 h-6 rounded-full bg-nutrity-accent/20 text-nutrity-accent flex items-center justify-center text-[10px]">{idx + 1}</span>
-                                                        {recipe.title}
-                                                    </h4>
-                                                    <ol className="space-y-2">
-                                                        {recipe.instructions.map((inst, i) => (
-                                                            <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
-                                                                <span className="text-nutrity-accent/50 font-bold mt-0.5">•</span>
-                                                                <span>{inst}</span>
-                                                            </li>
-                                                        ))}
-                                                    </ol>
+                                                <div key={idx} className="bg-white rounded-2xl border border-nutrity-border shadow-sm overflow-hidden flex flex-col md:flex-row">
+                                                    {recipe.image && (
+                                                        <div className="w-full md:w-48 h-48 md:h-auto shrink-0 relative">
+                                                            <img src={getDirectImageUrl(recipe.image)} alt={recipe.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                                        </div>
+                                                    )}
+                                                    <div className="p-5 flex-1">
+                                                        <h4 className="font-bold text-nutrity-primary mb-4 flex items-center gap-2">
+                                                            <span className="w-6 h-6 rounded-full bg-nutrity-accent/20 text-nutrity-accent flex items-center justify-center text-[10px]">{idx + 1}</span>
+                                                            {recipe.title}
+                                                        </h4>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                            <div>
+                                                                <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Ingredientes</h5>
+                                                                <ul className="space-y-1">
+                                                                    {(recipe.ingredients || []).map((ing, i) => (
+                                                                        <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
+                                                                            <span className="text-nutrity-accent/50 font-bold mt-0.5">•</span>
+                                                                            <span>{ing}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                            <div>
+                                                                <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Preparación</h5>
+                                                                <ol className="space-y-1">
+                                                                    {(recipe.preparation || recipe.instructions || []).map((inst, i) => (
+                                                                        <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
+                                                                            <span className="text-nutrity-accent/50 font-bold mt-0.5">{i + 1}.</span>
+                                                                            <span>{inst}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ol>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
                                     </section>
                                 )}
 
+                                <div className="pb-8"></div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+
+                {selectedMicro && (
+                    <motion.div
+                        key="micro-modal"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="fixed inset-0 z-[200] bg-nutrity-primary/80 backdrop-blur-sm flex items-center justify-center p-4"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl relative flex flex-col"
+                        >
+                            <button onClick={() => setSelectedMicro(null)} className="absolute top-6 right-6 p-2 rounded-full bg-white/50 backdrop-blur-md text-nutrity-primary hover:bg-white z-10 transition-all shadow-sm"><X className="w-5 h-5" /></button>
+
+                            <div className="h-64 md:h-80 relative shrink-0 bg-nutrity-bg flex items-center justify-center">
+                                {selectedMicro.image ? (
+                                    <img src={getDirectImageUrl(selectedMicro.image)} alt={selectedMicro.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                    <Zap className="w-32 h-32 text-nutrity-accent opacity-20" />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-nutrity-primary/90 via-nutrity-primary/40 to-transparent flex flex-col justify-end p-8">
+                                    <span className="px-3 py-1 bg-nutrity-accent text-white rounded-lg text-[10px] font-bold uppercase tracking-widest self-start mb-3">{selectedMicro.category}</span>
+                                    <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{selectedMicro.name} ({selectedMicro.symbol})</h2>
+                                </div>
+                            </div>
+
+                            <div className="p-8 space-y-8 flex-1 bg-slate-50">
+                                <section>
+                                    <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-nutrity-accent" /> Función Biológica
+                                    </h3>
+                                    <p className="text-nutrity-primary font-medium leading-relaxed text-sm md:text-base">{selectedMicro.function}</p>
+                                </section>
+
+                                <section>
+                                    <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <Zap className="w-4 h-4 text-nutrity-accent" /> Impacto Metabólico
+                                    </h3>
+                                    <p className="text-nutrity-primary font-medium leading-relaxed text-sm md:text-base">{selectedMicro.metabolicImpact}</p>
+                                </section>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <section>
+                                        <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <Leaf className="w-4 h-4 text-nutrity-success" /> Fuentes Bioavales
+                                        </h3>
+                                        <ul className="space-y-2">
+                                            {selectedMicro.sources.map((source, i) => (
+                                                <li key={i} className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-nutrity-success/50" />
+                                                    <span className="text-sm font-bold text-nutrity-primary">{source}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </section>
+
+                                    <section>
+                                        <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <AlertTriangle className="w-4 h-4 text-rose-500" /> Señales de Deficiencia
+                                        </h3>
+                                        <ul className="space-y-2">
+                                            {selectedMicro.deficiencySigns.map((sign, i) => (
+                                                <li key={i} className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-rose-500/50" />
+                                                    <span className="text-sm font-bold text-nutrity-primary">{sign}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </section>
+                                </div>
+                                
                                 <div className="pb-8"></div>
                             </div>
                         </motion.div>

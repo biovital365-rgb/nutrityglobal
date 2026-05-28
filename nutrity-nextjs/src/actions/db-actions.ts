@@ -17,7 +17,7 @@ export interface FoodItem {
         fiber: string
         sugar: string
     }
-    recipes: Array<{ title: string; instructions: string[] }>
+    recipes: Array<{ title: string; image?: string; ingredients?: string[]; preparation?: string[]; instructions?: string[] }>
     deletedAt?: string
 }
 
