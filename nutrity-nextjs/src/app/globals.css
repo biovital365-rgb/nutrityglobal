@@ -35,6 +35,13 @@
   --radius-xl: 16px;
   --radius-lg: 12px;
   --radius-md: 8px;
+
+  --animate-scroll-text: scroll-text 10s linear infinite;
+
+  @keyframes scroll-text {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
 }
 
 @layer base {

@@ -45,7 +45,10 @@ import {
     User,
     Trash2,
     Pencil,
-    AlertTriangle
+    AlertTriangle,
+    MessageCircle,
+    Bookmark,
+    Music
 } from "lucide-react";
 import { PricingTable } from './PricingTable';
 import { Course, Micronutrient } from "../lib/types";
@@ -389,19 +392,22 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [lessonProgress, setLessonProgress] = useState<Record<string, boolean>>({});
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
+    const [landingConfig, setLandingConfig] = useState<any>(null);
 
     useEffect(() => {
         const loadSupabaseData = async () => {
             try {
-                // Inyectamos organizationId para filtrado multi-tenant
-                const [foodData, microData, courseData] = await Promise.all([
+                // Inyectamos organizationId para filtrado multi-tenant y cargamos la config de la landing
+                const [foodData, microData, courseData, landingData] = await Promise.all([
                     dbService.getFoods(organizationId),
                     dbService.getMicronutrients(organizationId),
-                    dbService.getCourses(organizationId)
+                    dbService.getCourses(organizationId),
+                    dbService.getLandingConfig(organizationId)
                 ]);
                 setFoods(foodData.length > 0 ? foodData : foodCatalog);
                 setMicros(microData.length > 0 ? microData : micronutrientsData as any);
                 setCourses(courseData);
+                setLandingConfig(landingData);
 
                 if ((user?.id || user?.uid)) {
                     const progressMap = await dbService.getLessonsProgress(user?.id);
@@ -801,24 +807,98 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         </div>
                                         <a href="https://www.tiktok.com/@biovital.360" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent hover:underline">Ir a TikTok</a>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {[
-                                            { id: 1, title: "¿Por qué no bajas de peso?", img: "https://images.unsplash.com/photo-1494597564530-871f2b93ac55?w=400&q=80", link: "https://www.tiktok.com/@biovital.360" },
-                                            { id: 2, title: "El secreto del Yacón", img: "https://images.unsplash.com/photo-1596422846543-74c6fc0e2418?w=400&q=80", link: "https://www.tiktok.com/@biovital.360" },
-                                            { id: 3, title: "Sana tu intestino", img: "https://images.unsplash.com/photo-1505253713660-8d4088c18ce8?w=400&q=80", link: "https://www.tiktok.com/@biovital.360" },
-                                            { id: 4, title: "Ansiedad y Glucosa", img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80", link: "https://www.tiktok.com/@biovital.360" }
-                                        ].map(video => (
-                                            <a key={video.id} href={video.link} target="_blank" rel="noopener noreferrer" className="group block relative aspect-[9/16] rounded-2xl overflow-hidden bg-nutrity-bg border border-nutrity-border shadow-sm hover:border-nutrity-accent transition-all">
-                                                <img src={video.img} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-500" alt={video.title} />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
-                                                    <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white mb-2 group-hover:bg-nutrity-accent transition-colors">
-                                                        <Play className="w-3.5 h-3.5 ml-0.5" />
-                                                    </div>
-                                                    <p className="text-white text-xs font-bold leading-tight">{video.title}</p>
-                                                </div>
-                                            </a>
-                                        ))}
-                                    </div>
+                                    {(() => {
+                                        const defaultVideos = [
+                                            { id: 1, title: "¿Por qué no bajas de peso?", img: "https://images.unsplash.com/photo-1494597564530-871f2b93ac55?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7599900359984827656" },
+                                            { id: 2, title: "El secreto del Yacón", img: "https://images.unsplash.com/photo-1596422846543-74c6fc0e2418?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7600963485182250258" },
+                                            { id: 3, title: "Sana tu intestino", img: "https://images.unsplash.com/photo-1505253713660-8d4088c18ce8?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7601559572465093906" },
+                                            { id: 4, title: "Ansiedad y Glucosa", img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7633199556792028423" }
+                                        ];
+                                        const videos = landingConfig?.tiktokVideos || defaultVideos;
+                                        const metrics = [
+                                            { likes: "12.4K", comments: "284", bookmarks: "1.5K", shares: "142" },
+                                            { likes: "9.8K", comments: "193", bookmarks: "942", shares: "88" },
+                                            { likes: "15.2K", comments: "310", bookmarks: "2.1K", shares: "215" },
+                                            { likes: "8.5K", comments: "154", bookmarks: "784", shares: "65" }
+                                        ];
+                                        return (
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                {videos.map((video: any, idx: number) => {
+                                                    const m = metrics[idx] || metrics[0];
+                                                    return (
+                                                        <a key={video.id} href={video.link} target="_blank" rel="noopener noreferrer" className="group block relative aspect-[9/16] rounded-2xl overflow-hidden bg-nutrity-bg border border-nutrity-border shadow-md hover:border-nutrity-accent hover:shadow-[0_0_15px_rgba(26,140,79,0.25)] transition-all duration-300">
+                                                            <img src={video.img} className="absolute inset-0 w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-500" alt={video.title} />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-transparent" />
+                                                            
+                                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                                <div className="w-12 h-12 rounded-full bg-black/45 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white scale-90 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300">
+                                                                    <Play className="w-5 h-5 ml-1 text-white fill-white" />
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Sidebar widgets on right side */}
+                                                            <div className="absolute right-2.5 bottom-16 flex flex-col items-center gap-3.5 z-10">
+                                                                <div className="relative">
+                                                                    <div className="w-8 h-8 rounded-full border border-white bg-nutrity-primary flex items-center justify-center overflow-hidden font-bold text-white text-[9px] shadow-md">
+                                                                        B360
+                                                                    </div>
+                                                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-nutrity-accent border border-white flex items-center justify-center text-white text-[8px] font-black leading-none shadow-sm">
+                                                                        +
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                <div className="flex flex-col items-center">
+                                                                    <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white hover:text-red-500 transition-colors">
+                                                                        <Heart className="w-4 h-4 text-white fill-white/10 group-hover:text-red-500 group-hover:fill-red-500 transition-colors" />
+                                                                    </div>
+                                                                    <span className="text-[9px] text-white/90 font-bold mt-0.5 shadow-sm">{m.likes}</span>
+                                                                </div>
+
+                                                                <div className="flex flex-col items-center">
+                                                                    <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white">
+                                                                        <MessageCircle className="w-4 h-4 text-white fill-white/10" />
+                                                                    </div>
+                                                                    <span className="text-[9px] text-white/90 font-bold mt-0.5 shadow-sm">{m.comments}</span>
+                                                                </div>
+
+                                                                <div className="flex flex-col items-center">
+                                                                    <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white">
+                                                                        <Bookmark className="w-4 h-4 text-white fill-white/10" />
+                                                                    </div>
+                                                                    <span className="text-[9px] text-white/90 font-bold mt-0.5 shadow-sm">{m.bookmarks}</span>
+                                                                </div>
+
+                                                                <div className="flex flex-col items-center">
+                                                                    <div className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center text-white">
+                                                                        <Share2 className="w-4 h-4 text-white fill-white/10" />
+                                                                    </div>
+                                                                    <span className="text-[9px] text-white/90 font-bold mt-0.5 shadow-sm">{m.shares}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Text details at bottom */}
+                                                            <div className="absolute left-3 right-11 bottom-3 flex flex-col gap-1 text-left z-10">
+                                                                <div className="flex items-center gap-1">
+                                                                    <p className="text-white text-xs font-bold truncate">@biovital.360</p>
+                                                                    <svg className="w-3 h-3 text-sky-400 fill-sky-400" viewBox="0 0 24 24">
+                                                                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                                                    </svg>
+                                                                </div>
+                                                                <p className="text-white/95 text-[11px] font-medium leading-snug line-clamp-2 pr-1">{video.title}</p>
+                                                                
+                                                                <div className="flex items-center gap-1 text-[9px] text-white/70">
+                                                                    <Music className="w-3.5 h-3.5 shrink-0" />
+                                                                    <div className="overflow-hidden relative w-full h-3">
+                                                                        <p className="whitespace-nowrap absolute animate-scroll-text">sonido original - BioVital 360</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </a>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })()}
                                 </motion.div>
 
                                 {/* Quick Actions Row */}
