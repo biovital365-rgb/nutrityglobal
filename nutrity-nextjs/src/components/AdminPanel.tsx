@@ -7,7 +7,7 @@ import {
     FileText, Settings, Save, AlertTriangle, Loader2, LayoutTemplate
 } from "lucide-react";
 import * as dbService from "@/actions/db-actions";
-import { FoodItem, Micronutrient, Course } from "@/lib/types";
+import { FoodItem, Micronutrient, Course, Post } from "@/lib/types";
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 import { AdminFoodsTab } from "./admin/AdminFoodsTab";
@@ -71,6 +71,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [appointments, setAppointments] = useState<any[]>([]);
     const [pdfReports, setPdfReports] = useState<any[]>([]);
     const [landingConfig, setLandingConfig] = useState<any>({});
+    const [posts, setPosts] = useState<Post[]>([]);
 
     // Modal state for foods
     const [showFoodModal, setShowFoodModal] = useState(false);
@@ -108,7 +109,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const loadAll = useCallback(async () => {
         const orgId = user?.profile?.organization?.id;
         try {
-            const [foodData, microData, courseData, userData, appointmentData, reportData, landingData] = await Promise.all([
+            const [foodData, microData, courseData, userData, appointmentData, reportData, landingData, postData] = await Promise.all([
                 dbService.getFoods(orgId).catch(() => []),
                 dbService.getMicronutrients(orgId).catch(() => []),
                 dbService.getCourses(orgId, showDeleted).catch(() => []),
@@ -116,6 +117,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                 dbService.getAllAppointments(orgId, showDeleted).catch(() => []),
                 dbService.getPDFReports(orgId).catch(() => []),
                 dbService.getLandingConfig(orgId).catch(() => ({})),
+                dbService.getPosts(orgId, false).catch(() => []),
             ]);
             setFoods(foodData);
             setMicros(microData);
@@ -124,6 +126,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
             setAppointments(appointmentData);
             setPdfReports(reportData);
             setLandingConfig(landingData || {});
+            setPosts(postData);
         } catch (err) {
             console.error("Admin data load error:", err);
             notify("error", "Error al cargar datos");
@@ -267,7 +270,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
         { id: "calendar", icon: Calendar, label: "Calendario", count: appointments.length },
         { id: "reports", icon: FileText, label: "Reportes PDF", count: pdfReports.length },
         { id: "crm", icon: Settings, label: "CRM Automático", count: users.length },
-        { id: "blog", icon: BookOpen, label: "Blog", count: 0 },
+        { id: "blog", icon: BookOpen, label: "Blog", count: posts.length },
         { id: "landing", icon: LayoutTemplate, label: "Landing CMS", count: 1 },
     ];
 
@@ -476,7 +479,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                 )}
 
                 {section === "blog" && (
-                    <AdminBlogTab user={user} />
+                    <AdminBlogTab user={user} posts={posts} setPosts={setPosts} />
                 )}
 
                 {section === "landing" && (
