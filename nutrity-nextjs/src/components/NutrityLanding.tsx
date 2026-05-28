@@ -88,10 +88,10 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                         <img 
                             src={landingConfig.heroImage || "/landing-img-5.jpg"} 
                             alt="Hero Image" 
-                            className="w-full h-full object-cover object-top opacity-90"
+                            className="w-full h-full object-cover object-top"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f1] via-[#fbf8f1]/80 to-transparent"></div>
-                        <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px]"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f1] via-[#fbf8f1]/40 to-transparent"></div>
+                        <div className="absolute inset-0 bg-white/10"></div>
                     </div>
 
                     <div className="max-w-4xl mx-auto w-full relative z-10">

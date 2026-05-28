@@ -1,22 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { PlusCircle, Search, Pencil, Trash2, Save, X, BookOpen, Crown, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import * as dbService from "@/actions/db-actions";
 import { Post } from "@/lib/types";
+interface AdminBlogTabProps {
+    user: {
+        uid?: string;
+        email?: string;
+        displayName?: string;
+        profile?: {
+            name?: string;
+            email?: string;
+            role?: string;
+            plan?: string;
+            organization?: { id?: string; name?: string };
+        };
+    };
+    posts: Post[];
+    setPosts: React.Dispatch<React.SetStateAction<Post[]>>;
+}
 
-export default function AdminBlogTab({ user }: { user: any }) {
-    const [posts, setPosts] = useState<Post[]>([]);
+export default function AdminBlogTab({ user, posts, setPosts }: AdminBlogTabProps) {
     const [editingPost, setEditingPost] = useState<Partial<Post> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        loadPosts();
-    }, []);
-
-    const loadPosts = async () => {
+    const loadPosts = useCallback(async () => {
+        await Promise.resolve();
         setIsLoading(true);
         try {
             const data = await dbService.getPosts(user?.profile?.organization?.id, false); // false to get unpublished too
@@ -26,19 +38,26 @@ export default function AdminBlogTab({ user }: { user: any }) {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [user, setPosts]);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        loadPosts();
+    }, [loadPosts]);
 
     const handleSavePost = async () => {
         if (!editingPost?.title || !editingPost?.content) return;
         setIsSaving(true);
         try {
             // Slug generation
-            if (!editingPost.slug) {
-                editingPost.slug = editingPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            let slug = editingPost.slug;
+            if (!slug) {
+                slug = editingPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
             }
 
             const postToSave = {
                 ...editingPost,
+                slug,
                 organizationId: user?.profile?.organization?.id,
                 author: editingPost.author || user?.displayName || "Admin",
                 isPublished: editingPost.isPublished || false,
