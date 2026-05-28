@@ -45,8 +45,10 @@ export default function DashboardPage() {
             if (guestEval.data && guestEval.plan) {
               const { saveEvaluation } = await import("@/actions/db-actions");
               await saveEvaluation(authUser.id, undefined, guestEval.data, guestEval.plan);
-              sessionStorage.removeItem("guest_evaluation");
-              actualPlan = guestEval.plan;
+              actualPlan = {
+                ...guestEval.plan,
+                rawAnswers: guestEval.data
+              };
             }
           } catch (e) {
             console.error("Error recovering guest evaluation", e);
@@ -134,7 +136,11 @@ export default function DashboardPage() {
   if (!user) return <div className="p-8 text-center">Cargando perfil...</div>;
 
   // Merge current menu into evaluation results for PDF rendering
-  const reportResults = { ...(evaluation || {}), weeklyMenu: currentMenu };
+  const reportResults = { 
+    ...(evaluation || {}), 
+    name: user?.profile?.name || user?.user_metadata?.full_name || evaluation?.name || "Paciente Nutrity",
+    weeklyMenu: currentMenu 
+  };
 
   return (
     <>

@@ -47,7 +47,7 @@ export function NutrityReportTemplate({ results }: ReportTemplateProps) {
                         <h1 className="text-[85px] font-black leading-[0.85] mb-12 tracking-tighter text-[#1b3b36]">
                             Master <br />
                             Metabólico <br />
-                            <span className="text-[#c19b6c]">2025</span>
+                            <span className="text-[#c19b6c]">2026</span>
                         </h1>
 
                         <div className="h-px bg-[hsla(136,19%,29%,0.1)] w-full mb-8"></div>

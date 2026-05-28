@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { Save, Loader2, LayoutTemplate, Type, FileText, Image as ImageIcon } from "lucide-react";
+import { Base64ImageUpload } from "./shared";
 
 interface AdminLandingTabProps {
   isSaving: boolean;
@@ -31,6 +32,10 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -137,14 +142,11 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
                 { name: "strategiesImage", label: "Imagen Estrategias (Mujer en parque)" },
               ].map((field) => (
                 <div key={field.name} className="space-y-2">
-                  <label className="text-xs font-bold text-nutrity-gray-text uppercase tracking-widest">{field.label}</label>
-                  <input
-                    type="text"
-                    name={field.name}
+                  <Base64ImageUpload
+                    label={field.label}
                     value={(formData as any)[field.name]}
-                    onChange={handleChange}
-                    className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent outline-none transition-all"
-                    placeholder="URL o ruta de imagen (ej. /landing-img-1.jpg)"
+                    onChange={(v) => handleImageChange(field.name, v)}
+                    placeholder="Sube una foto o pega una URL..."
                   />
                 </div>
               ))}

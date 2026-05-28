@@ -2,7 +2,8 @@
 import { motion, AnimatePresence } from "motion/react";
 import { Loader2, Pencil, Trash2, Save, X } from "lucide-react";
 import { Micronutrient } from "@/lib/types";
-import { FieldInput, TagInput } from "./shared";
+import { FieldInput, TagInput, Base64ImageUpload } from "./shared";
+import { getDirectImageUrl } from "@/lib/utils";
 
 interface AdminMicronutrientsTabProps {
     micros: Micronutrient[];
@@ -40,6 +41,7 @@ export function AdminMicronutrientsTab({
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">
+                                    <th className="py-4 px-6">Imagen</th>
                                     <th className="py-4 px-6">Símbolo</th>
                                     <th className="py-4 px-6">Nombre</th>
                                     <th className="py-4 px-6">Categoría</th>
@@ -50,6 +52,15 @@ export function AdminMicronutrientsTab({
                             <tbody className="divide-y divide-nutrity-border">
                                 {micros.map((micro) => (
                                     <tr key={micro.id} className={`hover:bg-slate-50 transition-colors group ${(micro as any).deletedAt ? "opacity-50" : ""}`}>
+                                        <td className="py-4 px-6">
+                                            <div className="w-10 h-10 rounded-xl bg-nutrity-bg overflow-hidden flex items-center justify-center border border-nutrity-border">
+                                                {micro.image ? (
+                                                    <img src={getDirectImageUrl(micro.image)} alt={micro.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                                ) : (
+                                                    <span className="text-[10px] text-nutrity-gray-text/50">N/A</span>
+                                                )}
+                                            </div>
+                                        </td>
                                         <td className="py-4 px-6">
                                             <div className="w-10 h-10 rounded-xl bg-nutrity-accent/10 flex items-center justify-center">
                                                 <span className="text-sm font-black text-nutrity-accent">{micro.symbol}</span>
@@ -116,7 +127,7 @@ export function AdminMicronutrientsTab({
                                 </div>
                                 <FieldInput label="Función" value={editingMicro.function || ""} onChange={(v) => setEditingMicro(p => ({ ...p, function: v }))} multiline placeholder="Función biológica del micronutriente..." />
                                 <FieldInput label="Impacto Metabólico" value={editingMicro.metabolicImpact || ""} onChange={(v) => setEditingMicro(p => ({ ...p, metabolicImpact: v }))} multiline placeholder="Efecto en el metabolismo..." />
-                                <FieldInput label="Imagen URL" value={editingMicro.image || ""} onChange={(v) => setEditingMicro(p => ({ ...p, image: v }))} placeholder="/image.png" />
+                                <Base64ImageUpload label="Imagen" value={editingMicro.image || ""} onChange={(v) => setEditingMicro(p => ({ ...p, image: v }))} placeholder="Sube una foto o pega una URL..." />
                                 <TagInput label="Fuentes Bioavales" tags={editingMicro.sources || []} onChange={(t) => setEditingMicro(p => ({ ...p, sources: t }))} />
                                 <TagInput label="Señales de Deficiencia" tags={editingMicro.deficiencySigns || []} onChange={(t) => setEditingMicro(p => ({ ...p, deficiencySigns: t }))} />
 

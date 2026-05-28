@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Loader2, Pencil, Trash2, Save, X, PlusCircle } from "lucide-react";
 import { FoodItem } from "@/lib/types";
 import { getDirectImageUrl } from "@/lib/utils";
-import { FieldInput, TagInput } from "./shared";
+import { FieldInput, TagInput, Base64ImageUpload } from "./shared";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface AdminFoodsTabProps {
@@ -137,16 +137,16 @@ export function AdminFoodsTab({
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Recetas</label>
-                                        <button type="button" onClick={() => setEditingFood(p => ({ ...p, recipes: [...(p.recipes || []), { title: "", instructions: [] }] }))}
+                                        <button type="button" onClick={() => setEditingFood(p => ({ ...p, recipes: [...(p.recipes || []), { title: "", image: "", ingredients: [], preparation: [] }] }))}
                                             className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest flex items-center gap-1 hover:underline">
                                             <PlusCircle className="w-3 h-3" /> Agregar Receta
                                         </button>
                                     </div>
                                     {editingFood.recipes?.map((recipe, rIdx) => (
-                                        <div key={rIdx} className="bg-nutrity-bg rounded-xl p-4 space-y-3 border border-nutrity-border">
+                                        <div key={rIdx} className="bg-nutrity-bg rounded-xl p-4 space-y-4 border border-nutrity-border">
                                             <div className="flex items-center gap-2">
                                                 <input
-                                                    type="text" value={recipe.title} placeholder={`Receta ${rIdx + 1}`}
+                                                    type="text" value={recipe.title} placeholder={`Título de la receta ${rIdx + 1}`}
                                                     onChange={(e) => {
                                                         const updated = [...(editingFood.recipes || [])];
                                                         updated[rIdx] = { ...updated[rIdx], title: e.target.value };
@@ -155,13 +155,38 @@ export function AdminFoodsTab({
                                                     className="flex-1 bg-white border border-nutrity-border rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10"
                                                 />
                                                 <button type="button" onClick={() => setEditingFood(p => ({ ...p, recipes: p.recipes?.filter((_, i) => i !== rIdx) }))}
-                                                    className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 transition-all"><Trash2 className="w-4 h-4" /></button>
                                             </div>
-                                            <TagInput label="Pasos" tags={recipe.instructions} onChange={(instructions) => {
-                                                const updated = [...(editingFood.recipes || [])];
-                                                updated[rIdx] = { ...updated[rIdx], instructions };
-                                                setEditingFood(p => ({ ...p, recipes: updated }));
-                                            }} />
+                                            
+                                            <div className="p-3 bg-white rounded-lg border border-nutrity-border">
+                                                <Base64ImageUpload
+                                                    label="Imagen de la Receta"
+                                                    value={recipe.image || ""}
+                                                    onChange={(img) => {
+                                                        const updated = [...(editingFood.recipes || [])];
+                                                        updated[rIdx] = { ...updated[rIdx], image: img };
+                                                        setEditingFood(p => ({ ...p, recipes: updated }));
+                                                    }}
+                                                    placeholder="Sube una foto o pega una URL"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="bg-white p-3 rounded-lg border border-nutrity-border">
+                                                    <TagInput label="Ingredientes" tags={recipe.ingredients || []} onChange={(ingredients) => {
+                                                        const updated = [...(editingFood.recipes || [])];
+                                                        updated[rIdx] = { ...updated[rIdx], ingredients };
+                                                        setEditingFood(p => ({ ...p, recipes: updated }));
+                                                    }} />
+                                                </div>
+                                                <div className="bg-white p-3 rounded-lg border border-nutrity-border">
+                                                    <TagInput label="Preparación" tags={recipe.preparation || (recipe as any).instructions || []} onChange={(preparation) => {
+                                                        const updated = [...(editingFood.recipes || [])];
+                                                        updated[rIdx] = { ...updated[rIdx], preparation };
+                                                        setEditingFood(p => ({ ...p, recipes: updated }));
+                                                    }} />
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
