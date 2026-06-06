@@ -5,7 +5,7 @@ import { WeeklyMenuSchema, MetabolicPlanSchema, type OnboardingData, type Weekly
 import { supabase } from "@/lib/supabase";
 import { getInternalId, getPendingMenu } from "./db-actions";
 
-const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const menuModel = genAI.getGenerativeModel({
@@ -212,12 +212,16 @@ export async function generateAIWeeklyMenuSecure(userId: string, phase: string):
         // 1. Fetch User Data
         const { data: user, error: userError } = await supabase
             .from('User')
-            .select('id, name, age')
+            .select('id, name, age, plan')
             .eq('id', userId)
             .maybeSingle();
             
         if (userError || !user) {
             throw new Error(userError?.message || "Usuario no encontrado");
+        }
+
+        if (user.plan === 'FREE') {
+            return { success: false, error: "REQUIRES_UPGRADE", message: "Tu plan Freemium no incluye generación de menú automatizado." };
         }
 
         // 2. Fetch Latest Evaluation

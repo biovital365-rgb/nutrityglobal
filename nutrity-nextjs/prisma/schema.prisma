@@ -22,6 +22,8 @@ model Organization {
   Post                Post[]
   pdfReports          PDFReportLog[]
   users               User[]
+  dailyMenus          DailyMenu[]
+  lessonProgresses    LessonProgress[]
 }
 
 model User {
@@ -33,6 +35,7 @@ model User {
   plan                String                @default("FREE")
   stripeCustomerId    String?               @unique
   subscriptionId      String?               @unique
+  subscriptionStatus  String?
   organizationId      String?
   phone               String?
   address             String?
@@ -198,37 +201,43 @@ model Enrollment {
 }
 
 model LessonProgress {
-  id        String   @id @default(cuid())
-  userId    String
-  lessonId  String
-  completed Boolean  @default(false)
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  lessonId       String
+  completed      Boolean       @default(false)
+  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime      @default(now())
+  organization   Organization? @relation(fields: [organizationId], references: [id])
 
   @@unique([userId, lessonId])
   @@index([userId])
+  @@index([organizationId])
   @@index([lessonId])
 }
 
 model DailyMenu {
-  id            String    @id @default(cuid())
-  userId        String
-  date          String
-  weekStart     String?
-  phase         String?
-  status        String    @default("PENDING")
-  menuData      Json
-  metabolicGoal String?
-  adminNotes    String?
-  approvedBy    String?
-  approvedAt    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  date           String
+  weekStart      String?
+  phase          String?
+  status         String        @default("PENDING")
+  menuData       Json
+  metabolicGoal  String?
+  adminNotes     String?
+  approvedBy     String?
+  approvedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id])
 
   @@unique([userId, date])
   @@index([userId])
+  @@index([organizationId])
 }
 
 model Post {
