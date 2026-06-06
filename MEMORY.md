@@ -33,6 +33,7 @@
 3.  **Notificaciones Push/Email**: Avisar al paciente cuando su menú sea aprobado.
 4.  **Feedback del Usuario**: Botón "Solicitar Cambios" si el menú aprobado no le convence.
 5.  **GEO Audit**: Preparar el contenido para ser indexable por motores de búsqueda generativos.
+6.  **Stripe Paywall & Admin**: Sistema de pagos implementado con lógica `Mock` de respaldo en `stripe-actions.ts` y control de Suscripciones (Freemium, Basic, Advanced, Elite) integrado desde el Admin Panel.
 
 - **Base de Datos**: Supabase (PostgreSQL) con Prisma ORM.
 - **IA**: Google Gemini (Pro/Flash).
