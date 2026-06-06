@@ -135,7 +135,7 @@ export async function getFoods() {
             console.log('Catalog empty, auto-syncing foods...');
             const { foodCatalog } = await import('../lib/food-data');
             for (const food of foodCatalog) {
-                await saveFood({ ...food, organizationId: targetOrg }).catch(() => {});
+                await saveFood({ ...food, organizationId: targetOrg || undefined }).catch(() => {});
             }
             return getFoods();
         }
@@ -280,7 +280,7 @@ export async function getMicronutrients() {
             console.log('Catalog empty, auto-syncing micronutrients...');
             const { micronutrientsData } = await import('../lib/micronutrients-data');
             for (const micro of micronutrientsData) {
-                await saveMicronutrient({ ...(micro as any), organizationId: targetOrg }).catch(() => {});
+                await saveMicronutrient({ ...(micro as any), organizationId: targetOrg || undefined }).catch(() => {});
             }
             return getMicronutrients();
         }
