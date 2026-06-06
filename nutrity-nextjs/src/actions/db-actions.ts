@@ -1,6 +1,22 @@
 "use server";
 import { supabase } from "@/lib/supabase";
+import { prisma } from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
 
+export async function getServerUser() {
+    const supabaseClient = await createClient();
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return null;
+    return await prisma.user.findFirst({
+        where: { 
+            OR: [
+                { firebaseUid: user.id }, 
+                { email: user.email! }
+            ] 
+        },
+        include: { organization: true }
+    });
+}
 
 // Interfaces correspondientes a los modelos de Prisma
 export interface FoodItem {
@@ -96,23 +112,32 @@ export async function getInternalId(idOrUid: string): Promise<string> {
         return idOrUid;
 }
 
-    // Alimentos con Auto-Sincronización y Depuración Silenciosa (Solución Definitiva)
-export async function getFoods(organizationId?: string) {
-        let query = supabase.from('Food').select('*').is('deletedAt', null)
-        if (organizationId) {
-            query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
+    // Alimentos con Auto-Sincronización y Depuración Silenciosa usando Prisma
+export async function getFoods() {
+        const user = await getServerUser();
+        const targetOrg = user?.role === 'ADMIN' ? null : (user?.organizationId || null);
+
+        const whereClause: any = { deletedAt: null };
+        if (targetOrg) {
+            whereClause.OR = [
+                { organizationId: null },
+                { organizationId: targetOrg }
+            ];
         }
 
-        const { data, error } = await query.order('name', { ascending: true })
+        const data = await prisma.food.findMany({
+            where: whereClause,
+            orderBy: { name: 'asc' }
+        });
         
         // 1. Auto-Sincronización si está vacío
-        if (!error && (!data || data.length === 0)) {
+        if (!data || data.length === 0) {
             console.log('Catalog empty, auto-syncing foods...');
             const { foodCatalog } = await import('../lib/food-data');
             for (const food of foodCatalog) {
-                await saveFood({ ...food, organizationId }, organizationId).catch(() => {});
+                await saveFood({ ...food, organizationId: targetOrg }).catch(() => {});
             }
-            return getFoods(organizationId);
+            return getFoods();
         }
 
         // 2. Depuración Silenciosa de Duplicados (Sin necesidad de botón)
@@ -127,34 +152,34 @@ export async function getFoods(organizationId?: string) {
                     toDelete.push(food.id);
                 } else {
                     seen.add(key);
-                    uniqueData.push(food as FoodItem);
+                    uniqueData.push(food as unknown as FoodItem);
                 }
             }
 
             if (toDelete.length > 0) {
                 console.log(`Silent cleaning ${toDelete.length} duplicate foods...`);
-                supabase.from('Food').delete().in('id', toDelete).then(() => {
-                    console.log('Food cleanup completed successfully.');
-                });
+                await prisma.food.deleteMany({ where: { id: { in: toDelete } } });
+                console.log('Food cleanup completed successfully.');
                 return uniqueData;
             }
         }
 
-        if (error) {
-            console.error('getFoods error:', error)
-            return []
-        }
-        return (data || []) as FoodItem[]
+        return data as unknown as FoodItem[];
 }
 
-export async function saveFood(food: Partial<FoodItem>, organizationId?: string) {
+export async function saveFood(food: Partial<FoodItem>, organizationIdParam?: string) {
+        const user = await getServerUser();
+        // Validation: user must be logged in to create records
+        if (!user) throw new Error("Unauthorized");
+        const finalOrgId = user.role === 'ADMIN' ? (food.organizationId || organizationIdParam || null) : user.organizationId;
+
         const nameKey = (food.name || '').toLowerCase().trim()
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
             .replace(/[^a-z0-9]/g, '-') // Non-alphanumeric to dash
             .replace(/-+/g, '-') // Collapse multiple dashes
             .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
         const deterministicId = `food-${nameKey}`;
-        const originalId = food.id; // Guardamos el ID original para detectar cambios de nombre
+        const originalId = food.id; 
 
         const payload: any = {
             name: food.name || '',
@@ -166,23 +191,23 @@ export async function saveFood(food: Partial<FoodItem>, organizationId?: string)
             nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
             recipes: food.recipes || [],
             id: deterministicId, 
+            organizationId: finalOrgId
         };
 
-        const finalOrgId = food.organizationId || organizationId;
-        if (finalOrgId) payload.organizationId = finalOrgId;
-
-        const { data, error } = await supabase
-            .from('Food')
-            .upsert(payload, { onConflict: 'id' })
-            .select()
-            .single()
-
-        if (error) throw error;
+        const data = await prisma.food.upsert({
+            where: { id: deterministicId },
+            update: payload,
+            create: payload
+        });
 
         // Si el ID cambió (cambio de nombre), eliminamos el registro antiguo
         if (originalId && originalId !== deterministicId && originalId.startsWith('food-')) {
             console.log(`Renaming food: deleting old ID ${originalId}`);
-            await supabase.from('Food').delete().eq('id', originalId);
+            // Check authorization before delete
+            const oldFood = await prisma.food.findUnique({ where: { id: originalId } });
+            if (oldFood && (user.role === 'ADMIN' || oldFood.organizationId === user.organizationId)) {
+                await prisma.food.delete({ where: { id: originalId } });
+            }
         }
 
         return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
@@ -215,31 +240,49 @@ export async function deduplicateFoods() {
 }
 
 export async function deleteFood(id: string) {
-        const { error } = await supabase
-            .from('Food')
-            .update({ deletedAt: new Date().toISOString() })
-            .eq('id', id)
-        if (error) throw error
+        const user = await getServerUser();
+        if (!user) throw new Error("Unauthorized");
+        
+        const food = await prisma.food.findUnique({ where: { id } });
+        if (!food) throw new Error("Not found");
+        
+        if (user.role !== 'ADMIN' && food.organizationId !== user.organizationId) {
+            throw new Error("Forbidden");
+        }
+
+        await prisma.food.update({
+            where: { id },
+            data: { deletedAt: new Date().toISOString() }
+        });
         return true
 }
 
     // Micronutrientes con Auto-Sincronización y Depuración Silenciosa
-export async function getMicronutrients(organizationId?: string) {
-        let query = supabase.from('Micronutrient').select('*').is('deletedAt', null)
-        if (organizationId) {
-            query = query.or(`organizationId.is.null,organizationId.eq.${organizationId}`)
+export async function getMicronutrients() {
+        const user = await getServerUser();
+        const targetOrg = user?.role === 'ADMIN' ? null : (user?.organizationId || null);
+
+        const whereClause: any = { deletedAt: null };
+        if (targetOrg) {
+            whereClause.OR = [
+                { organizationId: null },
+                { organizationId: targetOrg }
+            ];
         }
 
-        const { data, error } = await query.order('name', { ascending: true })
+        const data = await prisma.micronutrient.findMany({
+            where: whereClause,
+            orderBy: { name: 'asc' }
+        });
         
         // 1. Auto-Sincronización
-        if (!error && (!data || data.length === 0)) {
+        if (!data || data.length === 0) {
             console.log('Catalog empty, auto-syncing micronutrients...');
             const { micronutrientsData } = await import('../lib/micronutrients-data');
             for (const micro of micronutrientsData) {
-                await saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(() => {});
+                await saveMicronutrient({ ...(micro as any), organizationId: targetOrg }).catch(() => {});
             }
-            return getMicronutrients(organizationId);
+            return getMicronutrients();
         }
 
         // 2. Depuración Silenciosa
@@ -254,27 +297,26 @@ export async function getMicronutrients(organizationId?: string) {
                     toDelete.push(micro.id);
                 } else {
                     seen.add(key);
-                    uniqueData.push(micro as Micronutrient);
+                    uniqueData.push(micro as unknown as Micronutrient);
                 }
             }
 
             if (toDelete.length > 0) {
                 console.log(`Silent cleaning ${toDelete.length} duplicate micronutrients...`);
-                supabase.from('Micronutrient').delete().in('id', toDelete).then(() => {
-                    console.log('Micronutrient cleanup completed successfully.');
-                });
+                await prisma.micronutrient.deleteMany({ where: { id: { in: toDelete } } });
+                console.log('Micronutrient cleanup completed successfully.');
                 return uniqueData;
             }
         }
 
-        if (error) {
-            console.error('getMicronutrients error:', error)
-            return []
-        }
-        return (data || []) as Micronutrient[]
+        return data as unknown as Micronutrient[];
 }
 
-export async function saveMicronutrient(micro: Partial<Micronutrient>, organizationId?: string) {
+export async function saveMicronutrient(micro: Partial<Micronutrient>, organizationIdParam?: string) {
+        const user = await getServerUser();
+        if (!user) throw new Error("Unauthorized");
+        const finalOrgId = user.role === 'ADMIN' ? (micro.organizationId || organizationIdParam || null) : user.organizationId;
+
         const nameKey = (micro.name || '').toLowerCase().trim()
             .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
             .replace(/[^a-z0-9]/g, '-')
@@ -294,33 +336,41 @@ export async function saveMicronutrient(micro: Partial<Micronutrient>, organizat
             dailyDose: micro.dailyDose || '',
             image: micro.image || null,
             id: deterministicId, 
+            organizationId: finalOrgId
         };
 
-        const finalOrgId = micro.organizationId || organizationId;
-        if (finalOrgId) payload.organizationId = finalOrgId;
-
-        const { data, error } = await supabase
-            .from('Micronutrient')
-            .upsert(payload, { onConflict: 'id' })
-            .select()
-            .single()
-
-        if (error) throw error;
+        const data = await prisma.micronutrient.upsert({
+            where: { id: deterministicId },
+            update: payload,
+            create: payload
+        });
 
         // Cleanup old ID if renamed
         if (originalId && originalId !== deterministicId && originalId.startsWith('micro-')) {
-            await supabase.from('Micronutrient').delete().eq('id', originalId);
+            const oldMicro = await prisma.micronutrient.findUnique({ where: { id: originalId } });
+            if (oldMicro && (user.role === 'ADMIN' || oldMicro.organizationId === user.organizationId)) {
+                await prisma.micronutrient.delete({ where: { id: originalId } });
+            }
         }
 
         return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
 }
 
 export async function deleteMicronutrient(id: string) {
-        const { error } = await supabase
-            .from('Micronutrient')
-            .update({ deletedAt: new Date().toISOString() })
-            .eq('id', id)
-        if (error) throw error
+        const user = await getServerUser();
+        if (!user) throw new Error("Unauthorized");
+        
+        const micro = await prisma.micronutrient.findUnique({ where: { id } });
+        if (!micro) throw new Error("Not found");
+        
+        if (user.role !== 'ADMIN' && micro.organizationId !== user.organizationId) {
+            throw new Error("Forbidden");
+        }
+
+        await prisma.micronutrient.update({
+            where: { id },
+            data: { deletedAt: new Date().toISOString() }
+        });
         return true
 }
 
@@ -348,80 +398,83 @@ export async function deduplicateMicronutrients() {
         return { count: toDelete.length };
 }
 
-    // Perfil de Usuario (SaaS)
-export async function getUserProfile(firebaseUid: string) {
-        const { data, error } = await supabase
-            .from('User')
-            .select('*, organization:Organization(*)')
-            .eq('firebaseUid', firebaseUid)
-            .is('deletedAt', null)
-            .maybeSingle()
-
-        if (error) {
-            console.error('Error fetching user profile:', error)
-            return null
+export async function getUserProfile(firebaseUid?: string) {
+        const currentUser = await getServerUser();
+        if (!currentUser) return null;
+        
+        const targetUid = firebaseUid || currentUser.firebaseUid;
+        if (currentUser.role !== 'ADMIN' && targetUid !== currentUser.firebaseUid) {
+            return null;
         }
-        return data
+
+        return await prisma.user.findFirst({
+            where: { firebaseUid: targetUid as string, deletedAt: null },
+            include: { organization: true }
+        });
 }
 
-export async function updateUserProfile(userId: string, profileData: Partial<any>) {
-        // Resolve firebaseUid -> internal DB UUID before updating
+export async function updateUserProfile(userId: string, profileData: any) {
+        const currentUser = await getServerUser();
+        if (!currentUser) throw new Error("Unauthorized");
+        
         const internalId = await getInternalId(userId);
-        const { email, ...safeData } = profileData;
-        const { data, error } = await supabase
-            .from('User')
-            .update({ ...safeData, updatedAt: new Date().toISOString() })
-            .eq('id', internalId)
-            .select('*, organization:Organization(*)')
-            .single();
+        if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
+            throw new Error("Forbidden");
+        }
 
-        if (error) throw error;
-        return data;
+        const { email, ...safeData } = profileData;
+        return await prisma.user.update({
+            where: { id: internalId },
+            data: { ...safeData, updatedAt: new Date() },
+            include: { organization: true }
+        });
 }
 
-    // Admin: Gestión de Usuarios
-export async function getAllUsers(organizationId?: string, includeDeleted = false) {
-        let query = supabase.from('User').select('*, organization:Organization(*), evaluations:Evaluation(results)')
-        if (!includeDeleted) query = query.is('deletedAt', null)
+export async function getAllUsers(organizationIdParam?: string, includeDeleted = false) {
+        const currentUser = await getServerUser();
+        if (!currentUser || !['ADMIN', 'COACH'].includes(currentUser.role)) throw new Error("Forbidden");
+
+        // Si es Elite/Coach y tiene organizationId propio, forzamos que solo vea los suyos.
+        // Si no tiene organizationId (SuperAdmin), puede ver todo o filtrar por el parámetro.
+        const targetOrgId = currentUser.organizationId || organizationIdParam || null;
         
-        if (organizationId) {
-            query = query.eq('organizationId', organizationId)
-        }
-        const { data, error } = await query.order('name', { ascending: true })
-        if (error) throw error
-        
-        // Mapear para facilitar acceso al último resultado
-        return (data || []).map(u => ({
+        const users = await prisma.user.findMany({
+            where: {
+                deletedAt: includeDeleted ? undefined : null,
+                ...(targetOrgId ? { organizationId: targetOrgId } : {})
+            },
+            include: {
+                organization: true,
+                evaluations: { select: { results: true }, orderBy: { createdAt: 'desc' }, take: 1 }
+            },
+            orderBy: { name: 'asc' }
+        });
+
+        return users.map(u => ({
             ...u,
-            metabolicResults: (u as any).evaluations?.[0]?.results || null
+            metabolicResults: u.evaluations?.[0]?.results || null
         }));
 }
 
 export async function updateUserStatus(userId: string, status: 'ACTIVE' | 'BLOCKED' | 'OBSERVED') {
-        const { data, error } = await supabase
-            .from('User')
-            .update({ status, updatedAt: new Date().toISOString() })
-            .eq('id', userId)
-            .select()
-            .single()
-        if (error) throw error
-        return data
+        const currentUser = await getServerUser();
+        if (!currentUser || currentUser.role !== 'ADMIN') throw new Error("Forbidden");
+
+        return await prisma.user.update({
+            where: { id: userId },
+            data: { status: status as any, updatedAt: new Date() }
+        });
 }
 
 export async function deleteUser(userId: string) {
-        // Eliminar registros relacionados (Cascade Manual) para evitar violaciones de llave foránea
-        await supabase.from('Evaluation').delete().eq('userId', userId);
-        await supabase.from('Measurement').delete().eq('userId', userId);
-        await supabase.from('Appointment').delete().eq('userId', userId);
-        await supabase.from('LessonProgress').delete().eq('userId', userId);
-        await supabase.from('Enrollment').delete().eq('userId', userId);
+        const currentUser = await getServerUser();
+        if (!currentUser || currentUser.role !== 'ADMIN') throw new Error("Forbidden");
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { deletedAt: new Date().toISOString() }
+        });
         
-        const { error } = await supabase
-            .from('User')
-            .update({ deletedAt: new Date().toISOString() })
-            .eq('id', userId)
-            
-        if (error) throw error
         return true
 }
 
@@ -430,75 +483,60 @@ export async function syncUserProfile(firebaseUser: any, name?: string) {
             const email = (firebaseUser.email || '').toLowerCase().trim();
             const isAdminEmail = ADMIN_EMAILS.includes(email);
 
-            // 1. Intentar buscar por firebaseUid directamente
-            let { data: profile, error } = await supabase
-                .from('User')
-                .select('*, organization:Organization(*)')
-                .eq('firebaseUid', firebaseUser.uid)
-                .is('deletedAt', null)
-                .maybeSingle();
+            let profile = await prisma.user.findFirst({
+                where: { firebaseUid: firebaseUser.uid, deletedAt: null },
+                include: { organization: true }
+            });
 
-            if (error) throw error;
-
-            // 2. Si no existe por UID, buscar por email (para usuarios migrados o nuevos registros)
             if (!profile) {
-                const { data: emailProfile, error: emailError } = await supabase
-                    .from('User')
-                    .select('*, organization:Organization(*)')
-                    .eq('email', email)
-                    .is('deletedAt', null)
-                    .maybeSingle();
-
-                if (emailError) throw emailError;
+                const emailProfile = await prisma.user.findFirst({
+                    where: { email: email, deletedAt: null },
+                    include: { organization: true }
+                });
 
                 if (emailProfile) {
-                    // Vincular el firebaseUid al perfil existente
-                    const { data: updated, error: updateError } = await supabase
-                        .from('User')
-                        .update({ 
+                    profile = await prisma.user.update({
+                        where: { id: emailProfile.id },
+                        data: {
                             firebaseUid: firebaseUser.uid,
                             role: isAdminEmail ? 'ADMIN' : (emailProfile.role || 'USER'),
                             plan: isAdminEmail ? 'ELITE' : (emailProfile.plan || 'FREE'),
-                            updatedAt: new Date().toISOString()
-                        })
-                        .eq('id', emailProfile.id)
-                        .select('*, organization:Organization(*)')
-                        .single();
-                    
-                    if (updateError) throw updateError;
-                    profile = updated;
+                            updatedAt: new Date()
+                        },
+                        include: { organization: true }
+                    });
                 } else {
-                    const { data: created, error: createError } = await supabase
-                        .from('User')
-                        .insert({
-                            id: crypto.randomUUID(),
-                            firebaseUid: firebaseUser.uid,
-                            email: email,
-                            name: name || firebaseUser.displayName || 'Nuevo Usuario',
-                            role: isAdminEmail ? 'ADMIN' : 'USER',
-                            plan: isAdminEmail ? 'ELITE' : 'FREE',
-                            updatedAt: new Date().toISOString()
-                        })
-                        .select('*, organization:Organization(*)')
-                        .single();
-                    
-                    if (createError) throw createError;
-                    profile = created;
+                    try {
+                        profile = await prisma.user.create({
+                            data: {
+                                id: crypto.randomUUID(),
+                                firebaseUid: firebaseUser.uid,
+                                email: email,
+                                name: name || firebaseUser.displayName || 'Nuevo Usuario',
+                                role: isAdminEmail ? 'ADMIN' : 'USER',
+                                plan: isAdminEmail ? 'ELITE' : 'FREE',
+                                updatedAt: new Date()
+                            },
+                            include: { organization: true }
+                        });
+                    } catch (e: any) {
+                        if (e.code === 'P2002') {
+                            // Race condition handled: another request already created the user
+                            profile = await prisma.user.findFirst({
+                                where: { firebaseUid: firebaseUser.uid },
+                                include: { organization: true }
+                            });
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
             } else if (isAdminEmail && (profile.role !== 'ADMIN' || profile.plan !== 'ELITE')) {
-                // 4. Asegurar que SuperAdmins tengan el rol y plan correcto si ya existen
-                    const { data: upgraded, error: upgradeError } = await supabase
-                        .from('User')
-                        .update({ 
-                            role: 'ADMIN', 
-                            plan: 'ELITE' 
-                        })
-                        .eq('id', profile.id)
-                        .select('*, organization:Organization(*)')
-                        .single();
-                
-                if (upgradeError) throw upgradeError;
-                profile = upgraded;
+                profile = await prisma.user.update({
+                    where: { id: profile.id },
+                    data: { role: 'ADMIN', plan: 'ELITE' },
+                    include: { organization: true }
+                });
             }
 
             return profile;
@@ -510,34 +548,35 @@ export async function syncUserProfile(firebaseUser: any, name?: string) {
 
     // Evaluaciones
 export async function saveEvaluation(userId: string, organizationId: string | undefined, data: any, results: any) {
+        const currentUser = await getServerUser();
+        if (!currentUser) throw new Error("Unauthorized");
+        
         const internalId = await getInternalId(userId);
-
-        // Buscar si ya existe una evaluación para no duplicarla o perder el id original
-        const { data: existingEval } = await supabase
-            .from('Evaluation')
-            .select('id')
-            .eq('userId', internalId)
-            .maybeSingle();
-
-        const evalId = existingEval?.id || crypto.randomUUID();
-
-        const { data: saved, error } = await supabase
-            .from('Evaluation')
-            .upsert({
-                id: evalId,
-                userId: internalId,
-                organizationId: organizationId || null,
-                data,
-                results
-            }, { onConflict: 'id' })
-            .select()
-            .single();
-
-        if (error) {
-            console.error('saveEvaluation error:', error);
-            throw error;
+        if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
+            throw new Error("Forbidden");
         }
-        return saved;
+        
+        const targetOrgId = currentUser.role === 'ADMIN' ? (organizationId || null) : currentUser.organizationId;
+
+        const existingEval = await prisma.evaluation.findFirst({
+            where: { userId: internalId }
+        });
+
+        if (existingEval) {
+            return await prisma.evaluation.update({
+                where: { id: existingEval.id },
+                data: { data, results, organizationId: targetOrgId }
+            });
+        } else {
+            return await prisma.evaluation.create({
+                data: {
+                    userId: internalId,
+                    organizationId: targetOrgId,
+                    data,
+                    results
+                }
+            });
+        }
 }
 
 
@@ -560,37 +599,50 @@ export async function saveBiologicalDiagnosis(
         holisticApproach: Array<{ discipline: string; recommendation: string }>;
     }
 ) {
+    const currentUser = await getServerUser();
+    if (!currentUser) throw new Error("Unauthorized");
+    
     const internalId = await getInternalId(userId);
+    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
+        throw new Error("Forbidden");
+    }
+    
+    const targetOrgId = currentUser.role === 'ADMIN' ? (organizationId || null) : currentUser.organizationId;
 
-    // Buscar si ya existe un diagnóstico para hacer upsert (1 por usuario)
-    const { data: existing } = await supabase
-        .from('BiologicalDiagnosis')
-        .select('id')
-        .eq('userId', internalId)
-        .maybeSingle();
+    const existing = await prisma.biologicalDiagnosis.findFirst({
+        where: { userId: internalId }
+    });
 
-    const diagId = existing?.id || crypto.randomUUID();
+    const payload = {
+        userId: internalId,
+        organizationId: targetOrgId,
+        mainSymptom: triaje.mainSymptom,
+        affectedSystem: triaje.affectedSystem,
+        symptomDuration: triaje.symptomDuration,
+        emotionalContext: triaje.emotionalContext,
+        nmgConflict: nmgDiagnosis.conflict,
+        nmgOrgan: nmgDiagnosis.organ,
+        phase: nmgDiagnosis.phase,
+        holisticApproach: nmgDiagnosis.holisticApproach as any,
+        updatedAt: new Date()
+    };
 
-    const { data, error } = await supabase
-        .from('BiologicalDiagnosis')
-        .upsert({
-            id: diagId,
-            userId: internalId,
-            organizationId: organizationId || null,
-            // Síntomas del triaje
-            mainSymptom: triaje.mainSymptom,
-            affectedSystem: triaje.affectedSystem,
-            symptomDuration: triaje.symptomDuration,
-            emotionalContext: triaje.emotionalContext,
-            // Diagnóstico NMG generado por IA (JSON)
-            conflictRoot: nmgDiagnosis.conflict,
-            affectedOrgan: nmgDiagnosis.organ,
-            biologicalPhase: nmgDiagnosis.phase,
-            holisticProtocol: nmgDiagnosis.holisticApproach,
-            updatedAt: new Date().toISOString(),
-        }, { onConflict: 'id' })
-        .select()
-        .single();
+    let data;
+    let error;
+    try {
+        if (existing) {
+            data = await prisma.biologicalDiagnosis.update({
+                where: { id: existing.id },
+                data: payload
+            });
+        } else {
+            data = await prisma.biologicalDiagnosis.create({
+                data: payload
+            });
+        }
+    } catch(e: any) {
+        error = e;
+    }
 
     if (error) {
         // Log estructurado para auditoría — no bloquea el flujo principal

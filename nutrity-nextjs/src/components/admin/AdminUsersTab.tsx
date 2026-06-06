@@ -334,9 +334,10 @@ export function AdminUsersTab({
                                         <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Plan de Suscripción</label>
                                         <select className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none"
                                             value={editingUser.plan || "FREE"} onChange={(e) => setEditingUser({ ...editingUser, plan: e.target.value })}>
-                                            <option value="FREE">FREEMIUM</option>
-                                            <option value="PREMIUM">PREMIUM</option>
-                                            <option value="ELITE">ELITE</option>
+                                            <option value="FREE">FREEMIUM (FREE)</option>
+                                            <option value="BASIC">BÁSICO (BASIC)</option>
+                                            <option value="ADVANCED">AVANZADO (ADVANCED)</option>
+                                            <option value="ELITE">ELITE/COACH (ELITE)</option>
                                         </select>
                                     </div>
                                     {/* User Status Protocol in Edit Modal */}
