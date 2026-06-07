@@ -2,6 +2,7 @@
 import { supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
 import { foodCatalog } from "@/lib/food-data";
 import { micronutrientsData } from "@/lib/micronutrients-data";
 import { sendWelcomeEmail, sendMenuApprovedEmail } from "./email-actions";
@@ -1282,12 +1283,14 @@ export async function savePost(post: any, organizationId?: string) {
   const isUpdate = !!post.id;
   const { data, error } = await supabase.from('Post').upsert({ ...post, id, organizationId: organizationId || null, updatedAt: new Date().toISOString() }).select().single();
   if (error) { console.error('Error saving post:', error); throw new Error(error.message); }
+  revalidatePath('/', 'layout');
   return data;
 }
 
 export async function deletePost(id: string) {
   const { error } = await supabase.from('Post').delete().eq('id', id);
   if (error) { console.error('Error deleting post:', error); throw new Error(error.message); }
+  revalidatePath('/', 'layout');
   return true;
 }
 
@@ -1348,5 +1351,6 @@ export async function saveLandingConfig(configData: any, organizationId?: string
     console.error('Error saving landing config:', error);
     throw new Error(error.message);
   }
+  revalidatePath('/', 'layout');
   return data;
 }
