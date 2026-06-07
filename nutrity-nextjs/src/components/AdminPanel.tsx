@@ -110,8 +110,8 @@ export function AdminPanel({ user }: AdminPanelProps) {
         const orgId = user?.profile?.organization?.id;
         try {
             const [foodData, microData, courseData, userData, appointmentData, reportData, landingData, postData] = await Promise.all([
-                dbService.getFoods(orgId).catch(() => []),
-                dbService.getMicronutrients(orgId).catch(() => []),
+                dbService.getFoods().catch(() => []),
+                dbService.getMicronutrients().catch(() => []),
                 dbService.getCourses(orgId, showDeleted).catch(() => []),
                 dbService.getAllUsers(orgId, showDeleted).catch(() => []),
                 dbService.getAllAppointments(orgId, showDeleted).catch(() => []),
