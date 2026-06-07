@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
     Utensils, Zap, ClipboardCheck, BookOpen,
     PlusCircle, Search, Shield, Users, Calendar,
-    FileText, Settings, Save, AlertTriangle, Loader2, LayoutTemplate
+    FileText, Settings, Save, AlertTriangle, Loader2, LayoutTemplate, CreditCard
 } from "lucide-react";
 import * as dbService from "@/actions/db-actions";
 import { FoodItem, Micronutrient, Course, Post } from "@/lib/types";
@@ -20,6 +20,7 @@ import { AdminCrmTab } from "./admin/AdminCrmTab";
 import { AdminReportsTab } from "./admin/AdminReportsTab";
 import AdminBlogTab from "./admin/AdminBlogTab";
 import { AdminLandingTab } from "./admin/AdminLandingTab";
+import { AdminPaymentsTab } from "./admin/AdminPaymentsTab";
 import { DeleteConfirmModal } from "./admin/shared";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -40,7 +41,7 @@ interface AdminPanelProps {
     onBackToDashboard?: () => void;
 }
 
-type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm" | "calendar" | "reports" | "blog" | "landing";
+type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm" | "calendar" | "reports" | "blog" | "landing" | "payments";
 
 // ─── Empty templates ─────────────────────────────────────────────────────────
 const emptyFood: Partial<FoodItem> = {
@@ -271,6 +272,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
         { id: "crm", icon: Settings, label: "CRM Automático", count: users.length },
         { id: "blog", icon: BookOpen, label: "Blog", count: posts.length },
         { id: "landing", icon: LayoutTemplate, label: "Landing CMS", count: 1 },
+        { id: "payments", icon: CreditCard, label: "Planes y Pagos", count: users.filter(u => u.plan && u.plan !== "FREEMIUM").length },
     ];
 
     // ─── Filtered data ────────────────────────────────────────────────────────
@@ -446,6 +448,27 @@ export function AdminPanel({ user }: AdminPanelProps) {
                             } catch (err) {
                                 console.error('updateUserStatus failed:', err);
                                 notify('error', 'Error al cambiar el estado del usuario');
+                            }
+                        }}
+                    />
+                )}
+
+                {section === "payments" && (
+                    <AdminPaymentsTab
+                        users={users}
+                        isSaving={isSaving}
+                        onUpdatePlan={async (userId, newPlan) => {
+                            try {
+                                setIsSaving(true);
+                                await dbService.updateUserProfile(userId, { plan: newPlan });
+                                const orgId = user?.profile?.organization?.id;
+                                const refreshed = await dbService.getAllUsers(orgId);
+                                setUsers(refreshed);
+                                notify('success', `Plan actualizado a ${newPlan}`);
+                            } catch (err) {
+                                notify('error', 'Error al actualizar el plan');
+                            } finally {
+                                setIsSaving(false);
                             }
                         }}
                     />
