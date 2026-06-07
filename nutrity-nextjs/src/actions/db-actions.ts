@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { foodCatalog } from "@/lib/food-data";
 import { micronutrientsData } from "@/lib/micronutrients-data";
+import { sendWelcomeEmail, sendMenuApprovedEmail } from "./email-actions";
 
 export async function getServerUser() {
     const supabaseClient = await createClient();
@@ -478,7 +479,7 @@ export async function deleteUser(userId: string) {
         return true
 }
 
-export async function syncUserProfile(firebaseUser: any, name?: string) {
+export async function syncUserProfile(firebaseUser: any, name?: string, organizationId?: string) {
         try {
             const email = (firebaseUser.email || '').toLowerCase().trim();
             const isAdminEmail = ADMIN_EMAILS.includes(email);
@@ -515,10 +516,14 @@ export async function syncUserProfile(firebaseUser: any, name?: string) {
                                 name: name || firebaseUser.displayName || 'Nuevo Usuario',
                                 role: isAdminEmail ? 'ADMIN' : 'USER',
                                 plan: isAdminEmail ? 'ELITE' : 'FREE',
+                                organizationId: organizationId || null,
                                 updatedAt: new Date()
                             },
                             include: { organization: true }
                         });
+                        
+                        // Disparar correo de bienvenida asincrónicamente sin bloquear el SSR
+                        sendWelcomeEmail(email, profile.name || 'Amig@').catch(err => console.error('Failed to send welcome email', err));
                     } catch (e: any) {
                         if (e.code === 'P2002') {
                             // Race condition handled: another request already created the user
@@ -1094,6 +1099,10 @@ export async function approveWeeklyMenu(userId: string, weekStart: string, admin
             .select();
 
         if (error) throw error;
+
+        // Disparar email asíncrono
+        sendMenuApprovedEmail(internalId).catch(err => console.error('Failed to send approved email', err));
+
         return data;
 }
 

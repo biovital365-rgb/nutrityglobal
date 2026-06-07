@@ -224,6 +224,21 @@ export async function generateAIWeeklyMenuSecure(userId: string, phase: string):
             return { success: false, error: "REQUIRES_UPGRADE", message: "Tu plan Freemium no incluye generación de menú automatizado." };
         }
 
+        // --- RATE LIMITING (Anti-abuso IA) ---
+        // Verificamos si este usuario ya ha generado más de 2 semanas de menú (14 días) en las últimas 24h
+        const todayStr = new Date().toISOString().split('T')[0];
+        const { count: dailyGenerations } = await supabase
+            .from('DailyMenu')
+            .select('*', { count: 'exact', head: true })
+            .eq('userId', userId)
+            .gte('createdAt', `${todayStr}T00:00:00.000Z`);
+
+        if (dailyGenerations && dailyGenerations >= 14) {
+            console.warn(`[RATE LIMIT] Usuario ${userId} superó el límite diario de IA.`);
+            return { success: false, error: "RATE_LIMIT", message: "Por seguridad, has alcanzado el límite de re-generación de menús por hoy. Intenta de nuevo mañana." };
+        }
+        // -------------------------------------
+
         // 2. Fetch Latest Evaluation
         const { data: evaluations } = await supabase
             .from('Evaluation')

@@ -16,6 +16,13 @@ export default function Home() {
         setUser(user);
       }
     });
+
+    // Guardar invitation_org_id si viene en la URL (?ref=orgId)
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get("ref");
+    if (ref) {
+      localStorage.setItem("invitation_org_id", ref);
+    }
   }, []);
 
   return (
