@@ -5,7 +5,7 @@ import { prisma as db } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
 const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || 'sk_test_mock') as string, {
-  apiVersion: '2025-01-27.acacia',
+  apiVersion: '2026-04-22.dahlia',
 });
 
 // Map de Precios/Planes. En producción esto vendría de ENV variables (los price_id de Stripe)
