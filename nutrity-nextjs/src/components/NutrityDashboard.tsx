@@ -416,8 +416,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             try {
                 // Inyectamos organizationId para filtrado multi-tenant y cargamos la config de la landing
                 const [foodData, microData, courseData, landingData] = await Promise.all([
-                    dbService.getFoods(organizationId),
-                    dbService.getMicronutrients(organizationId),
+                    dbService.getFoods(),
+                    dbService.getMicronutrients(),
                     dbService.getCourses(organizationId),
                     dbService.getLandingConfig(organizationId)
                 ]);
@@ -448,8 +448,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             const refreshCatalog = async () => {
                 try {
                     const [foodData, microData] = await Promise.all([
-                        dbService.getFoods(organizationId),
-                        dbService.getMicronutrients(organizationId)
+                        dbService.getFoods(),
+                        dbService.getMicronutrients()
                     ]);
                     if (foodData.length > 0) setFoods(foodData);
                     if (microData.length > 0) setMicros(microData);

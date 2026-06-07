@@ -27,8 +27,8 @@ export function useNutrityData(uid: string | undefined, organizationId: string |
     const loadCatalogs = useCallback(async () => {
         try {
             const [foodData, microData, courseData] = await Promise.all([
-                dbService.getFoods(organizationId),
-                dbService.getMicronutrients(organizationId),
+                dbService.getFoods(),
+                dbService.getMicronutrients(),
                 dbService.getCourses(organizationId)
             ]);
             setFoods(foodData);

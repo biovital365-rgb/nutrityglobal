@@ -142,9 +142,8 @@ export function AdminPanel({ user }: AdminPanelProps) {
         try {
             await dbService.forceSyncCatalog(type, user?.profile?.organization?.id);
             notify("success", "Sincronización completada.");
-            const orgId = user?.profile?.organization?.id;
-            if (type === "foods") setFoods(await dbService.getFoods(orgId));
-            else setMicros(await dbService.getMicronutrients(orgId));
+            if (type === "foods") setFoods(await dbService.getFoods());
+            else setMicros(await dbService.getMicronutrients());
         } catch { notify("error", "Error durante la sincronización."); }
         finally { setIsSaving(false); }
     };
