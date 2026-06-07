@@ -610,8 +610,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     return (
         <div id="dashboard-container" className="flex h-screen bg-nutrity-bg text-nutrity-primary overflow-hidden font-body pb-[90px] md:pb-0">
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex flex-col w-64 bg-nutrity-primary text-white border-r border-white/5">
-                <div className="p-8">
+            <aside className="hidden lg:flex flex-col w-64 bg-nutrity-primary text-white border-r border-white/5 overflow-y-auto hide-scroll-indicator">
+                <div className="p-8 min-h-max">
                     <div className="flex items-center gap-3 mb-10">
                         <div className="w-10 h-10 bg-nutrity-accent rounded-xl flex items-center justify-center shadow-lg shadow-nutrity-accent/20">
                             <Activity className="w-6 h-6 text-white" />
@@ -2115,6 +2115,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         { id: 'menu', icon: ClipboardCheck, label: 'Menú' },
                         { id: 'goals', icon: Target, label: 'Metas' },
                         { id: 'subscription', icon: CreditCard, label: 'Planes' },
+                        ...(user?.profile?.role === 'ADMIN' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com' ? [{ id: 'organization', icon: Users, label: 'Admin' }] : []),
                         { id: 'profile', icon: User, label: 'Perfil' },
                         { id: 'logout', icon: LogOut, label: 'Salir', color: 'text-red-500' },
                     ].map((item: any) => {
