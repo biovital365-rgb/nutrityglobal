@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 import { prisma as db } from '@/lib/prisma';
 
 const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || 'sk_test_mock') as string, {
-  apiVersion: '2025-01-27.acacia',
+  apiVersion: '2026-04-22.dahlia',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
