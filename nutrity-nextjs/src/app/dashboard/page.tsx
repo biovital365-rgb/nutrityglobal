@@ -27,9 +27,13 @@ export default function DashboardPage() {
       try {
         // Sync user with DB and merge returned profile into state
         const { syncUserProfile } = await import("@/actions/db-actions");
+        // Leer posible código de invitación del Coach
+        const orgId = localStorage.getItem("invitation_org_id");
+        
         const dbProfile = await syncUserProfile(
           { uid: authUser.id, email: authUser.email },
-          authUser.user_metadata?.full_name
+          authUser.user_metadata?.full_name,
+          orgId || undefined
         );
         // Merge the DB profile so user.profile is always available in dashboard
         setUser({ ...authUser, profile: dbProfile });
