@@ -2114,6 +2114,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         { id: 'academy', icon: BookOpen, label: 'Academia' },
                         { id: 'menu', icon: ClipboardCheck, label: 'Menú' },
                         { id: 'goals', icon: Target, label: 'Metas' },
+                        { id: 'subscription', icon: CreditCard, label: 'Planes' },
                         { id: 'profile', icon: User, label: 'Perfil' },
                         { id: 'logout', icon: LogOut, label: 'Salir', color: 'text-red-500' },
                     ].map((item: any) => {

@@ -70,6 +70,7 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                         <a href="#alimentacion" className="text-xs font-bold uppercase tracking-widest text-[#1b3b36] hover:text-[#c19b6c] transition-colors">Alimentación</a>
                         <a href="#movimiento" className="text-xs font-bold uppercase tracking-widest text-[#1b3b36] hover:text-[#c19b6c] transition-colors">Movimiento</a>
                         <a href="#estrategias" className="text-xs font-bold uppercase tracking-widest text-[#1b3b36] hover:text-[#c19b6c] transition-colors">Estrategias</a>
+                        <button onClick={() => onStart()} className="text-xs font-bold uppercase tracking-widest text-[#1b3b36] hover:text-[#c19b6c] transition-colors">Planes</button>
                         <Link href="/blog" className="text-xs font-bold uppercase tracking-widest text-[#1b3b36] hover:text-[#c19b6c] transition-colors">Blog</Link>
                     </nav>
                     <button

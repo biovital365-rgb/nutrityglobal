@@ -9,17 +9,17 @@ interface AdminPaymentsTabProps {
 }
 
 export function AdminPaymentsTab({ users, isSaving, onUpdatePlan }: AdminPaymentsTabProps) {
-    const plans = ["FREEMIUM", "BASIC", "ADVANCED", "ELITE"];
+    const plans = ["FREE", "BASIC", "ADVANCED", "ELITE"];
 
     return (
         <motion.div key="payments-table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             {/* Resumen de Planes */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 {plans.map((planStr) => {
-                    const count = users.filter((u) => (u.plan || "FREEMIUM") === planStr).length;
+                    const count = users.filter((u) => (u.plan || "FREE") === planStr).length;
                     return (
                         <div key={planStr} className="bg-white p-4 rounded-xl border border-nutrity-border shadow-sm">
-                            <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-1">{planStr}</p>
+                            <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-1">{planStr === "FREE" ? "FREEMIUM" : planStr}</p>
                             <p className="text-2xl font-bold text-nutrity-primary">{count} <span className="text-xs text-nutrity-gray-text font-normal">usuarios</span></p>
                         </div>
                     );
@@ -39,8 +39,8 @@ export function AdminPaymentsTab({ users, isSaving, onUpdatePlan }: AdminPayment
                         </thead>
                         <tbody className="divide-y divide-nutrity-border">
                             {users.map((u) => {
-                                const currentPlan = u.plan || "FREEMIUM";
-                                const isPremium = currentPlan !== "FREEMIUM";
+                                const currentPlan = u.plan || "FREE";
+                                const isPremium = currentPlan !== "FREE";
                                 
                                 return (
                                     <tr key={u.id} className="hover:bg-slate-50 transition-colors group">
