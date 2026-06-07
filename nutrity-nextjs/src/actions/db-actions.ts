@@ -2,6 +2,8 @@
 import { supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
+import { foodCatalog } from "@/lib/food-data";
+import { micronutrientsData } from "@/lib/micronutrients-data";
 
 export async function getServerUser() {
     const supabaseClient = await createClient();
@@ -133,7 +135,6 @@ export async function getFoods() {
         // 1. Auto-Sincronización si está vacío
         if (!data || data.length === 0) {
             console.log('Catalog empty, auto-syncing foods...');
-            const { foodCatalog } = await import('../lib/food-data');
             for (const food of foodCatalog) {
                 await saveFood({ ...food, organizationId: targetOrg || undefined }).catch(() => {});
             }
@@ -278,7 +279,6 @@ export async function getMicronutrients() {
         // 1. Auto-Sincronización
         if (!data || data.length === 0) {
             console.log('Catalog empty, auto-syncing micronutrients...');
-            const { micronutrientsData } = await import('../lib/micronutrients-data');
             for (const micro of micronutrientsData) {
                 await saveMicronutrient({ ...(micro as any), organizationId: targetOrg || undefined }).catch(() => {});
             }
