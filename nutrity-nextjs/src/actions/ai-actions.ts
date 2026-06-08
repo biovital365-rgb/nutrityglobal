@@ -207,8 +207,11 @@ export async function getAICoachResponse(messages: any[], context: any) {
     return result.response.text();
 }
 
+import { createClient } from "@/utils/supabase/server";
+
 export async function generateAIWeeklyMenuSecure(userId: string, phase: string): Promise<any> {
     try {
+        const supabase = await createClient();
         // 1. Fetch User Data
         const { data: user, error: userError } = await supabase
             .from('User')
