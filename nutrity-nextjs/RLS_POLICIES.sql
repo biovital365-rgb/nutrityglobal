@@ -9,7 +9,7 @@ ON "DailyMenu"
 FOR SELECT
 USING (
   "userId" = auth.uid()::text OR
-  (SELECT role FROM "User" WHERE id = auth.uid()::text) = 'ADMIN'
+  (SELECT role FROM "User" WHERE id = auth.uid()::text) IN ('ADMIN', 'COACH')
 );
 
 -- 3. Política INSERT: Los usuarios solo pueden insertar sus propios menús
@@ -17,7 +17,8 @@ CREATE POLICY "Users can insert their own menus"
 ON "DailyMenu"
 FOR INSERT
 WITH CHECK (
-  "userId" = auth.uid()::text
+  "userId" = auth.uid()::text OR
+  (SELECT role FROM "User" WHERE id = auth.uid()::text) IN ('ADMIN', 'COACH')
 );
 
 -- 4. Política UPDATE: Solo el usuario o un ADMIN puede actualizar el menú
@@ -26,7 +27,7 @@ ON "DailyMenu"
 FOR UPDATE
 USING (
   "userId" = auth.uid()::text OR
-  (SELECT role FROM "User" WHERE id = auth.uid()::text) = 'ADMIN'
+  (SELECT role FROM "User" WHERE id = auth.uid()::text) IN ('ADMIN', 'COACH')
 );
 
 -- 5. Política DELETE: Solo ADMINs o el propio usuario
@@ -35,5 +36,5 @@ ON "DailyMenu"
 FOR DELETE
 USING (
   "userId" = auth.uid()::text OR
-  (SELECT role FROM "User" WHERE id = auth.uid()::text) = 'ADMIN'
+  (SELECT role FROM "User" WHERE id = auth.uid()::text) IN ('ADMIN', 'COACH')
 );
