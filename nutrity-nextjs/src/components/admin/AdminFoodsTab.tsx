@@ -181,7 +181,7 @@ export function AdminFoodsTab({
                                                     }} placeholder="1 taza de avena&#10;2 huevos..." />
                                                 </div>
                                                 <div className="bg-white p-3 rounded-lg border border-nutrity-border">
-                                                    <FieldInput label="Preparación (uno por línea)" multiline value={(recipe.preparation || (recipe as any).instructions || []).join('\n')} onChange={(text) => {
+                                                    <FieldInput label="Preparación (uno por línea)" multiline value={(recipe.preparation || []).join('\n')} onChange={(text) => {
                                                         const preparation = text.split('\n').filter(line => line.trim() !== '');
                                                         const updated = [...(editingFood.recipes || [])];
                                                         updated[rIdx] = { ...updated[rIdx], preparation };
