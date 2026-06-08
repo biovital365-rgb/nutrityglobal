@@ -1996,7 +1996,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             <span className="w-6 h-6 rounded-full bg-nutrity-accent/20 text-nutrity-accent flex items-center justify-center text-[10px]">{idx + 1}</span>
                                                             {recipe.title}
                                                         </h4>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                             <div>
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Ingredientes</h5>
                                                                 <ul className="space-y-1">
@@ -2011,7 +2011,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             <div>
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Preparación</h5>
                                                                 <ol className="space-y-1">
-                                                                    {(recipe.preparation || recipe.instructions || []).map((inst, i) => (
+                                                                    {(recipe.preparation || []).map((inst, i) => (
                                                                         <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
                                                                             <span className="text-nutrity-accent/50 font-bold mt-0.5">{i + 1}.</span>
                                                                             <span>{inst}</span>
@@ -2019,6 +2019,19 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                     ))}
                                                                 </ol>
                                                             </div>
+                                                            {recipe.instructions && recipe.instructions.length > 0 && (
+                                                                <div>
+                                                                    <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Perfil Metabólico</h5>
+                                                                    <ul className="space-y-1">
+                                                                        {recipe.instructions.map((inst, i) => (
+                                                                            <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
+                                                                                <span className="text-amber-500 font-bold mt-0.5">•</span>
+                                                                                <span>{inst}</span>
+                                                                            </li>
+                                                                        ))}
+                                                                    </ul>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
