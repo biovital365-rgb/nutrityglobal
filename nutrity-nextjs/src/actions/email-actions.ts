@@ -93,3 +93,59 @@ export async function sendMenuApprovedEmail(userId: string) {
     return { success: false, error };
   }
 }
+
+export async function sendMenuChangesRequestedEmail(userId: string, notes: string) {
+  try {
+    const user = await db.user.findUnique({ 
+      where: { id: userId },
+      include: { organization: true }
+    });
+    
+    if (!user || !user.email) throw new Error('Usuario no encontrado o sin email');
+
+    // We assume the coach/admin email is the organization owner or a general admin email.
+    // For now, we will notify the general admin or the coach if available.
+    const notifyEmail = user.organization?.ownerEmail || process.env.ADMIN_EMAIL || 'support@nutrityglobal.com';
+
+    if (!resend) {
+      console.log(`[MOCK EMAIL] Solicitud de cambios de ${user.name} enviada a: ${notifyEmail} con notas: ${notes}`);
+      return { success: true, mock: true };
+    }
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [notifyEmail],
+      subject: `Solicitud de Cambios en Menú - Paciente: ${user.name || user.email}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #1e293b; max-w: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #f59e0b; padding: 24px; text-align: center;">
+            <h1 style="color: white; margin: 0;">Revisión de Menú Solicitada</h1>
+          </div>
+          <div style="padding: 24px;">
+            <h2 style="color: #0f766e;">Hola Coach,</h2>
+            <p style="font-size: 16px; line-height: 1.5;">El paciente <strong>${user.name || user.email}</strong> ha solicitado cambios en su menú semanal.</p>
+            <p style="font-size: 16px; line-height: 1.5;"><strong>Notas del paciente:</strong></p>
+            <blockquote style="background-color: #f8fafc; padding: 16px; border-left: 4px solid #f59e0b; font-style: italic;">
+              ${notes}
+            </blockquote>
+            <p style="font-size: 16px; line-height: 1.5;">Por favor, ingresa al panel de administración para revisar el menú y aprobar los ajustes.</p>
+            <div style="text-align: center; margin-top: 32px;">
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard" style="background-color: #0f766e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Ir al Panel de Administración</a>
+            </div>
+          </div>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('[RESEND ERROR]', error);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('[EMAIL ACTION ERROR]', error);
+    return { success: false, error };
+  }
+}
+

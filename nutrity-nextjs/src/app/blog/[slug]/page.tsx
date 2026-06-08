@@ -68,8 +68,23 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     // For premium posts, only show a teaser to guests (client handles full gate)
     const teaserContent = post.content.substring(0, 600) + (post.content.length > 600 ? "..." : "");
 
+    const jsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        description: post.excerpt || post.content.substring(0, 155),
+        image: post.thumbnail ? [post.thumbnail] : [],
+        datePublished: new Date(post.createdAt).toISOString(),
+        dateModified: new Date(post.updatedAt || post.createdAt).toISOString(),
+        author: {
+            '@type': 'Person',
+            name: post.author,
+        },
+    };
+
     return (
         <div className="min-h-screen bg-[#fbf8f1] selection:bg-[#c19b6c] selection:text-white">
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
             {/* ── Nav ── */}
             <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fbf8f1]/80 border-b border-[#c19b6c]/20 transition-all duration-300">
                 <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">

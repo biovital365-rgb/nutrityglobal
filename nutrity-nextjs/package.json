@@ -12,6 +12,7 @@
   "dependencies": {
     "@google/genai": "^2.5.0",
     "@google/generative-ai": "^0.24.1",
+    "@paypal/react-paypal-js": "^10.0.0",
     "@prisma/client": "^5.22.0",
     "@stripe/stripe-js": "^9.6.0",
     "@supabase/ssr": "^0.10.3",

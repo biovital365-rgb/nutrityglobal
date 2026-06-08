@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { foodCatalog } from "@/lib/food-data";
 import { micronutrientsData } from "@/lib/micronutrients-data";
-import { sendWelcomeEmail, sendMenuApprovedEmail } from "./email-actions";
+import { sendWelcomeEmail, sendMenuApprovedEmail, sendMenuChangesRequestedEmail } from "./email-actions";
 
 export async function getServerUser() {
     const supabaseClient = await createClient();
@@ -1353,4 +1353,42 @@ export async function saveLandingConfig(configData: any, organizationId?: string
   }
   revalidatePath('/', 'layout');
   return data;
+}
+
+export async function requestMenuChanges(userId: string, weekStart: string, notes: string) {
+    const currentUser = await getServerUser();
+    if (!currentUser || currentUser.id !== userId) throw new Error("Forbidden");
+
+    // Buscamos el menú de la semana
+    const { data: menu, error: menuErr } = await supabase
+        .from('DailyMenu')
+        .select('*')
+        .eq('userId', userId)
+        .eq('weekStart', weekStart)
+        .limit(1)
+        .single();
+
+    if (menuErr || !menu) {
+        throw new Error("Menú no encontrado para esa semana");
+    }
+
+    // Actualizamos el estado a CHANGES_REQUESTED y añadimos las notas
+    const { error: updateErr } = await supabase
+        .from('DailyMenu')
+        .update({
+            status: 'CHANGES_REQUESTED',
+            adminNotes: notes, 
+            updatedAt: new Date().toISOString(),
+        })
+        .eq('id', menu.id);
+
+    if (updateErr) {
+        throw new Error("Error actualizando el estado del menú");
+    }
+
+    // Notificamos al coach/admin
+    await sendMenuChangesRequestedEmail(userId, notes);
+
+    revalidatePath('/', 'layout');
+    return true;
 }
