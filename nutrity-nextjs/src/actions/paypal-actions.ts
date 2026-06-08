@@ -31,8 +31,9 @@ async function generateAccessToken() {
 
     const data = await response.json();
     return data.access_token;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to generate Access Token:", error);
+    if (error.message === "MISSING_API_CREDENTIALS") throw error;
     throw new Error("PayPal Token Error");
   }
 }
