@@ -2111,6 +2111,55 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         </motion.div>
                     </motion.div>
                 )}
+
+                {/* Change Request Modal */}
+                {showChangeRequestModal && (
+                    <motion.div
+                        key="change-request-modal"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-nutrity-primary/60 backdrop-blur-md flex items-center justify-center p-6"
+                    >
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white w-full max-w-lg rounded-2xl p-10 shadow-2xl relative border border-white/20">
+                            <button onClick={() => setShowChangeRequestModal(false)} className="absolute top-8 right-8 p-2 rounded-full hover:bg-nutrity-bg text-nutrity-gray-text opacity-50"><X className="w-5 h-5" /></button>
+                            
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                                    <MessageCircle className="w-6 h-6 text-blue-500" />
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-display font-bold mb-1">Solicitar Cambios</h3>
+                                    <p className="text-xs font-bold text-nutrity-gray-text uppercase tracking-widest">Ajustes a tu Plan Nutricional</p>
+                                </div>
+                            </div>
+                            
+                            <p className="text-sm text-nutrity-gray-text mb-8 font-medium">Describe qué cambios necesitas en tu menú (ej. alimentos que no te gustan, intolerancias nuevas, dificultad para encontrar ingredientes, etc.)</p>
+                            
+                            <div className="space-y-6">
+                                <textarea 
+                                    className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none font-medium min-h-[120px] resize-none"
+                                    placeholder="Quisiera cambiar..."
+                                    value={changeRequestNotes}
+                                    onChange={(e) => setChangeRequestNotes(e.target.value)}
+                                ></textarea>
+                                
+                                <button 
+                                    onClick={handleRequestChanges}
+                                    disabled={isRequestingChanges || !changeRequestNotes.trim()}
+                                    className="w-full bg-nutrity-primary text-white py-5 rounded-xl font-bold shadow-lg shadow-nutrity-primary/20 active:scale-95 transition-all text-sm uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isRequestingChanges ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Enviando...
+                                        </>
+                                    ) : "Enviar a mi Coach"}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
             </AnimatePresence>
 
             {/* Notification Toast */}

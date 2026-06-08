@@ -425,11 +425,13 @@ export async function updateUserProfile(userId: string, profileData: any) {
         }
 
         const { email, ...safeData } = profileData;
-        return await prisma.user.update({
+        const updated = await prisma.user.update({
             where: { id: internalId },
             data: { ...safeData, updatedAt: new Date() },
             include: { organization: true }
         });
+        revalidatePath('/', 'layout');
+        return updated;
 }
 
 export async function getAllUsers(organizationIdParam?: string, includeDeleted = false) {
@@ -462,10 +464,12 @@ export async function updateUserStatus(userId: string, status: 'ACTIVE' | 'BLOCK
         const currentUser = await getServerUser();
         if (!currentUser || currentUser.role !== 'ADMIN') throw new Error("Forbidden");
 
-        return await prisma.user.update({
+        const updated = await prisma.user.update({
             where: { id: userId },
             data: { status: status as any, updatedAt: new Date() }
         });
+        revalidatePath('/', 'layout');
+        return updated;
 }
 
 export async function deleteUser(userId: string) {
@@ -477,6 +481,7 @@ export async function deleteUser(userId: string) {
             data: { deletedAt: new Date().toISOString() }
         });
         
+        revalidatePath('/', 'layout');
         return true
 }
 
@@ -1104,6 +1109,7 @@ export async function approveWeeklyMenu(userId: string, weekStart: string, admin
         // Disparar email asíncrono
         sendMenuApprovedEmail(internalId).catch(err => console.error('Failed to send approved email', err));
 
+        revalidatePath('/', 'layout');
         return data;
 }
 
@@ -1125,6 +1131,7 @@ export async function rejectWeeklyMenu(userId: string, weekStart: string, adminE
             .select();
 
         if (error) throw error;
+        revalidatePath('/', 'layout');
         return data;
 }
 
@@ -1144,6 +1151,7 @@ export async function updateDayMenu(recordId: string, menuData: any, metabolicGo
             .single();
 
         if (error) throw error;
+        revalidatePath('/', 'layout');
         return data;
 }
 
@@ -1235,30 +1243,35 @@ export async function getDailyMenus(userId: string) {
 export async function restoreFood(id: string) {
         const { data, error } = await supabase.from('Food').update({ deletedAt: null }).eq('id', id).select().single();
         if (error) throw error;
+        revalidatePath('/', 'layout');
         return data;
 }
 
 export async function restoreMicronutrient(id: string) {
         const { data, error } = await supabase.from('Micronutrient').update({ deletedAt: null }).eq('id', id).select().single();
         if (error) throw error;
+        revalidatePath('/', 'layout');
         return data;
 }
 
 export async function restoreCourse(id: string) {
         const { data, error } = await supabase.from('Course').update({ deletedAt: null }).eq('id', id).select().single();
         if (error) throw error;
+        revalidatePath('/', 'layout');
         return data;
 }
 
 export async function restoreUser(id: string) {
         const { data, error } = await supabase.from('User').update({ deletedAt: null }).eq('id', id).select().single();
         if (error) throw error;
+        revalidatePath('/', 'layout');
         return data;
 }
 
 export async function restoreAppointment(id: string) {
         const { data, error } = await supabase.from('Appointment').update({ deletedAt: null }).eq('id', id).select().single();
         if (error) throw error;
+        revalidatePath('/', 'layout');
         return data;
     }
 
@@ -1359,10 +1372,10 @@ export async function requestMenuChanges(userId: string, weekStart: string, note
     const currentUser = await getServerUser();
     if (!currentUser || currentUser.id !== userId) throw new Error("Forbidden");
 
-    // Buscamos el menú de la semana
+    // Buscamos si existe al menos un día
     const { data: menu, error: menuErr } = await supabase
         .from('DailyMenu')
-        .select('*')
+        .select('id')
         .eq('userId', userId)
         .eq('weekStart', weekStart)
         .limit(1)
@@ -1372,7 +1385,7 @@ export async function requestMenuChanges(userId: string, weekStart: string, note
         throw new Error("Menú no encontrado para esa semana");
     }
 
-    // Actualizamos el estado a CHANGES_REQUESTED y añadimos las notas
+    // Actualizamos el estado a CHANGES_REQUESTED para TODOS los días de la semana
     const { error: updateErr } = await supabase
         .from('DailyMenu')
         .update({
@@ -1380,14 +1393,17 @@ export async function requestMenuChanges(userId: string, weekStart: string, note
             adminNotes: notes, 
             updatedAt: new Date().toISOString(),
         })
-        .eq('id', menu.id);
+        .eq('userId', userId)
+        .eq('weekStart', weekStart);
 
     if (updateErr) {
         throw new Error("Error actualizando el estado del menú");
     }
 
-    // Notificamos al coach/admin
-    await sendMenuChangesRequestedEmail(userId, notes);
+    // Notificamos al coach/admin (mocked o implementado en email-actions)
+    try {
+        await sendMenuChangesRequestedEmail(userId, notes);
+    } catch(e) { console.error("Error enviando email", e) }
 
     revalidatePath('/', 'layout');
     return true;

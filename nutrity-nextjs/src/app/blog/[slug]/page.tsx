@@ -68,9 +68,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     // For premium posts, only show a teaser to guests (client handles full gate)
     const teaserContent = post.content.substring(0, 600) + (post.content.length > 600 ? "..." : "");
 
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nutrity.global';
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'BlogPosting',
+        mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `${baseUrl}/blog/${post.slug}`,
+        },
         headline: post.title,
         description: post.excerpt || post.content.substring(0, 155),
         image: post.thumbnail ? [post.thumbnail] : [],
@@ -80,6 +85,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             '@type': 'Person',
             name: post.author,
         },
+        publisher: {
+            '@type': 'Organization',
+            name: 'BioVital 360',
+            logo: {
+                '@type': 'ImageObject',
+                url: `${baseUrl}/favicon.ico`,
+            }
+        }
     };
 
     return (
