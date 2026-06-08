@@ -1280,6 +1280,10 @@ export async function getPosts(organizationId?: string, onlyPublished: boolean =
   let query = supabase.from('Post').select('*');
   if (organizationId) query = query.eq('organizationId', organizationId);
   if (onlyPublished) query = query.eq('isPublished', true);
+  
+  // Exclude SYSTEM configurations stored as posts
+  query = query.neq('slug', 'landing-page-config');
+  
   const { data, error } = await query.order('createdAt', { ascending: false });
   if (error) { console.error('Error fetching posts:', error); return []; }
   return data;
