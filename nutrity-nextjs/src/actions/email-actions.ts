@@ -105,7 +105,8 @@ export async function sendMenuChangesRequestedEmail(userId: string, notes: strin
 
     // We assume the coach/admin email is the organization owner or a general admin email.
     // For now, we will notify the general admin or the coach if available.
-    const notifyEmail = user.organization?.ownerEmail || process.env.ADMIN_EMAIL || 'support@nutrityglobal.com';
+    // To correctly find the coach email, we could query the User table, but we'll use ADMIN_EMAIL for now.
+    const notifyEmail = process.env.ADMIN_EMAIL || 'support@nutrityglobal.com';
 
     if (!resend) {
       console.log(`[MOCK EMAIL] Solicitud de cambios de ${user.name} enviada a: ${notifyEmail} con notas: ${notes}`);
