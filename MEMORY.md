@@ -79,6 +79,14 @@
     *   Adaptación de colores institucionales premium (Navy, Forest Green, Cream, Gold).
     *   Conexión de la Landing con la base de datos de artículos del Blog.
 
+- [x] **Fase 9: Transición a SaaS B2C (Pagos y Tematización Dinámica)** (Completado)
+    *   **Notificaciones Transaccionales**: Integración con `Resend` para correos de bienvenida automáticos (Onboarding) y notificaciones de "Menú Aprobado".
+    *   **Rate Limiting IA**: Restricción anti-abuso implementada en `ai-actions.ts` limitando la generación a 14 días/menús cada 24 horas por usuario FREE.
+    *   **Seguridad de Producción (RLS)**: Aplicación de scripts SQL en Supabase para bloquear el acceso de lectura/escritura en la tabla `DailyMenu` asegurando la privacidad B2C.
+    *   **Multi-tenant Simplificado (Coach-Paciente)**: Sistema de `invitation_org_id` capturado vía URL (`?ref=ORG_ID`) e inyectado desde el `localStorage` directo al `syncUserProfile` en la base de datos.
+    *   **Tematización Dinámica UI**: Inyección de variables CSS HSL vía `ThemeInjector` para cambiar completamente la paleta visual del dashboard según el plan del usuario (Verde: FREE, Azul: BASIC, Plata: PREMIUM, Dorado: ELITE).
+    *   **Integración Pasarela PayPal**: Implementación de pago de suscripciones y webhooks de PayPal (`src/app/api/webhooks/paypal/route.ts`), enrutando compras a niveles `BASIC`, `PREMIUM` y `ELITE`, y control visual de planes en `SubscriptionTab.tsx`.
+
 ## Decisiones Arquitectónicas Recientes
 1.  **Modelo Gemini 3**: La transición a la serie 3 es obligatoria en 2026. Se utiliza el sufijo `-preview` para asegurar el acceso a los últimos avances en razonamiento clínico.
 2.  **Permisos Administrativos (RLS)**: Se optó por desactivar RLS en la tabla `DailyMenu` para el entorno administrativo, priorizando la velocidad de operación y evitando bloqueos de permisos en la generación de planes críticos.
@@ -114,3 +122,5 @@
     * Se eliminaron los imports dinámicos en Server Actions (ej. `await import('@/lib/food-data')`) reemplazándolos por imports estáticos, solucionando Errores 500 en Vercel durante el renderizado de Server Components.
     * Se adoptó oficialmente el **Transaction Pooler IPv4 (puerto 6543) de Supabase** (`aws-0-us-[region].pooler.supabase.com`) con el flag `?pgbouncer=true` en `DATABASE_URL` para garantizar la conexión desde Vercel (que no soporta IPv6 nativo en Serverless Functions).
     * Se incluyó comportamiento responsivo nativo en el sidebar de navegación (`overflow-y-auto`) para pantallas de laptops pequeñas, evitando pérdida de accesibilidad a funciones críticas (Planes y Organización).
+    * **Asignación Pasiva B2C**: En lugar de forzar un registro de usuarios complejo por jerarquías, el modelo SaaS emplea una asignación pasiva de `organizationId` a través del enlace de la Landing Page que persiste en `localStorage` hasta el registro.
+    * **Resend Fallback (Mock)**: El sistema de correos tiene un fallback inteligente en código que intercepta la falta de API Key y simula el envío sin crashear el proceso, ideal para ambientes de desarrollo.
