@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
     Utensils, Zap, ClipboardCheck, BookOpen,
     PlusCircle, Search, Shield, Users, Calendar,
-    FileText, Settings, Save, AlertTriangle, Loader2, LayoutTemplate, CreditCard
+    FileText, Settings, Save, AlertTriangle, Loader2, LayoutTemplate, CreditCard, TrendingUp
 } from "lucide-react";
 import * as dbService from "@/actions/db-actions";
 import { FoodItem, Micronutrient, Course, Post } from "@/lib/types";
@@ -21,6 +21,7 @@ import { AdminReportsTab } from "./admin/AdminReportsTab";
 import AdminBlogTab from "./admin/AdminBlogTab";
 import { AdminLandingTab } from "./admin/AdminLandingTab";
 import { AdminPaymentsTab } from "./admin/AdminPaymentsTab";
+import { AdminConversionsTab } from "./admin/AdminConversionsTab";
 import { DeleteConfirmModal } from "./admin/shared";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ interface AdminPanelProps {
     onBackToDashboard?: () => void;
 }
 
-type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm" | "calendar" | "reports" | "blog" | "landing" | "payments";
+type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm" | "calendar" | "reports" | "blog" | "landing" | "payments" | "conversions";
 
 // ─── Empty templates ─────────────────────────────────────────────────────────
 const emptyFood: Partial<FoodItem> = {
@@ -58,7 +59,8 @@ const emptyCourse: Partial<Course> = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 export function AdminPanel({ user }: AdminPanelProps) {
-    const [section, setSection] = useState<AdminSection>("foods");
+    const isCoach = user?.profile?.role === "COACH";
+    const [section, setSection] = useState<AdminSection>(isCoach ? "conversions" : "foods");
     const [searchTerm, setSearchTerm] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [showDeleted, setShowDeleted] = useState(false);
@@ -261,7 +263,11 @@ export function AdminPanel({ user }: AdminPanelProps) {
     };
 
     // ─── Section nav ──────────────────────────────────────────────────────────
-    const sections: { id: AdminSection; icon: typeof Utensils; label: string; count: number }[] = [
+    const sections: { id: AdminSection; icon: any; label: string; count: number }[] = isCoach ? [
+        { id: "conversions", icon: TrendingUp, label: "Mis Conversiones", count: users.length },
+        { id: "users", icon: Users, label: "Mis Pacientes", count: users.length },
+    ] : [
+        { id: "conversions", icon: TrendingUp, label: "Conversiones", count: users.length },
         { id: "foods", icon: Utensils, label: "Alimentos", count: foods.length },
         { id: "micronutrients", icon: Zap, label: "Micronutrientes", count: micros.length },
         { id: "menu", icon: ClipboardCheck, label: "Menú Semanal", count: users.filter(u => u.metabolicResults?.phase).length },
@@ -302,7 +308,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                 <div className="flex items-center gap-3">
                     <div className="bg-nutrity-accent/10 px-4 py-2 rounded-xl flex items-center gap-3 border border-nutrity-accent/20">
                         <Shield className="w-5 h-5 text-nutrity-accent" />
-                        <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">Admin Global</span>
+                        <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">{isCoach ? "Coach/Clínica" : "Admin Global"}</span>
                     </div>
                 </div>
             </div>
@@ -326,7 +332,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
             </div>
 
             {/* Search + Add bar */}
-            {!["menu", "crm", "reports", "blog", "landing"].includes(section) && (
+            {!["menu", "crm", "reports", "blog", "landing", "conversions"].includes(section) && (
                 <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
                     <div className="relative flex-1">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-nutrity-gray-text opacity-40" />
@@ -361,6 +367,10 @@ export function AdminPanel({ user }: AdminPanelProps) {
 
             {/* ═══════ SECTIONS ═══════ */}
             <AnimatePresence mode="wait">
+                {section === "conversions" && (
+                    <AdminConversionsTab users={users} />
+                )}
+
                 {section === "foods" && (
                     <AdminFoodsTab
                         foods={filteredFoods}

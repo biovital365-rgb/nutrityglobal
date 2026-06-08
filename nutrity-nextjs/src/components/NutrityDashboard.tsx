@@ -58,8 +58,11 @@ import { micronutrientsData } from "../lib/micronutrients-data";
 import { weeklyMenuData } from "../lib/menu-data";
 import { useNutrityData } from '../hooks/useNutrityData';
 import * as dbService from "@/actions/db-actions";
+import { useDropzone } from "react-dropzone";
+import { AdminPanel } from "./AdminPanel";
+import { ThemeInjector } from "./ThemeInjector";
+import SubscriptionTab from "./SubscriptionTab";
 import { getDirectImageUrl } from '../lib/utils';
-import { AdminPanel } from './AdminPanel';
 import { BioPlanSection } from './BioPlanSection';
 
 interface NutrityDashboardProps {
@@ -212,8 +215,34 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [dynamicMenu, setDynamicMenu] = useState<any>(null);
     // ─── Menú Aprobado por Coach ─────────────────────────────────────────
     const [approvedMenuDays, setApprovedMenuDays] = useState<any[]>([]);
-    const [menuStatus, setMenuStatus] = useState<'NONE' | 'PENDING' | 'APPROVED'>('NONE');
+    const [menuStatus, setMenuStatus] = useState<'NONE' | 'PENDING' | 'APPROVED' | 'CHANGES_REQUESTED'>('NONE');
     const [isLoadingApprovedMenu, setIsLoadingApprovedMenu] = useState(false);
+    
+    // ─── Feedback Loop ─────────────────────────────────────────────────────────
+    const [isRequestingChanges, setIsRequestingChanges] = useState(false);
+    const [showChangeRequestModal, setShowChangeRequestModal] = useState(false);
+    const [changeRequestNotes, setChangeRequestNotes] = useState("");
+
+    const handleRequestChanges = async () => {
+        if (!changeRequestNotes.trim() || !(user?.id || user?.uid) || approvedMenuDays.length === 0) return;
+        setIsRequestingChanges(true);
+        try {
+            // Utilizamos el weekStart del primer día aprobado (asumiendo que están agrupados por semana)
+            const weekStart = approvedMenuDays[0]?.weekStart;
+            if (!weekStart) throw new Error("No se pudo identificar la semana del menú");
+            
+            await dbService.requestMenuChanges(user?.id || user?.uid, weekStart, changeRequestNotes);
+            setMenuStatus('CHANGES_REQUESTED');
+            setShowChangeRequestModal(false);
+            setChangeRequestNotes("");
+            alert("Solicitud enviada con éxito. Tu Coach revisará los cambios pronto.");
+        } catch (err) {
+            console.error("Error solicitando cambios:", err);
+            alert("Hubo un problema al solicitar los cambios. Intenta nuevamente.");
+        } finally {
+            setIsRequestingChanges(false);
+        }
+    };
 
     // --- EFECTOS DE SINCRONIZACIÓN ---
     useEffect(() => {
@@ -314,7 +343,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 // 2. Si no hay aprobado, verificar si hay pendiente
                 const pending = await dbService.getPendingMenu(user?.id);
                 if (pending.length > 0) {
-                    setMenuStatus('PENDING');
+                    // Podemos verificar si el status es CHANGES_REQUESTED
+                    const firstPending = pending[0];
+                    if (firstPending.status === 'CHANGES_REQUESTED') {
+                        setMenuStatus('CHANGES_REQUESTED');
+                    } else {
+                        setMenuStatus('PENDING');
+                    }
                 } else {
                     setMenuStatus('NONE');
                 }
@@ -594,7 +629,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         { id: "goals", icon: Target, label: "Metas", disabled: !isProfileComplete },
         { id: "profile", icon: User, label: "Perfil" },
         { id: "subscription", icon: CreditCard, label: "Mi Plan", disabled: !isProfileComplete },
-        ...(user?.profile?.role === 'ADMIN' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com' ? [{ id: "organization", icon: Users, label: "Organización" }] : [])
+        ...(user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com' ? [{ id: "organization", icon: Users, label: user?.profile?.role === 'ADMIN' ? "Admin Global" : "Mi Organización" }] : [])
     ];
 
     const filteredFoods = (foods || []).filter(f =>
@@ -609,6 +644,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
     return (
         <div id="dashboard-container" className="flex h-screen bg-nutrity-bg text-nutrity-primary overflow-hidden font-body pb-[90px] md:pb-0">
+            <ThemeInjector plan={user?.profile?.plan} role={user?.profile?.role} />
             {/* Desktop Sidebar */}
             <aside className="hidden lg:flex flex-col w-64 bg-nutrity-primary text-white border-r border-white/5 overflow-y-auto hide-scroll-indicator">
                 <div className="p-8 min-h-max">
@@ -646,7 +682,12 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                     <div className="flex items-center gap-6">
                         <div className="hidden md:flex flex-col text-right">
                             <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">{user?.email}</span>
-                            <span className="text-sm font-bold text-nutrity-primary">{user?.profile?.plan || 'Básico (FREE)'}</span>
+                            <span className={`text-sm font-bold ${
+                                user?.profile?.plan === 'ELITE' || user?.profile?.role === 'COACH' ? 'text-amber-500' :
+                                user?.profile?.plan === 'PREMIUM' || user?.profile?.plan === 'AVANZADO' ? 'text-slate-400' :
+                                user?.profile?.plan === 'BASIC' || user?.profile?.plan === 'BÁSICO' ? 'text-blue-500' :
+                                'text-green-500'
+                            }`}>{user?.profile?.plan || 'Básico (FREE)'}</span>
                         </div>
                         <button onClick={onGeneratePDF} disabled={isGeneratingPDF} className="bg-nutrity-primary text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-3 shadow-lg shadow-nutrity-primary/10 hover:scale-105 transition-all">
                             {isGeneratingPDF ? (
@@ -1280,49 +1321,6 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                             </motion.div>
                         )}
 
-                        {activeTab === "subscription" && (
-                            <motion.div key="subscription" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <h2 className="text-3xl font-display font-bold">Planes de Membresía</h2>
-                                        <p className="text-nutrity-gray-text text-sm">Gestiona tu suscripción y accede a beneficios exclusivos Bio-SaaS.</p>
-                                    </div>
-                                    <div className="bg-nutrity-accent/10 px-4 py-2 rounded-xl flex items-center gap-3 border border-nutrity-accent/20">
-                                        <Shield className="w-5 h-5 text-nutrity-accent" />
-                                        <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">Pago Seguro via Stripe</span>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-nutrity-border flex items-center justify-between mb-10">
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-16 h-16 rounded-2xl bg-nutrity-primary text-white flex items-center justify-center shadow-lg shadow-nutrity-primary/20">
-                                            <Sparkles className="w-8 h-8" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-1">Tu Estado Actual</p>
-                                            <h3 className="text-2xl font-bold">Plan {user?.profile?.plan || 'Básico (FREE)'}</h3>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs text-nutrity-gray-text font-medium mb-1 line-through opacity-50">$29/mes</p>
-                                        <p className="text-xl font-bold text-nutrity-success">$0 <span className="text-xs text-nutrity-gray-text font-medium">Bajo Piloto</span></p>
-                                    </div>
-                                </div>
-
-                                <PricingTable
-                                    currentPlan={user?.profile?.plan || 'FREE'}
-                                    userId={user?.id || user?.uid || ''}
-                                />
-
-                                <div className="bg-nutrity-primary/5 p-8 rounded-3xl border border-nutrity-primary/10 flex flex-col items-center text-center">
-                                    <Shield className="w-10 h-10 text-nutrity-primary/40 mb-4" />
-                                    <h4 className="text-lg font-bold mb-2">Transacciones Protegidas via PayPal</h4>
-                                    <p className="text-sm text-nutrity-gray-text max-w-lg">
-                                        Utilizamos el procesamiento seguro de PayPal para todas las transacciones. Tu información financiera está protegida y nunca toca nuestros servidores. Una vez realizado el pago, el acceso al material se habilitará automáticamente.
-                                    </p>
-                                </div>
-                            </motion.div>
-                        )}
 
                         {activeTab === "measurements" && (
                             <motion.div key="measures" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
@@ -1480,10 +1478,19 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <p className="text-nutrity-gray-text text-sm">Cronograma nutricional personalizado para tu fase de remisión metabólica.</p>
                                     </div>
                                     {menuStatus === 'APPROVED' && (
-                                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-[10px] font-bold uppercase tracking-widest">
-                                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                                            Plan Aprobado por Coach
-                                        </span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-[10px] font-bold uppercase tracking-widest">
+                                                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                                                Plan Aprobado por Coach
+                                            </span>
+                                            <button 
+                                                onClick={() => setShowChangeRequestModal(true)}
+                                                className="px-4 py-2 bg-white border border-nutrity-border text-nutrity-gray-text hover:text-nutrity-primary hover:border-nutrity-accent rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
+                                            >
+                                                <MessageCircle className="w-3.5 h-3.5" />
+                                                Solicitar Cambios
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
 
@@ -1549,6 +1556,23 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <span className="px-6 py-3 bg-amber-50 text-amber-600 border border-amber-200 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
                                             <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
                                             Pendiente de Aprobación
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* ESTADO: CHANGES_REQUESTED — solicitó cambios */}
+                                {!isLoadingApprovedMenu && menuStatus === 'CHANGES_REQUESTED' && (
+                                    <div className="nutrity-card p-16 flex flex-col items-center justify-center text-center space-y-6">
+                                        <div className="w-20 h-20 rounded-3xl bg-blue-50 flex items-center justify-center">
+                                            <MessageCircle className="w-10 h-10 text-blue-500" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-xl font-bold text-nutrity-primary">Solicitud de cambios enviada</h3>
+                                            <p className="text-sm text-nutrity-gray-text max-w-sm">Hemos notificado a tu Coach sobre tus observaciones. Pronto recibirás un nuevo plan ajustado a tus necesidades.</p>
+                                        </div>
+                                        <span className="px-6 py-3 bg-blue-50 text-blue-600 border border-blue-200 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
+                                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                                            En Revisión por el Coach
                                         </span>
                                     </div>
                                 )}
@@ -1631,6 +1655,12 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
 
                         {/* Fallback for other tabs */}
+                        {activeTab === "subscription" && (
+                            <motion.div key="subscription" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                                <SubscriptionTab user={user} onSuccess={() => window.location.reload()} />
+                            </motion.div>
+                        )}
+
                         {activeTab === "agenda" && (
                             <motion.div key="agenda" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">

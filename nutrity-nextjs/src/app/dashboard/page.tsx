@@ -53,6 +53,7 @@ export default function DashboardPage() {
                 ...guestEval.plan,
                 rawAnswers: guestEval.data
               };
+              sessionStorage.removeItem("guest_evaluation");
             }
           } catch (e) {
             console.error("Error recovering guest evaluation", e);
