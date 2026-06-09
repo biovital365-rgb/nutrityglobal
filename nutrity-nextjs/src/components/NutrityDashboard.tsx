@@ -64,6 +64,8 @@ import { ThemeInjector } from "./ThemeInjector";
 import SubscriptionTab from "./SubscriptionTab";
 import { getDirectImageUrl } from '../lib/utils';
 import { BioPlanSection } from './BioPlanSection';
+import { LessonAssignment } from './LessonAssignment';
+import { LessonQuiz } from './LessonQuiz';
 
 interface NutrityDashboardProps {
     results: any; // This is the MetabolicPlan
@@ -642,6 +644,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         m?.category?.toLowerCase().includes(microSearch.toLowerCase())
     );
 
+    const upcomingAppointments = appointments
+        .filter(a => new Date(a.date) >= new Date(new Date().setHours(0,0,0,0)))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const nextAppt = upcomingAppointments[0];
+
     return (
         <div id="dashboard-container" className="flex h-screen bg-nutrity-bg text-nutrity-primary overflow-hidden font-body pb-[90px] md:pb-0">
             <ThemeInjector plan={user?.profile?.plan} role={user?.profile?.role} />
@@ -985,8 +992,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Próximo Control</p>
-                                            <h4 className="font-bold text-sm mt-0.5">{appointments[0]?.date || "Programar ahora"}</h4>
-                                            <p className="text-[10px] font-bold text-nutrity-accent mt-1 bg-nutrity-accent/10 inline-block px-2 py-0.5 rounded-full">Auto-Programación</p>
+                                            <h4 className="font-bold text-sm mt-0.5">{nextAppt?.date || "Programar ahora"}</h4>
+                                            <p className="text-[10px] font-bold text-nutrity-accent mt-1 bg-nutrity-accent/10 inline-block px-2 py-0.5 rounded-full">{nextAppt?.time ? `A las ${nextAppt.time}` : "Auto-Programación"}</p>
                                         </div>
                                     </div>
                                     <div className="nutrity-card p-6 flex items-center gap-6 cursor-pointer hover:border-nutrity-success transition-all group" onClick={handlePlanNutricional}>
@@ -1279,6 +1286,14 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                         {activeLesson?.description ? activeLesson.description : selectedCourse.description}
                                                     </p>
                                                 </div>
+                                                
+                                                {activeLesson?.assignment && (
+                                                    <LessonAssignment lessonId={activeLesson.id} assignment={activeLesson.assignment} userId={user?.id || user?.uid} />
+                                                )}
+                                                
+                                                {activeLesson?.quiz && (
+                                                    <LessonQuiz lessonId={activeLesson.id} quiz={activeLesson.quiz} userId={user?.id || user?.uid} />
+                                                )}
                                             </div>
                                             <div className="space-y-6">
                                                 <h3 className="font-display font-bold text-lg">Currículo del Curso</h3>
@@ -1996,7 +2011,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             <span className="w-6 h-6 rounded-full bg-nutrity-accent/20 text-nutrity-accent flex items-center justify-center text-[10px]">{idx + 1}</span>
                                                             {recipe.title}
                                                         </h4>
-                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                             <div>
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Ingredientes</h5>
                                                                 <ul className="space-y-1">
@@ -2019,20 +2034,20 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                     ))}
                                                                 </ol>
                                                             </div>
-                                                            {recipe.instructions && recipe.instructions.length > 0 && (
-                                                                <div>
-                                                                    <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Perfil Metabólico</h5>
-                                                                    <ul className="space-y-1">
-                                                                        {recipe.instructions.map((inst, i) => (
-                                                                            <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
-                                                                                <span className="text-amber-500 font-bold mt-0.5">•</span>
-                                                                                <span>{inst}</span>
-                                                                            </li>
-                                                                        ))}
-                                                                    </ul>
-                                                                </div>
-                                                            )}
                                                         </div>
+                                                        {recipe.instructions && recipe.instructions.length > 0 && (
+                                                            <div className="mt-6">
+                                                                <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Perfil Metabólico</h5>
+                                                                <ul className="space-y-1">
+                                                                    {recipe.instructions.map((inst, i) => (
+                                                                        <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
+                                                                            <span className="text-amber-500 font-bold mt-0.5">•</span>
+                                                                            <span>{inst}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}

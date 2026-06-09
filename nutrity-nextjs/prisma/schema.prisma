@@ -24,6 +24,8 @@ model Organization {
   users               User[]
   dailyMenus          DailyMenu[]
   lessonProgresses    LessonProgress[]
+  quizAttempts        QuizAttempt[]
+  assignmentSubmissions AssignmentSubmission[]
 }
 
 model User {
@@ -54,6 +56,8 @@ model User {
   evaluations         Evaluation[]
   measurements        Measurement[]
   pdfReports          PDFReportLog[]
+  quizAttempts        QuizAttempt[]
+  assignmentSubmissions AssignmentSubmission[]
   organization        Organization?         @relation(fields: [organizationId], references: [id])
 
   @@index([stripeCustomerId])
@@ -186,6 +190,8 @@ model Lesson {
   isFree                   Boolean  @default(false)
   createdAt                DateTime @default(now())
   course                   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quiz                     Quiz?
+  assignment               Assignment?
 
   @@index([courseId])
 }
@@ -307,5 +313,65 @@ model BiologicalDiagnosis {
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([organizationId])
+}
+
+// ─── LMS FASE 2: EVALUACIONES Y TAREAS ───────────────────────────────────────
+
+model Quiz {
+  id          String   @id @default(cuid())
+  lessonId    String   @unique
+  title       String
+  description String?
+  questions   Json     // Array de { text: string, options: string[], correctIndex: number }
+  createdAt   DateTime @default(now())
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  attempts    QuizAttempt[]
+}
+
+model QuizAttempt {
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  quizId         String
+  score          Float         // Sobre 10
+  passed         Boolean       // true si >= 7
+  answers        Json          // Array de { questionIndex: number, selectedIndex: number }
+  createdAt      DateTime      @default(now())
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz           Quiz          @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([userId])
+  @@index([quizId])
+  @@index([organizationId])
+}
+
+model Assignment {
+  id          String                 @id @default(cuid())
+  lessonId    String                 @unique
+  title       String
+  description String
+  createdAt   DateTime               @default(now())
+  lesson      Lesson                 @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  submissions AssignmentSubmission[]
+}
+
+model AssignmentSubmission {
+  id             String        @id @default(cuid())
+  userId         String
+  organizationId String?
+  assignmentId   String
+  content        String
+  feedback       String?
+  status         String        @default("PENDING") // PENDING, REVIEWED
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignment     Assignment    @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  @@index([userId])
+  @@index([assignmentId])
   @@index([organizationId])
 }

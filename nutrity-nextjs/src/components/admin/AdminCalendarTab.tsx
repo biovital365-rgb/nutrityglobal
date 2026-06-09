@@ -17,12 +17,13 @@ interface AdminCalendarTabProps {
     onCloseModal: () => void;
     onSave: (e: React.FormEvent) => Promise<void>;
     setEditingAppt: React.Dispatch<React.SetStateAction<any>>;
+    users: any[];
 }
 
 export function AdminCalendarTab({
     appointments, isSaving, showApptModal, editingAppt, apptFilter,
     onFilterChange, onEditAppt, onNewAppt, onDelete, onRestore,
-    onCloseModal, onSave, setEditingAppt,
+    onCloseModal, onSave, setEditingAppt, users,
 }: AdminCalendarTabProps) {
     const filtered = appointments.filter((a) => {
         if (apptFilter === "ALL") return true;
@@ -113,6 +114,18 @@ export function AdminCalendarTab({
                                 <p className="text-xs text-nutrity-gray-text">Ajusta la programación del paciente</p>
                             </div>
                             <form onSubmit={onSave} className="space-y-5">
+                                {!editingAppt.id && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Paciente *</label>
+                                        <select className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none"
+                                            value={editingAppt.userId || ""} onChange={(e) => setEditingAppt({ ...editingAppt, userId: e.target.value })} required>
+                                            <option value="" disabled>Selecciona un paciente</option>
+                                            {users.map(u => (
+                                                <option key={u.id} value={u.id}>{u.name || u.email}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                                 <FieldInput label="Motivo de la Cita" value={editingAppt.title || ""} onChange={(v) => setEditingAppt({ ...editingAppt, title: v })} required />
                                 <div className="grid grid-cols-2 gap-4">
                                     <FieldInput label="Fecha" type="date" value={editingAppt.date || ""} onChange={(v) => setEditingAppt({ ...editingAppt, date: v })} required />

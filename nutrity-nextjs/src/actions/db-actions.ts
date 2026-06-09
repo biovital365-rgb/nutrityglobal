@@ -85,6 +85,15 @@ export interface Lesson {
     duration: string
     order: number
     isFree: boolean
+    quiz?: {
+        title: string;
+        description: string;
+        questions: Array<{ text: string; options: string[]; correctIndex: number }>;
+    }
+    assignment?: {
+        title: string;
+        description: string;
+    }
 }
 
 const ADMIN_EMAILS = [
@@ -742,7 +751,7 @@ export async function saveMeasurement(userId: string, organizationId: string | u
 
     // --- Módulo de Academia (SaaS) ---
 export async function getCourses(organizationId?: string, includeDeleted = false) {
-        let query = supabase.from('Course').select('*, lessons:Lesson(*)')
+        let query = supabase.from('Course').select('*, lessons:Lesson(*, quiz:Quiz(*), assignment:Assignment(*))')
         if (!includeDeleted) query = query.is('deletedAt', null)
         
         if (organizationId) {
@@ -762,7 +771,7 @@ export async function getCourses(organizationId?: string, includeDeleted = false
 export async function getCourseWithLessons(courseId: string) {
         const { data, error } = await supabase
             .from('Course')
-            .select('*, lessons:Lesson(*)')
+            .select('*, lessons:Lesson(*, quiz:Quiz(*), assignment:Assignment(*))')
             .eq('id', courseId)
             .single()
 
@@ -825,6 +834,31 @@ export async function saveCourse(course: Partial<Course>, organizationId?: strin
                 if (lessonsError) {
                     console.error('saveCourse lessons error:', lessonsError);
                     // Non-fatal, we still saved the course
+                } else {
+                    for (let i = 0; i < lessons.length; i++) {
+                        const lessonData = lessons[i];
+                        const savedLessonId = lessonsPayload[i].id;
+                        
+                        if (lessonData.quiz) {
+                            await prisma.quiz.upsert({
+                                where: { lessonId: savedLessonId },
+                                update: { title: lessonData.quiz.title || '', description: lessonData.quiz.description || '', questions: lessonData.quiz.questions || [] },
+                                create: { lessonId: savedLessonId, title: lessonData.quiz.title || '', description: lessonData.quiz.description || '', questions: lessonData.quiz.questions || [] }
+                            }).catch(console.error);
+                        } else {
+                            await prisma.quiz.deleteMany({ where: { lessonId: savedLessonId } }).catch(() => {});
+                        }
+
+                        if (lessonData.assignment) {
+                            await prisma.assignment.upsert({
+                                where: { lessonId: savedLessonId },
+                                update: { title: lessonData.assignment.title || '', description: lessonData.assignment.description || '' },
+                                create: { lessonId: savedLessonId, title: lessonData.assignment.title || '', description: lessonData.assignment.description || '' }
+                            }).catch(console.error);
+                        } else {
+                            await prisma.assignment.deleteMany({ where: { lessonId: savedLessonId } }).catch(() => {});
+                        }
+                    }
                 }
             }
         }
@@ -1422,3 +1456,110 @@ export async function requestMenuChanges(userId: string, weekStart: string, note
     revalidatePath('/', 'layout');
     return true;
 }
+
+// ─── LMS FASE 2: EVALUACIONES Y TAREAS ───────────────────────────────────────
+
+export async function saveQuiz(lessonId: string, title: string, description: string, questions: any[]) {
+    const user = await getServerUser();
+    if (!user || user.role !== 'ADMIN') throw new Error("Unauthorized");
+
+    const payload = {
+        lessonId,
+        title,
+        description,
+        questions,
+    };
+
+    const data = await prisma.quiz.upsert({
+        where: { lessonId },
+        update: payload,
+        create: payload,
+    });
+    return data;
+}
+
+export async function saveAssignment(lessonId: string, title: string, description: string) {
+    const user = await getServerUser();
+    if (!user || user.role !== 'ADMIN') throw new Error("Unauthorized");
+
+    const payload = {
+        lessonId,
+        title,
+        description,
+    };
+
+    const data = await prisma.assignment.upsert({
+        where: { lessonId },
+        update: payload,
+        create: payload,
+    });
+    return data;
+}
+
+export async function submitQuizAttempt(lessonId: string, score: number, answers: any[] = []) {
+    const user = await getServerUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const quiz = await prisma.quiz.findUnique({ where: { lessonId } });
+    if (!quiz) throw new Error("Quiz not found");
+
+    const passed = score >= 7;
+
+    const attempt = await prisma.quizAttempt.create({
+        data: {
+            userId: user.id,
+            organizationId: user.organizationId,
+            quizId: quiz.id,
+            score,
+            passed,
+            answers,
+        }
+    });
+    return attempt;
+}
+
+export async function submitAssignment(lessonId: string, content: string) {
+    const user = await getServerUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const assignment = await prisma.assignment.findUnique({ where: { lessonId } });
+    if (!assignment) throw new Error("Assignment not found");
+
+    const submission = await prisma.assignmentSubmission.create({
+        data: {
+            userId: user.id,
+            organizationId: user.organizationId,
+            assignmentId: assignment.id,
+            content,
+            status: 'PENDING'
+        }
+    });
+    return submission;
+}
+
+export async function getAssignmentSubmissions(organizationId?: string) {
+    const whereClause: any = {};
+    if (organizationId) {
+        whereClause.organizationId = organizationId;
+    }
+
+    const submissions = await prisma.assignmentSubmission.findMany({
+        where: whereClause,
+        include: { 
+            user: { select: { name: true, email: true } },
+            assignment: { select: { title: true, lesson: { select: { title: true } } } }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+    return submissions;
+}
+
+export async function reviewAssignmentSubmission(submissionId: string, feedback: string) {
+    const updated = await prisma.assignmentSubmission.update({
+        where: { id: submissionId },
+        data: { status: 'REVIEWED', feedback }
+    });
+    return updated;
+}
+
+

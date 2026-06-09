@@ -3,25 +3,25 @@
 Este documento sirve como un punto de partida ("hand-off") para la próxima sesión de IA, asegurando continuidad inmediata en el desarrollo de **Nutrity Global SaaS**.
 
 ## 🎯 Objetivo de la Próxima Sesión
-Ahora que la base de facturación B2C, la visualización dinámica de planes (4 niveles: Free, Basic, Premium, Elite) y la pasarela de PayPal han sido integrados con éxito, el enfoque debe moverse a la **estabilización de funciones del panel administrativo para los Coaches**, además de **afinaciones visuales y funcionales post-despliegue**.
+Habiendo estabilizado la Fase 1 del módulo **Academia (LMS Pro)** con la correcta edición e inserción de lecciones y recursos mediante URLs ligeras, el enfoque de la próxima sesión deberá centrarse en la **Fase 2 del LMS (Interacción Estudiantil)**, implementando sistemas de validación de conocimientos y gestión de estudiantes, además de terminar la sincronización de agenda para los coaches.
 
 ## 📋 Tareas Prioritarias Sugeridas
 
-1. **Dashboard de Conversiones para Coaches (B2B2C)**
-   - *Contexto:* Los coaches (Elite) ahora pueden invitar pacientes con su link `?ref=ORG_ID`.
-   - *Tarea:* Crear una pestaña en el `AdminPanel.tsx` (o un panel específico para el rol `COACH`) donde puedan ver cuántos pacientes se han registrado usando su link y su estado de suscripción.
+1. **Sistema de Evaluación y Puntuaciones (LMS)**
+   - *Contexto:* Los pacientes completan cursos, pero no hay forma de validar su comprensión sobre el método de remisión.
+   - *Tarea:* Diseñar la estructura y UI para Quizzes/Cuestionarios al final de ciertas lecciones, calculando un puntaje (score) que desbloquee certificados o logros dentro de la academia.
 
-2. **Feedback Loop (Botón "Solicitar Cambios")**
-   - *Contexto:* El sistema ya envía el menú aprobado, pero el paciente debe poder reaccionar interactuando más fluido con el Coach.
-   - *Tarea:* Refinar la experiencia UI/UX del botón en el dashboard del paciente que permite enviar un comentario al coach y cambiar el estado del menú a `CHANGES_REQUESTED`.
+2. **Gestión de Tareas o Asignaciones (LMS)**
+   - *Contexto:* El coach necesita encargar misiones prácticas (ej: "Sube foto de tu plato 50-25-25").
+   - *Tarea:* Permitir la creación de "Tareas" dentro de una lección, donde el paciente pueda enviar un input de texto o un enlace, y el coach pueda revisarlo y otorgar un feedback.
 
-3. **Optimizaciones de Marketing y SEO (GEO)**
+3. **Integración Completa de Agenda (CRM)**
+- [x] **Dashboard Administrativo**: Permitir al Admin agendar citas seleccionando al paciente correspondiente y conectando con la BD (`Appointment`).
+- [x] **Visualización Bidireccional**: Mostrar las citas próximas en el "Próximo Control" del paciente y en su tab de Agenda.
+
+4. **Optimizaciones de Marketing y SEO (GEO)**
    - *Contexto:* Preparar la plataforma para escalar en ventas B2C.
    - *Tarea:* Refinar el `robots.txt`, el `sitemap.xml` dinámico y añadir metadatos enriquecidos (JSON-LD) a los artículos del Blog para motores de IA (ChatGPT, Perplexity).
 
-4. **Despliegue y Pruebas E2E**
-   - *Contexto:* Nuevas funciones han sido mergeadas al branch principal.
-   - *Tarea:* Realizar un testing End-to-End exhaustivo sobre los 4 planes en el entorno de producción (o staging en Vercel) confirmando que Stripe/PayPal webhooks y RLS no causen fricciones.
-
 ## 🤖 Contexto para el Agente (System Prompt Hand-off)
-**Para el próximo agente AI:** Al iniciar la sesión, por favor lee primero el archivo `MEMORY.md` para entender las decisiones arquitectónicas recientes (especialmente la inyección de temas de colores UI, pasarelas de pago y la persistencia de perfiles en base a Planes: Basic, Premium, Elite). Aplica el protocolo estricto de UI Premium/SaaS Level 2 y asegura el buen funcionamiento responsive de las tarjetas de precios en `SubscriptionTab.tsx`.
+**Para el próximo agente AI:** Al iniciar la sesión, revisa `MEMORY.md` para asimilar el flujo arquitectónico del LMS, especialmente la decisión de usar URLs públicas ligeras para archivos pesados (Videos/PDFs). El objetivo es construir el motor de evaluaciones y tareas respetando el diseño Premium/Glassmorphism y manteniendo la base de datos libre de binarios.

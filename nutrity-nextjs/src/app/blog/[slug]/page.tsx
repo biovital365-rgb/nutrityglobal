@@ -20,14 +20,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
         title: `${post.title} | BioVital.360 Blog`,
         description: post.excerpt || post.content.substring(0, 155),
+        keywords: post.tags,
         openGraph: {
             title: post.title,
             description: post.excerpt || post.content.substring(0, 155),
-            images: post.thumbnail ? [{ url: post.thumbnail }] : [],
+            images: post.thumbnail ? [{ url: post.thumbnail }] : [{ url: "/og-image.jpg" }],
             type: "article",
             publishedTime: new Date(post.createdAt).toISOString(),
             authors: [post.author],
         },
+        twitter: {
+            card: "summary_large_image",
+            title: post.title,
+            description: post.excerpt || post.content.substring(0, 155),
+            images: post.thumbnail ? [post.thumbnail] : ["/og-image.jpg"],
+        }
     };
 }
 
@@ -78,7 +85,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         },
         headline: post.title,
         description: post.excerpt || post.content.substring(0, 155),
-        image: post.thumbnail ? [post.thumbnail] : [],
+        image: post.thumbnail ? [post.thumbnail] : [`${baseUrl}/og-image.jpg`],
         datePublished: new Date(post.createdAt).toISOString(),
         dateModified: new Date(post.updatedAt || post.createdAt).toISOString(),
         author: {
@@ -92,7 +99,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 '@type': 'ImageObject',
                 url: `${baseUrl}/favicon.ico`,
             }
-        }
+        },
+        keywords: post.tags ? post.tags.join(', ') : '',
+        articleSection: post.category,
+        wordCount: post.content.split(" ").length
     };
 
     return (
