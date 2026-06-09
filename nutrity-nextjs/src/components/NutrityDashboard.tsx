@@ -815,7 +815,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                 <div className="space-y-3">
                                                     <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Protocolo Holístico Personalizado</p>
                                                     <div className="grid sm:grid-cols-2 gap-3">
-                                                        {results.nmgDiagnosis.holisticApproach.map((item: { discipline: string; recommendation: string }, idx: number) => (
+                                                        {(results.nmgDiagnosis.holisticApproach || []).map((item: { discipline: string; recommendation: string }, idx: number) => (
                                                             <div key={idx} className="flex gap-3 p-3 bg-nutrity-accent/5 border border-nutrity-accent/10 rounded-xl">
                                                                 <div className="w-6 h-6 rounded-lg bg-nutrity-accent/20 flex items-center justify-center shrink-0 mt-0.5">
                                                                     <Sparkles className="w-3 h-3 text-nutrity-accent" />
@@ -1138,7 +1138,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                 <div className="flex flex-col gap-1.5">
                                                     <span className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest opacity-50">Fuentes Bioavales</span>
                                                     <div className="flex flex-wrap gap-2">
-                                                        {micro.sources.map((s, i) => (
+                                                        {(micro.sources || []).map((s: any, i: number) => (
                                                             <span key={i} className="px-2 py-0.5 bg-nutrity-bg text-[10px] font-bold text-nutrity-primary rounded-md">{s}</span>
                                                         ))}
                                                     </div>
@@ -1298,7 +1298,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                             <div className="space-y-6">
                                                 <h3 className="font-display font-bold text-lg">Currículo del Curso</h3>
                                                 <div className="space-y-3">
-                                                    {selectedCourse.lessons?.sort((a, b) => a.order - b.order).map((lesson, idx) => (
+                                                    {(selectedCourse.lessons || []).sort((a: any, b: any) => a.order - b.order).map((lesson: any, idx: number) => (
                                                         <div key={lesson.id}
                                                             onClick={async () => {
                                                                 setActiveLesson(lesson);
@@ -2039,7 +2039,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             <div className="mt-6">
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Perfil Metabólico</h5>
                                                                 <ul className="space-y-1">
-                                                                    {recipe.instructions.map((inst, i) => (
+                                                                    {(Array.isArray(recipe.instructions) ? recipe.instructions : []).map((inst: any, i: number) => (
                                                                         <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
                                                                             <span className="text-amber-500 font-bold mt-0.5">•</span>
                                                                             <span>{inst}</span>
@@ -2110,7 +2110,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                             <Leaf className="w-4 h-4 text-nutrity-success" /> Fuentes Bioavales
                                         </h3>
                                         <ul className="space-y-2">
-                                            {selectedMicro.sources.map((source, i) => (
+                                            {(selectedMicro.sources || []).map((source: string, i: number) => (
                                                 <li key={i} className="flex items-center gap-2">
                                                     <div className="w-2 h-2 rounded-full bg-nutrity-success/50" />
                                                     <span className="text-sm font-bold text-nutrity-primary">{source}</span>
@@ -2124,7 +2124,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                             <AlertTriangle className="w-4 h-4 text-rose-500" /> Señales de Deficiencia
                                         </h3>
                                         <ul className="space-y-2">
-                                            {selectedMicro.deficiencySigns.map((sign, i) => (
+                                            {(selectedMicro.deficiencySigns || []).map((sign: string, i: number) => (
                                                 <li key={i} className="flex items-center gap-2">
                                                     <div className="w-2 h-2 rounded-full bg-rose-500/50" />
                                                     <span className="text-sm font-bold text-nutrity-primary">{sign}</span>
