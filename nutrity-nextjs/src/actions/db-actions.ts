@@ -802,6 +802,11 @@ export async function saveCourse(course: Partial<Course>, organizationId?: strin
                 title: lesson.title || `Lección ${idx + 1}`,
                 description: lesson.description || null,
                 videoUrl: lesson.videoUrl || null,
+                videoInstructions: lesson.videoInstructions || null,
+                presentationUrl: lesson.presentationUrl || null,
+                presentationInstructions: lesson.presentationInstructions || null,
+                pdfUrl: lesson.pdfUrl || null,
+                pdfInstructions: lesson.pdfInstructions || null,
                 duration: lesson.duration || null,
                 order: lesson.order !== undefined ? lesson.order : idx,
                 isFree: lesson.isFree || false

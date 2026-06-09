@@ -171,16 +171,21 @@ model Course {
 }
 
 model Lesson {
-  id          String   @id @default(cuid())
-  courseId    String
-  title       String
-  description String?
-  videoUrl    String?
-  duration    String?
-  order       Int
-  isFree      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id                       String   @id @default(cuid())
+  courseId                 String
+  title                    String
+  description              String?
+  videoUrl                 String?
+  videoInstructions        String?
+  presentationUrl          String?
+  presentationInstructions String?
+  pdfUrl                   String?
+  pdfInstructions          String?
+  duration                 String?
+  order                    Int
+  isFree                   Boolean  @default(false)
+  createdAt                DateTime @default(now())
+  course                   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
 }
