@@ -34,7 +34,7 @@ export function LessonQuiz({ lessonId, quiz, userId }: LessonQuizProps) {
         try {
             // Calculate score client-side for simplicity before sending to backend
             let correctCount = 0;
-            quiz.questions.forEach((q, idx) => {
+            (quiz.questions || []).forEach((q, idx) => {
                 if (answers[idx] === q.correctIndex) {
                     correctCount++;
                 }
@@ -84,13 +84,13 @@ export function LessonQuiz({ lessonId, quiz, userId }: LessonQuizProps) {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-                {quiz.questions.map((q, qIdx) => (
+                {(quiz.questions || []).map((q, qIdx) => (
                     <div key={qIdx} className="space-y-4">
                         <h4 className="font-bold text-nutrity-primary text-sm leading-relaxed">
                             <span className="text-nutrity-accent mr-2">{qIdx + 1}.</span> {q.text}
                         </h4>
                         <div className="space-y-2">
-                            {q.options.map((opt, oIdx) => (
+                            {(q.options || []).map((opt, oIdx) => (
                                 <label key={oIdx} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${answers[qIdx] === oIdx ? 'bg-nutrity-accent/5 border-nutrity-accent' : 'bg-slate-50 border-nutrity-border/50 hover:border-nutrity-accent/30'}`}>
                                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${answers[qIdx] === oIdx ? 'border-nutrity-accent' : 'border-nutrity-gray-text/30'}`}>
                                         {answers[qIdx] === oIdx && <div className="w-2.5 h-2.5 rounded-full bg-nutrity-accent" />}
