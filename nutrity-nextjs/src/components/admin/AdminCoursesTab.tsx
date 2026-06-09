@@ -190,19 +190,108 @@ export function AdminCoursesTab({
                                                                 />
                                                             </div>
                                                         </div>
-                                                        <div>
-                                                            <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">URL del Video (YouTube/Drive)</label>
-                                                            <input
-                                                                type="url"
-                                                                value={lesson.videoUrl}
-                                                                onChange={(e) => {
-                                                                    const newLessons = [...(editingCourse.lessons || [])];
-                                                                    newLessons[idx] = { ...lesson, videoUrl: e.target.value };
-                                                                    setEditingCourse(p => ({ ...p, lessons: newLessons }));
-                                                                }}
-                                                                className="w-full bg-white border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all"
-                                                                placeholder="https://..."
-                                                            />
+                                                        <div className="space-y-4 pt-2">
+                                                            <div className="p-4 bg-white rounded-xl border border-nutrity-border/50 space-y-3">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <div className="w-6 h-6 rounded-md bg-rose-50 text-rose-500 flex items-center justify-center font-bold text-xs">1</div>
+                                                                    <h5 className="text-xs font-bold text-nutrity-primary uppercase tracking-wider">Recurso: Video</h5>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">URL del Video (YouTube/Vimeo/Drive)</label>
+                                                                    <input
+                                                                        type="url"
+                                                                        value={lesson.videoUrl || ''}
+                                                                        onChange={(e) => {
+                                                                            const newLessons = [...(editingCourse.lessons || [])];
+                                                                            newLessons[idx] = { ...lesson, videoUrl: e.target.value };
+                                                                            setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                        }}
+                                                                        className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all"
+                                                                        placeholder="https://..."
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">Indicaciones del Video</label>
+                                                                    <textarea
+                                                                        value={lesson.videoInstructions || ''}
+                                                                        onChange={(e) => {
+                                                                            const newLessons = [...(editingCourse.lessons || [])];
+                                                                            newLessons[idx] = { ...lesson, videoInstructions: e.target.value };
+                                                                            setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                        }}
+                                                                        className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all h-16 resize-none"
+                                                                        placeholder="Instrucciones para este video..."
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="p-4 bg-white rounded-xl border border-nutrity-border/50 space-y-3">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <div className="w-6 h-6 rounded-md bg-amber-50 text-amber-500 flex items-center justify-center font-bold text-xs">2</div>
+                                                                    <h5 className="text-xs font-bold text-nutrity-primary uppercase tracking-wider">Recurso: Presentación (PPT)</h5>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">URL de Presentación (Google Drive/Canva)</label>
+                                                                    <input
+                                                                        type="url"
+                                                                        value={lesson.presentationUrl || ''}
+                                                                        onChange={(e) => {
+                                                                            const newLessons = [...(editingCourse.lessons || [])];
+                                                                            newLessons[idx] = { ...lesson, presentationUrl: e.target.value };
+                                                                            setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                        }}
+                                                                        className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all"
+                                                                        placeholder="https://..."
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">Indicaciones de Presentación</label>
+                                                                    <textarea
+                                                                        value={lesson.presentationInstructions || ''}
+                                                                        onChange={(e) => {
+                                                                            const newLessons = [...(editingCourse.lessons || [])];
+                                                                            newLessons[idx] = { ...lesson, presentationInstructions: e.target.value };
+                                                                            setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                        }}
+                                                                        className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all h-16 resize-none"
+                                                                        placeholder="Instrucciones para las diapositivas..."
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="p-4 bg-white rounded-xl border border-nutrity-border/50 space-y-3">
+                                                                <div className="flex items-center gap-2 mb-2">
+                                                                    <div className="w-6 h-6 rounded-md bg-blue-50 text-blue-500 flex items-center justify-center font-bold text-xs">3</div>
+                                                                    <h5 className="text-xs font-bold text-nutrity-primary uppercase tracking-wider">Recurso: Archivo PDF</h5>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">URL del PDF (Google Drive/Dropbox)</label>
+                                                                    <input
+                                                                        type="url"
+                                                                        value={lesson.pdfUrl || ''}
+                                                                        onChange={(e) => {
+                                                                            const newLessons = [...(editingCourse.lessons || [])];
+                                                                            newLessons[idx] = { ...lesson, pdfUrl: e.target.value };
+                                                                            setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                        }}
+                                                                        className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all"
+                                                                        placeholder="https://..."
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">Indicaciones del PDF</label>
+                                                                    <textarea
+                                                                        value={lesson.pdfInstructions || ''}
+                                                                        onChange={(e) => {
+                                                                            const newLessons = [...(editingCourse.lessons || [])];
+                                                                            newLessons[idx] = { ...lesson, pdfInstructions: e.target.value };
+                                                                            setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                        }}
+                                                                        className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20 transition-all h-16 resize-none"
+                                                                        placeholder="Instrucciones para el material de lectura..."
+                                                                    />
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                         <div>
                                                             <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">Descripción Breve</label>
