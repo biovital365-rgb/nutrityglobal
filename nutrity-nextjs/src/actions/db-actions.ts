@@ -77,6 +77,11 @@ export interface Lesson {
     title: string
     description: string
     videoUrl: string
+    videoInstructions?: string
+    presentationUrl?: string
+    presentationInstructions?: string
+    pdfUrl?: string
+    pdfInstructions?: string
     duration: string
     order: number
     isFree: boolean
