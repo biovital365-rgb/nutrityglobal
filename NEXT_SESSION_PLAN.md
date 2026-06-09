@@ -20,8 +20,8 @@ Habiendo estabilizado la Fase 1 del módulo **Academia (LMS Pro)** con la correc
 - [x] **Visualización Bidireccional**: Mostrar las citas próximas en el "Próximo Control" del paciente y en su tab de Agenda.
 
 4. **Optimizaciones de Marketing y SEO (GEO)**
-   - *Contexto:* Preparar la plataforma para escalar en ventas B2C.
-   - *Tarea:* Refinar el `robots.txt`, el `sitemap.xml` dinámico y añadir metadatos enriquecidos (JSON-LD) a los artículos del Blog para motores de IA (ChatGPT, Perplexity).
+   - [x] *Contexto:* Preparar la plataforma para escalar en ventas B2C.
+   - [x] *Tarea:* Refinar el `robots.txt`, el `sitemap.xml` dinámico y añadir metadatos enriquecidos (JSON-LD) a los artículos del Blog para motores de IA (ChatGPT, Perplexity). Adición de metadata global e imagen en `layout.tsx`.
 
 ## 🤖 Contexto para el Agente (System Prompt Hand-off)
 **Para el próximo agente AI:** Al iniciar la sesión, revisa `MEMORY.md` para asimilar el flujo arquitectónico del LMS, especialmente la decisión de usar URLs públicas ligeras para archivos pesados (Videos/PDFs). El objetivo es construir el motor de evaluaciones y tareas respetando el diseño Premium/Glassmorphism y manteniendo la base de datos libre de binarios.

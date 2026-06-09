@@ -24,7 +24,7 @@ export function LessonQuiz({ lessonId, quiz, userId }: LessonQuizProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
 
-    const isComplete = Object.keys(answers).length === quiz.questions.length;
+    const isComplete = Object.keys(answers || {})?.length === (quiz?.questions?.length || 0);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,7 +39,7 @@ export function LessonQuiz({ lessonId, quiz, userId }: LessonQuizProps) {
                     correctCount++;
                 }
             });
-            const score = Math.round((correctCount / quiz.questions.length) * 10);
+            const score = Math.round((correctCount / (quiz?.questions?.length || 1)) * 10);
             
             const response = await submitQuizAttempt(lessonId, score);
             setResult({ score, passed: response.passed });

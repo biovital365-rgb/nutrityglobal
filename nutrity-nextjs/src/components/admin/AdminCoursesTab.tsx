@@ -366,7 +366,7 @@ export function AdminCoursesTab({
                                                                         }} className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20" placeholder="Título del Quiz" />
                                                                         <div className="p-2 bg-slate-50 border border-nutrity-border/50 rounded-xl space-y-2">
                                                                             <div className="flex justify-between items-center">
-                                                                                <span className="text-[10px] font-bold text-nutrity-gray-text uppercase">Preguntas ({lesson.quiz.questions.length})</span>
+                                                                                <span className="text-[10px] font-bold text-nutrity-gray-text uppercase">Preguntas ({lesson.quiz?.questions?.length || 0})</span>
                                                                                 <button type="button" onClick={() => {
                                                                                     const newLessons = [...(editingCourse.lessons || [])];
                                                                                     newLessons[idx].quiz!.questions.push({ text: "Nueva Pregunta", options: ["Opción 1", "Opción 2"], correctIndex: 0 });
