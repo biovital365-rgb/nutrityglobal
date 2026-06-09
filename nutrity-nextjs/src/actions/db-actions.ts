@@ -742,7 +742,7 @@ export async function saveMeasurement(userId: string, organizationId: string | u
 
     // --- Módulo de Academia (SaaS) ---
 export async function getCourses(organizationId?: string, includeDeleted = false) {
-        let query = supabase.from('Course').select('*')
+        let query = supabase.from('Course').select('*, lessons:Lesson(*)')
         if (!includeDeleted) query = query.is('deletedAt', null)
         
         if (organizationId) {
