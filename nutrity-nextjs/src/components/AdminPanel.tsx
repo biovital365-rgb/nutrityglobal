@@ -291,12 +291,12 @@ export function AdminPanel({ user }: AdminPanelProps) {
         { id: "courses", icon: BookOpen, label: "Cursos", count: courses.length },
         { id: "users", icon: Users, label: "Usuarios", count: users.length },
         { id: "calendar", icon: Calendar, label: "Calendario", count: appointments.length },
-        { id: "reports", icon: FileText, label: "Reportes PDF", count: pdfReports.length },
+        { id: "reports", icon: FileText, label: "Reportes PDF", count: pdfReports?.length || 0 },
         { id: "crm", icon: Settings, label: "CRM Automático", count: users.length },
-        { id: "blog", icon: BookOpen, label: "Blog", count: posts.length },
-        { id: "submissions", icon: FileText, label: "Tareas", count: submissions.length },
+        { id: "blog", icon: BookOpen, label: "Blog", count: posts?.length || 0 },
+        { id: "submissions", icon: FileText, label: "Tareas", count: submissions?.length || 0 },
         { id: "landing", icon: LayoutTemplate, label: "Landing CMS", count: 1 },
-        { id: "payments", icon: CreditCard, label: "Planes y Pagos", count: users.filter(u => u.plan && u.plan !== "FREEMIUM").length },
+        { id: "payments", icon: CreditCard, label: "Planes y Pagos", count: users?.filter(u => u.plan && u.plan !== "FREEMIUM")?.length || 0 },
     ];
 
     // ─── Filtered data ────────────────────────────────────────────────────────

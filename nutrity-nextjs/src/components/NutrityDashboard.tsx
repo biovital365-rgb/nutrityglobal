@@ -226,7 +226,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const [changeRequestNotes, setChangeRequestNotes] = useState("");
 
     const handleRequestChanges = async () => {
-        if (!changeRequestNotes.trim() || !(user?.id || user?.uid) || approvedMenuDays.length === 0) return;
+        if (!changeRequestNotes?.trim() || !(user?.id || user?.uid) || (approvedMenuDays?.length || 0) === 0) return;
         setIsRequestingChanges(true);
         try {
             // Utilizamos el weekStart del primer día aprobado (asumiendo que están agrupados por semana)
@@ -644,7 +644,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         m?.category?.toLowerCase().includes(microSearch.toLowerCase())
     );
 
-    const upcomingAppointments = appointments
+    const upcomingAppointments = (appointments || [])
         .filter(a => new Date(a.date) >= new Date(new Date().setHours(0,0,0,0)))
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const nextAppt = upcomingAppointments[0];
@@ -1221,7 +1221,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                     }
                                                                     const detailed = await dbService.getCourseWithLessons(course.id);
                                                                     setSelectedCourse(detailed);
-                                                                    if (detailed?.lessons && detailed.lessons.length > 0) {
+                                                                    if (detailed?.lessons && detailed.lessons?.length > 0) {
                                                                         setActiveLesson(detailed.lessons.sort((a: any, b: any) => a.order - b.order)[0]);
                                                                     }
                                                                 }}
@@ -1993,10 +1993,10 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                     </div>
                                 </section>
 
-                                {selectedFood.recipes && selectedFood.recipes.length > 0 && (
+                                {selectedFood?.recipes && selectedFood.recipes?.length > 0 && (
                                     <section>
                                         <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-4 flex items-center gap-2">
-                                            <ChefHat className="w-4 h-4 text-nutrity-accent" /> Recetas Recomendadas ({selectedFood.recipes.length})
+                                            <ChefHat className="w-4 h-4 text-nutrity-accent" /> Recetas Recomendadas ({selectedFood.recipes?.length || 0})
                                         </h3>
                                         <div className="space-y-4">
                                             {selectedFood.recipes.map((recipe, idx) => (
@@ -2035,7 +2035,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                 </ol>
                                                             </div>
                                                         </div>
-                                                        {recipe.instructions && recipe.instructions.length > 0 && (
+                                                        {recipe.instructions && recipe.instructions?.length > 0 && (
                                                             <div className="mt-6">
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Perfil Metabólico</h5>
                                                                 <ul className="space-y-1">
