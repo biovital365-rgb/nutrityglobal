@@ -60,6 +60,15 @@ export interface Lesson {
     duration: string
     order: number
     isFree: boolean
+    quiz?: {
+        title: string;
+        description: string;
+        questions: Array<{ text: string; options: string[]; correctIndex: number }>;
+    }
+    assignment?: {
+        title: string;
+        description: string;
+    }
 }
 export interface Post {
     id: string;

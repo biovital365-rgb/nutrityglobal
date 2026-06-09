@@ -306,6 +306,106 @@ export function AdminCoursesTab({
                                                                 placeholder="En esta lección aprenderás..."
                                                             />
                                                         </div>
+
+                                                        {/* ─── TAREAS Y CUESTIONARIOS ─── */}
+                                                        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-nutrity-border/50">
+                                                            {/* Tarea/Asignación */}
+                                                            <div className="p-4 bg-white rounded-xl border border-nutrity-border/50 space-y-3">
+                                                                <div className="flex items-center justify-between mb-2">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-6 h-6 rounded-md bg-nutrity-accent/10 text-nutrity-accent flex items-center justify-center font-bold text-xs">T</div>
+                                                                        <h5 className="text-xs font-bold text-nutrity-primary uppercase tracking-wider">Tarea Práctica</h5>
+                                                                    </div>
+                                                                    <button type="button" onClick={() => {
+                                                                        const newLessons = [...(editingCourse.lessons || [])];
+                                                                        if (newLessons[idx].assignment) delete newLessons[idx].assignment;
+                                                                        else newLessons[idx].assignment = { title: "Reflexión del día", description: "Describe tu menú de ayer..." };
+                                                                        setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                    }} className="text-[10px] font-bold text-nutrity-accent hover:underline">
+                                                                        {lesson.assignment ? 'Eliminar' : 'Habilitar'}
+                                                                    </button>
+                                                                </div>
+                                                                {lesson.assignment && (
+                                                                    <div className="space-y-2">
+                                                                        <input type="text" value={lesson.assignment.title} onChange={e => {
+                                                                            const newLessons = [...(editingCourse.lessons || [])];
+                                                                            newLessons[idx].assignment!.title = e.target.value;
+                                                                            setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                        }} className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20" placeholder="Título de la tarea" />
+                                                                        <textarea value={lesson.assignment.description} onChange={e => {
+                                                                            const newLessons = [...(editingCourse.lessons || [])];
+                                                                            newLessons[idx].assignment!.description = e.target.value;
+                                                                            setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                        }} className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-2.5 rounded-xl h-20 resize-none focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20" placeholder="Instrucciones para el paciente..." />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Cuestionario (Quiz) */}
+                                                            <div className="p-4 bg-white rounded-xl border border-nutrity-border/50 space-y-3">
+                                                                <div className="flex items-center justify-between mb-2">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-6 h-6 rounded-md bg-nutrity-primary/10 text-nutrity-primary flex items-center justify-center font-bold text-xs">Q</div>
+                                                                        <h5 className="text-xs font-bold text-nutrity-primary uppercase tracking-wider">Cuestionario</h5>
+                                                                    </div>
+                                                                    <button type="button" onClick={() => {
+                                                                        const newLessons = [...(editingCourse.lessons || [])];
+                                                                        if (newLessons[idx].quiz) delete newLessons[idx].quiz;
+                                                                        else newLessons[idx].quiz = { title: "Cuestionario de Lección", description: "", questions: [{ text: "¿Cuál es el beneficio principal?", options: ["Opción A", "Opción B", "Opción C"], correctIndex: 0 }] };
+                                                                        setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                    }} className="text-[10px] font-bold text-nutrity-accent hover:underline">
+                                                                        {lesson.quiz ? 'Eliminar' : 'Habilitar'}
+                                                                    </button>
+                                                                </div>
+                                                                {lesson.quiz && (
+                                                                    <div className="space-y-2">
+                                                                        <input type="text" value={lesson.quiz.title} onChange={e => {
+                                                                            const newLessons = [...(editingCourse.lessons || [])];
+                                                                            newLessons[idx].quiz!.title = e.target.value;
+                                                                            setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                        }} className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20" placeholder="Título del Quiz" />
+                                                                        <div className="p-2 bg-slate-50 border border-nutrity-border/50 rounded-xl space-y-2">
+                                                                            <div className="flex justify-between items-center">
+                                                                                <span className="text-[10px] font-bold text-nutrity-gray-text uppercase">Preguntas ({lesson.quiz.questions.length})</span>
+                                                                                <button type="button" onClick={() => {
+                                                                                    const newLessons = [...(editingCourse.lessons || [])];
+                                                                                    newLessons[idx].quiz!.questions.push({ text: "Nueva Pregunta", options: ["Opción 1", "Opción 2"], correctIndex: 0 });
+                                                                                    setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                                }} className="text-[10px] font-bold text-nutrity-accent">+ Añadir</button>
+                                                                            </div>
+                                                                            {lesson.quiz.questions.map((q, qIdx) => (
+                                                                                <div key={qIdx} className="space-y-1 p-2 bg-white rounded border border-nutrity-border/50 relative group/q">
+                                                                                    <button type="button" onClick={() => {
+                                                                                        const newLessons = [...(editingCourse.lessons || [])];
+                                                                                        newLessons[idx].quiz!.questions.splice(qIdx, 1);
+                                                                                        setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                                    }} className="absolute top-1 right-1 text-red-500 opacity-0 group-hover/q:opacity-100"><Trash2 className="w-3 h-3"/></button>
+                                                                                    <input type="text" value={q.text} onChange={e => {
+                                                                                        const newLessons = [...(editingCourse.lessons || [])];
+                                                                                        newLessons[idx].quiz!.questions[qIdx].text = e.target.value;
+                                                                                        setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                                    }} className="w-full text-xs p-1 border-b border-nutrity-border/50 focus:outline-none" placeholder="Pregunta" />
+                                                                                    {q.options.map((opt, oIdx) => (
+                                                                                        <div key={oIdx} className="flex items-center gap-1">
+                                                                                            <input type="radio" name={`correct-${idx}-${qIdx}`} checked={q.correctIndex === oIdx} onChange={() => {
+                                                                                                const newLessons = [...(editingCourse.lessons || [])];
+                                                                                                newLessons[idx].quiz!.questions[qIdx].correctIndex = oIdx;
+                                                                                                setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                                            }} className="w-3 h-3" />
+                                                                                            <input type="text" value={opt} onChange={e => {
+                                                                                                const newLessons = [...(editingCourse.lessons || [])];
+                                                                                                newLessons[idx].quiz!.questions[qIdx].options[oIdx] = e.target.value;
+                                                                                                setEditingCourse(p => ({ ...p, lessons: newLessons }));
+                                                                                            }} className="flex-1 text-[10px] p-1 border border-transparent hover:border-nutrity-border/50 focus:border-nutrity-border/50 focus:outline-none" />
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

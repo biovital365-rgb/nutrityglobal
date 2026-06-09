@@ -22,6 +22,7 @@ import AdminBlogTab from "./admin/AdminBlogTab";
 import { AdminLandingTab } from "./admin/AdminLandingTab";
 import { AdminPaymentsTab } from "./admin/AdminPaymentsTab";
 import { AdminConversionsTab } from "./admin/AdminConversionsTab";
+import { AdminSubmissionsTab } from "./admin/AdminSubmissionsTab";
 import { DeleteConfirmModal } from "./admin/shared";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -42,7 +43,7 @@ interface AdminPanelProps {
     onBackToDashboard?: () => void;
 }
 
-type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm" | "calendar" | "reports" | "blog" | "landing" | "payments" | "conversions";
+type AdminSection = "foods" | "micronutrients" | "menu" | "courses" | "users" | "crm" | "calendar" | "reports" | "blog" | "landing" | "payments" | "conversions" | "submissions";
 
 // ─── Empty templates ─────────────────────────────────────────────────────────
 const emptyFood: Partial<FoodItem> = {
@@ -75,6 +76,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [pdfReports, setPdfReports] = useState<any[]>([]);
     const [landingConfig, setLandingConfig] = useState<any>({});
     const [posts, setPosts] = useState<Post[]>([]);
+    const [submissions, setSubmissions] = useState<any[]>([]);
 
     // Modal state for foods
     const [showFoodModal, setShowFoodModal] = useState(false);
@@ -112,7 +114,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const loadAll = useCallback(async () => {
         const orgId = user?.profile?.organization?.id;
         try {
-            const [foodData, microData, courseData, userData, appointmentData, reportData, landingData, postData] = await Promise.all([
+            const [foodData, microData, courseData, userData, appointmentData, reportData, landingData, postData, submissionsData] = await Promise.all([
                 dbService.getFoods().catch(() => []),
                 dbService.getMicronutrients().catch(() => []),
                 dbService.getCourses(orgId, showDeleted).catch(() => []),
@@ -121,6 +123,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                 dbService.getPDFReports(orgId).catch(() => []),
                 dbService.getLandingConfig(orgId).catch(() => ({})),
                 dbService.getPosts(orgId, false).catch(() => []),
+                dbService.getAssignmentSubmissions(orgId).catch(() => []),
             ]);
             setFoods(foodData);
             setMicros(microData);
@@ -130,6 +133,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
             setPdfReports(reportData);
             setLandingConfig(landingData || {});
             setPosts(postData);
+            setSubmissions(submissionsData);
         } catch (err) {
             console.error("Admin data load error:", err);
             notify("error", "Error al cargar datos");
@@ -222,15 +226,28 @@ export function AdminPanel({ user }: AdminPanelProps) {
         if (!editingAppt) return;
         setIsSaving(true);
         try {
-            await dbService.updateAppointment(editingAppt.id, {
-                title: editingAppt.title, date: editingAppt.date,
-                time: editingAppt.time, type: editingAppt.type,
-            });
+            if (editingAppt.id) {
+                await dbService.updateAppointment(editingAppt.id, {
+                    title: editingAppt.title, date: editingAppt.date,
+                    time: editingAppt.time, type: editingAppt.type,
+                });
+                notify("success", "Cita actualizada correctamente.");
+            } else {
+                if (!editingAppt.userId) {
+                    notify("error", "Debes seleccionar un paciente.");
+                    setIsSaving(false);
+                    return;
+                }
+                await dbService.saveAppointment(editingAppt.userId, user?.profile?.organization?.id, {
+                    title: editingAppt.title, date: editingAppt.date,
+                    time: editingAppt.time, type: editingAppt.type,
+                });
+                notify("success", "Cita creada correctamente.");
+            }
             const updated = await dbService.getAllAppointments(user?.profile?.organization?.id);
             setAppointments(updated);
-            notify("success", "Cita actualizada correctamente.");
             setShowApptModal(false);
-        } catch { notify("error", "Error al actualizar la cita."); }
+        } catch { notify("error", "Error al procesar la cita."); }
         finally { setIsSaving(false); }
     };
 
@@ -277,6 +294,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
         { id: "reports", icon: FileText, label: "Reportes PDF", count: pdfReports.length },
         { id: "crm", icon: Settings, label: "CRM Automático", count: users.length },
         { id: "blog", icon: BookOpen, label: "Blog", count: posts.length },
+        { id: "submissions", icon: FileText, label: "Tareas", count: submissions.length },
         { id: "landing", icon: LayoutTemplate, label: "Landing CMS", count: 1 },
         { id: "payments", icon: CreditCard, label: "Planes y Pagos", count: users.filter(u => u.plan && u.plan !== "FREEMIUM").length },
     ];
@@ -487,13 +505,14 @@ export function AdminPanel({ user }: AdminPanelProps) {
                 {section === "calendar" && (
                     <AdminCalendarTab
                         appointments={appointments}
+                        users={users}
                         isSaving={isSaving}
                         showApptModal={showApptModal}
                         editingAppt={editingAppt}
                         apptFilter={apptFilter}
                         onFilterChange={setApptFilter}
                         onEditAppt={(a) => { setEditingAppt(a); setShowApptModal(true); }}
-                        onNewAppt={() => { setEditingAppt({ date: new Date().toISOString().split("T")[0], time: "10:00", title: "Consulta de Control", type: "VIRTUAL" }); setShowApptModal(true); }}
+                        onNewAppt={() => { setEditingAppt({ title: "", date: "", time: "", type: "Virtual", userId: "" }); setShowApptModal(true); }}
                         onDelete={(id, name) => setDeleteTarget({ type: "calendar", id, name })}
                         onRestore={(id) => handleRestore("calendar", id)}
                         onCloseModal={() => setShowApptModal(false)}
@@ -512,6 +531,27 @@ export function AdminPanel({ user }: AdminPanelProps) {
 
                 {section === "blog" && (
                     <AdminBlogTab user={user} posts={posts} setPosts={setPosts} />
+                )}
+
+                {section === "submissions" && (
+                    <AdminSubmissionsTab 
+                        submissions={submissions} 
+                        isSaving={isSaving}
+                        onReview={async (subId, feedback) => {
+                            setIsSaving(true);
+                            try {
+                                await dbService.reviewAssignmentSubmission(subId, feedback);
+                                const orgId = user?.profile?.organization?.id;
+                                const refreshed = await dbService.getAssignmentSubmissions(orgId);
+                                setSubmissions(refreshed);
+                                notify("success", "Revisión enviada");
+                            } catch (e) {
+                                notify("error", "Error al guardar revisión");
+                            } finally {
+                                setIsSaving(false);
+                            }
+                        }}
+                    />
                 )}
 
                 {section === "landing" && (
