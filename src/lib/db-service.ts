@@ -800,39 +800,6 @@ export const dbService = {
         return data
     },
 
-    // Sincronización Forzada de Catálogos (Para Admin) - CORREGIDO PARA EVITAR PÉRDIDA DE DATOS
-    async forceSyncCatalog(type: 'foods' | 'micros', organizationId?: string) {
-        if (type === 'foods') {
-            const { foodCatalog } = await import('../lib/food-data');
-            
-            // 1. Obtener todos los alimentos existentes
-            const { data: existingFoods } = await supabase
-                .from('Food')
-                .select('name');
-            const existingNames = new Set((existingFoods || []).map(f => f.name.toLowerCase()));
-
-            // 2. Solo insertar los que NO existen (para no sobreescribir ediciones manuales o recetas)
-            for (const food of foodCatalog) {
-                if (!existingNames.has(food.name.toLowerCase())) {
-                    await this.saveFood({ ...food, organizationId }, organizationId).catch(e => console.error(`Sync error ${food.name}:`, e));
-                }
-            }
-        } else {
-            const { micronutrientsData } = await import('../lib/micronutrients-data');
-            
-            const { data: existingMicros } = await supabase
-                .from('Micronutrient')
-                .select('name');
-            const existingNames = new Set((existingMicros || []).map(m => m.name.toLowerCase()));
-
-            for (const micro of micronutrientsData) {
-                if (!existingNames.has(micro.name.toLowerCase())) {
-                    await this.saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(e => console.error(`Sync error ${micro.name}:`, e));
-                }
-            }
-        }
-        return true;
-    },
 
     // ─── Módulo de Menú Semanal con Flujo de Aprobación ─────────────────────────
 

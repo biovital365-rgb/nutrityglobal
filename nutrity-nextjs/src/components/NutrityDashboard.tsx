@@ -53,8 +53,7 @@ import {
 } from "lucide-react";
 import { PricingTable } from './PricingTable';
 import { Course, Micronutrient } from "../lib/types";
-import { foodCatalog, FoodItem } from "../lib/food-data";
-import { micronutrientsData } from "../lib/micronutrients-data";
+import { FoodItem } from "../lib/types";
 import { weeklyMenuData } from "../lib/menu-data";
 import { useNutrityData } from '../hooks/useNutrityData';
 import * as dbService from "@/actions/db-actions";
@@ -458,8 +457,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                     dbService.getCourses(organizationId),
                     dbService.getLandingConfig(organizationId)
                 ]);
-                setFoods(foodData.length > 0 ? foodData : foodCatalog);
-                setMicros(microData.length > 0 ? microData : micronutrientsData as any);
+                setFoods(foodData);
+                setMicros(microData);
                 setCourses(courseData);
                 setLandingConfig(landingData);
 
@@ -469,8 +468,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 }
             } catch (err) {
                 console.error("Error loading Supabase data:", err);
-                setFoods(foodCatalog);
-                setMicros(micronutrientsData as any);
+                setFoods([]);
+                setMicros([]);
             } finally {
                 setIsLoadingData(false);
             }

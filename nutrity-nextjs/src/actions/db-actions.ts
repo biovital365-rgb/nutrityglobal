@@ -3,8 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { foodCatalog } from "@/lib/food-data";
-import { micronutrientsData } from "@/lib/micronutrients-data";
+
 import { sendWelcomeEmail, sendMenuApprovedEmail, sendMenuChangesRequestedEmail } from "./email-actions";
 
 export async function getServerUser() {
@@ -929,21 +928,7 @@ export async function getPDFReports(organizationId?: string) {
         return data
 }
 
-    // Sincronización Forzada de Catálogos (Para Admin)
-export async function forceSyncCatalog(type: 'foods' | 'micros', organizationId?: string) {
-        if (type === 'foods') {
-            const { foodCatalog } = await import('../lib/food-data');
-            for (const food of foodCatalog) {
-                await saveFood({ ...food, organizationId }, organizationId).catch(e => console.error(`Sync error ${food.name}:`, e));
-            }
-        } else {
-            const { micronutrientsData } = await import('../lib/micronutrients-data');
-            for (const micro of micronutrientsData) {
-                await saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(e => console.error(`Sync error ${micro.name}:`, e));
-            }
-        }
-        return true;
-}
+
 
     // ─── Módulo de Menú Semanal con Flujo de Aprobación ─────────────────────────
 

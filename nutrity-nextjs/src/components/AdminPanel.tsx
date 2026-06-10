@@ -143,17 +143,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     useEffect(() => { loadAll(); }, [loadAll]);
 
     // ─── Sync ─────────────────────────────────────────────────────────────────
-    const handleSync = async (type: "foods" | "micros") => {
-        if (!confirm(`¿Deseas sincronizar el catálogo de ${type === "foods" ? "alimentos" : "micronutrientes"}?`)) return;
-        setIsSaving(true);
-        try {
-            await dbService.forceSyncCatalog(type, user?.profile?.organization?.id);
-            notify("success", "Sincronización completada.");
-            if (type === "foods") setFoods(await dbService.getFoods());
-            else setMicros(await dbService.getMicronutrients());
-        } catch { notify("error", "Error durante la sincronización."); }
-        finally { setIsSaving(false); }
-    };
+
 
     // ─── CRUD handlers ────────────────────────────────────────────────────────
     const handleSaveFood = async (e: React.FormEvent) => {
@@ -401,7 +391,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                         onOpenNew={() => { setEditingFood(emptyFood); setShowFoodModal(true); }}
                         onCloseModal={() => setShowFoodModal(false)}
                         onSave={handleSaveFood}
-                        onSync={() => handleSync("foods")}
+
                         setEditingFood={setEditingFood}
                     />
                 )}
@@ -417,7 +407,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                         onRestore={(id) => handleRestore("micronutrients", id)}
                         onCloseModal={() => setShowMicroModal(false)}
                         onSave={handleSaveMicro}
-                        onSync={() => handleSync("micros")}
+
                         setEditingMicro={setEditingMicro}
                     />
                 )}

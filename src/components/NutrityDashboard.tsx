@@ -47,8 +47,7 @@ import {
     Pencil,
     MessageSquare
 } from "lucide-react";
-import { foodCatalog } from "../lib/food-data";
-import { micronutrientsData } from "../lib/micronutrients-data";
+import { FoodItem } from "../lib/db-service";
 import { weeklyMenuData } from "../lib/menu-data";
 import { auth, db } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot } from "firebase/firestore";
