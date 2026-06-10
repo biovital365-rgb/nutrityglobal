@@ -26,6 +26,7 @@ model Organization {
   lessonProgresses    LessonProgress[]
   quizAttempts        QuizAttempt[]
   assignmentSubmissions AssignmentSubmission[]
+  config              OrganizationConfig?
 }
 
 model User {
@@ -373,5 +374,44 @@ model AssignmentSubmission {
 
   @@index([userId])
   @@index([assignmentId])
+  @@index([organizationId])
+}
+
+model OrganizationConfig {
+  id              String       @id @default(cuid())
+  organizationId  String       @unique
+  heroTitle       String?
+  heroSubtitle    String?
+  heroDescription String?
+  ctaText         String?
+  primaryColor    String?
+  accentColor     String?
+  heroImage       String?
+  scienceImage    String?
+  missionImage    String?
+  habitsImage     String?
+  strategiesImage String?
+  tiktokVideos    Json?        // Array de los 4 videos
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Micronutrient {
+  id              String        @id @default(cuid())
+  organizationId  String?
+  name            String
+  symbol          String
+  category        String
+  function        String
+  metabolicImpact String
+  sources         Json          // Array de strings
+  deficiencySigns Json          // Array de strings
+  dailyDose       String
+  image           String
+  createdAt       DateTime      @default(now())
+  deletedAt       DateTime?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+
   @@index([organizationId])
 }
