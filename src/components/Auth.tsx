@@ -76,9 +76,11 @@ export function Auth({ onAuthSuccess, onBack }: AuthProps) {
             >
                 <div className="text-center mb-10">
                     <div className="flex justify-center mb-6">
-                        <div className="w-14 h-14 bg-nutrity-accent rounded-2xl flex items-center justify-center shadow-lg shadow-nutrity-accent/20">
-                            <Activity className="w-8 h-8 text-white" />
-                        </div>
+                        <img 
+                            src="https://drive.google.com/uc?export=view&id=1LSl9LF795Q6E2YnjvZ0kZ40DjVuk7LuS" 
+                            alt="Nutrity Global Logo" 
+                            className="w-48 h-auto object-contain drop-shadow-md" 
+                        />
                     </div>
                     <h2 className="text-3xl font-display font-bold text-nutrity-primary tracking-tight">
                         {isLogin ? 'Acceso Vital' : 'Únete a Nutrity'}

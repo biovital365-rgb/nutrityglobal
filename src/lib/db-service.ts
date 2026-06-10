@@ -110,31 +110,6 @@ export const dbService = {
             return this.getFoods(organizationId, includeDeleted);
         }
 
-        // 2. Depuración Silenciosa de Duplicados (Sin necesidad de botón)
-        if (data && data.length > 0) {
-            const seen = new Set();
-            const toDelete: string[] = [];
-            const uniqueData: FoodItem[] = [];
-
-            for (const food of data) {
-                const key = `${food.name.toLowerCase().trim()}-${food.organizationId || 'global'}`;
-                if (seen.has(key)) {
-                    toDelete.push(food.id);
-                } else {
-                    seen.add(key);
-                    uniqueData.push(food as FoodItem);
-                }
-            }
-
-            if (toDelete.length > 0) {
-                console.log(`Silent cleaning ${toDelete.length} duplicate foods...`);
-                supabase.from('Food').delete().in('id', toDelete).then(() => {
-                    console.log('Food cleanup completed successfully.');
-                });
-                return uniqueData;
-            }
-        }
-
         if (error) {
             console.error('getFoods error:', error)
             return []
@@ -238,31 +213,6 @@ export const dbService = {
                 await this.saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(() => {});
             }
             return this.getMicronutrients(organizationId, includeDeleted);
-        }
-
-        // 2. Depuración Silenciosa
-        if (data && data.length > 0) {
-            const seen = new Set();
-            const toDelete: string[] = [];
-            const uniqueData: Micronutrient[] = [];
-
-            for (const micro of data) {
-                const key = `${micro.name.toLowerCase().trim()}-${micro.organizationId || 'global'}`;
-                if (seen.has(key)) {
-                    toDelete.push(micro.id);
-                } else {
-                    seen.add(key);
-                    uniqueData.push(micro as Micronutrient);
-                }
-            }
-
-            if (toDelete.length > 0) {
-                console.log(`Silent cleaning ${toDelete.length} duplicate micronutrients...`);
-                supabase.from('Micronutrient').delete().in('id', toDelete).then(() => {
-                    console.log('Micronutrient cleanup completed successfully.');
-                });
-                return uniqueData;
-            }
         }
 
         if (error) {
@@ -607,14 +557,28 @@ export const dbService = {
     },
 
     async getCourseWithLessons(courseId: string) {
-        const { data, error } = await supabase
-            .from('Course')
-            .select('*, lessons:Lesson(*)')
-            .eq('id', courseId)
-            .single()
+        try {
+            const { data, error } = await supabase
+                .from('Course')
+                .select('*, Lesson(*, quiz:Quiz(*), assignment:Assignment(*))')
+                .eq('id', courseId)
+                .single()
 
-        if (error) throw error
-        return data as Course
+            if (error) {
+                console.error('getCourseWithLessons Supabase error:', error);
+                throw error;
+            }
+            
+            // Mapeamos Lesson (retornado por PostgREST) a lessons para el frontend
+            const mappedData = {
+                ...data,
+                lessons: data.Lesson || []
+            };
+            return mappedData as Course;
+        } catch (e) {
+            console.error('getCourseWithLessons exception:', e);
+            throw e;
+        }
     },
 
     async saveCourse(course: Partial<Course>, organizationId?: string) {
@@ -683,6 +647,86 @@ export const dbService = {
             progress[item.lessonId] = item.completed;
         });
         return progress;
+    },
+
+    // --- LMS Phase 2: Evaluaciones y Tareas ---
+    async getLessonQuiz(lessonId: string) {
+        const { data, error } = await supabase
+            .from('Quiz')
+            .select('*')
+            .eq('lessonId', lessonId)
+            .maybeSingle();
+        if (error) throw error;
+        return data;
+    },
+
+    async saveQuiz(quiz: any) {
+        const id = quiz.id && quiz.id.length > 20 ? quiz.id : crypto.randomUUID();
+        const { data, error } = await supabase
+            .from('Quiz')
+            .upsert({ ...quiz, id }, { onConflict: 'lessonId' })
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async submitQuizAttempt(userId: string, organizationId: string | undefined, quizId: string, score: number, passed: boolean, answers: any) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('QuizAttempt')
+            .insert({
+                id: crypto.randomUUID(),
+                userId: internalId,
+                organizationId: organizationId || null,
+                quizId,
+                score,
+                passed,
+                answers
+            })
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async getLessonAssignment(lessonId: string) {
+        const { data, error } = await supabase
+            .from('Assignment')
+            .select('*')
+            .eq('lessonId', lessonId)
+            .maybeSingle();
+        if (error) throw error;
+        return data;
+    },
+
+    async saveAssignment(assignment: any) {
+        const id = assignment.id && assignment.id.length > 20 ? assignment.id : crypto.randomUUID();
+        const { data, error } = await supabase
+            .from('Assignment')
+            .upsert({ ...assignment, id }, { onConflict: 'lessonId' })
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async submitAssignment(userId: string, organizationId: string | undefined, assignmentId: string, content: string) {
+        const internalId = await this.getInternalId(userId);
+        const { data, error } = await supabase
+            .from('AssignmentSubmission')
+            .insert({
+                id: crypto.randomUUID(),
+                userId: internalId,
+                organizationId: organizationId || null,
+                assignmentId,
+                content,
+                status: 'PENDING'
+            })
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
     },
 
     // Citas (Nuevo soporte multi-tenant en Supabase)
@@ -781,17 +825,35 @@ export const dbService = {
         return data
     },
 
-    // Sincronización Forzada de Catálogos (Para Admin)
+    // Sincronización Forzada de Catálogos (Para Admin) - CORREGIDO PARA EVITAR PÉRDIDA DE DATOS
     async forceSyncCatalog(type: 'foods' | 'micros', organizationId?: string) {
         if (type === 'foods') {
             const { foodCatalog } = await import('../lib/food-data');
+            
+            // 1. Obtener todos los alimentos existentes
+            const { data: existingFoods } = await supabase
+                .from('Food')
+                .select('name');
+            const existingNames = new Set((existingFoods || []).map(f => f.name.toLowerCase()));
+
+            // 2. Solo insertar los que NO existen (para no sobreescribir ediciones manuales o recetas)
             for (const food of foodCatalog) {
-                await this.saveFood({ ...food, organizationId }, organizationId).catch(e => console.error(`Sync error ${food.name}:`, e));
+                if (!existingNames.has(food.name.toLowerCase())) {
+                    await this.saveFood({ ...food, organizationId }, organizationId).catch(e => console.error(`Sync error ${food.name}:`, e));
+                }
             }
         } else {
             const { micronutrientsData } = await import('../lib/micronutrients-data');
+            
+            const { data: existingMicros } = await supabase
+                .from('Micronutrient')
+                .select('name');
+            const existingNames = new Set((existingMicros || []).map(m => m.name.toLowerCase()));
+
             for (const micro of micronutrientsData) {
-                await this.saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(e => console.error(`Sync error ${micro.name}:`, e));
+                if (!existingNames.has(micro.name.toLowerCase())) {
+                    await this.saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(e => console.error(`Sync error ${micro.name}:`, e));
+                }
             }
         }
         return true;

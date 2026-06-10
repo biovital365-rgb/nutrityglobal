@@ -171,22 +171,24 @@ export function AdminFoodsTab({
                                                 />
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="bg-white p-3 rounded-lg border border-nutrity-border">
-                                                    <FieldInput label="Ingredientes (uno por línea)" multiline value={(recipe.ingredients || []).join('\n')} onChange={(text) => {
-                                                        const ingredients = text.split('\n').filter(line => line.trim() !== '');
-                                                        const updated = [...(editingFood.recipes || [])];
-                                                        updated[rIdx] = { ...updated[rIdx], ingredients };
-                                                        setEditingFood(p => ({ ...p, recipes: updated }));
-                                                    }} placeholder="1 taza de avena&#10;2 huevos..." />
-                                                </div>
-                                                <div className="bg-white p-3 rounded-lg border border-nutrity-border">
-                                                    <FieldInput label="Preparación (uno por línea)" multiline value={(recipe.preparation || []).join('\n')} onChange={(text) => {
-                                                        const preparation = text.split('\n').filter(line => line.trim() !== '');
-                                                        const updated = [...(editingFood.recipes || [])];
-                                                        updated[rIdx] = { ...updated[rIdx], preparation };
-                                                        setEditingFood(p => ({ ...p, recipes: updated }));
-                                                    }} placeholder="Mezclar los ingredientes...&#10;Cocinar a fuego lento..." />
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="bg-white p-3 rounded-lg border border-nutrity-border">
+                                                        <FieldInput label="Ingredientes (uno por línea)" multiline value={(recipe.ingredients || []).join('\n')} onChange={(text) => {
+                                                            const ingredients = text.split('\n').filter(line => line.trim() !== '');
+                                                            const updated = [...(editingFood.recipes || [])];
+                                                            updated[rIdx] = { ...updated[rIdx], ingredients };
+                                                            setEditingFood(p => ({ ...p, recipes: updated }));
+                                                        }} placeholder="1 taza de avena&#10;2 huevos..." />
+                                                    </div>
+                                                    <div className="bg-white p-3 rounded-lg border border-nutrity-border">
+                                                        <FieldInput label="Preparación (uno por línea)" multiline value={(recipe.preparation || []).join('\n')} onChange={(text) => {
+                                                            const preparation = text.split('\n').filter(line => line.trim() !== '');
+                                                            const updated = [...(editingFood.recipes || [])];
+                                                            updated[rIdx] = { ...updated[rIdx], preparation };
+                                                            setEditingFood(p => ({ ...p, recipes: updated }));
+                                                        }} placeholder="Mezclar los ingredientes...&#10;Cocinar a fuego lento..." />
+                                                    </div>
                                                 </div>
                                                 <div className="bg-white p-3 rounded-lg border border-nutrity-border">
                                                     <FieldInput label="Indicaciones Adicionales" multiline value={(recipe.instructions || []).join('\n')} onChange={(text) => {
