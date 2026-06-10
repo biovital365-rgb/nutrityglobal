@@ -17,6 +17,8 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
     heroSubtitle: "De la Diabetes Tipo 2",
     heroDescription: "Recuperando tu salud metabólica con ciencia, no con dietas restrictivas.",
     ctaText: "Comenzar mi Transformación",
+    primaryColor: "#012a4a",
+    accentColor: "#c19b6c",
     heroImage: "/landing-img-5.jpg",
     scienceImage: "/landing-img-1.jpg",
     missionImage: "/landing-img-3.jpg",

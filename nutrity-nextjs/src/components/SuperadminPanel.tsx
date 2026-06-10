@@ -39,8 +39,8 @@ export function SuperadminPanel({ user }: SuperadminPanelProps) {
             const [foodData, microData, courseData, userData] = await Promise.all([
                 dbService.getFoods(),
                 dbService.getMicronutrients(),
-                dbService.getCourses(null, false),
-                dbService.getAllUsers(null, false), // null means all organizations
+                dbService.getCourses(undefined, false),
+                dbService.getAllUsers(undefined, false), // undefined means all organizations
             ]);
             setFoods(foodData || []);
             setMicros(microData || []);
