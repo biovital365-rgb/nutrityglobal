@@ -63,7 +63,7 @@ export async function createPatientByCoach(data: { name: string; email: string; 
                 email: data.email,
                 name: data.name,
                 phone: data.phone || "",
-                age: data.age ? parseInt(data.age) : null,
+                age: data.age || null,
                 role: "USER",
                 plan: "FREE",
                 status: "ACTIVE",
