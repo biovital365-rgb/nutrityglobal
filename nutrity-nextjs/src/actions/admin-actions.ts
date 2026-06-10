@@ -67,8 +67,7 @@ export async function createPatientByCoach(data: { name: string; email: string; 
                 role: "USER",
                 plan: "FREE",
                 status: "ACTIVE",
-                organizationId: coachUser.organizationId,
-                onboardingComplete: false,
+                organizationId: coachUser.organizationId
             }
         });
 

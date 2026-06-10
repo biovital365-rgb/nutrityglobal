@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
     Utensils, Zap, ClipboardCheck, BookOpen,
     PlusCircle, Search, Shield, Users, Calendar,
-    FileText, Settings, Save, AlertTriangle, Loader2, LayoutTemplate, CreditCard, TrendingUp
+    FileText, Settings, Save, AlertTriangle, Loader2, LayoutTemplate, CreditCard, TrendingUp, X
 } from "lucide-react";
 import * as dbService from "@/actions/db-actions";
 import { FoodItem, Micronutrient, Course, Post } from "@/lib/types";
@@ -23,7 +23,7 @@ import { AdminLandingTab } from "./admin/AdminLandingTab";
 import { AdminPaymentsTab } from "./admin/AdminPaymentsTab";
 import { AdminConversionsTab } from "./admin/AdminConversionsTab";
 import { AdminSubmissionsTab } from "./admin/AdminSubmissionsTab";
-import { DeleteConfirmModal } from "./admin/shared";
+import { DeleteConfirmModal, FieldInput } from "./admin/shared";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface AdminPanelProps {
