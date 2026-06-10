@@ -303,7 +303,7 @@ export async function getMicronutrients() {
             return getMicronutrients();
         }
 
-        return (data || []) as Micronutrient[];
+        return (data as unknown) as Micronutrient[];
 }
 
 export async function saveMicronutrient(micro: Partial<Micronutrient>, organizationIdParam?: string) {
