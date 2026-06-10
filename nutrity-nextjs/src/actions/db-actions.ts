@@ -148,41 +148,6 @@ export async function getFoods() {
             orderBy: { name: 'asc' }
         });
         
-        // 1. Auto-Sincronización si está vacío
-        if (!data || data.length === 0) {
-            console.log('Catalog empty, auto-syncing foods...');
-            // Solo insertamos los que no existan.
-            for (const food of foodCatalog) {
-                // Generamos ID determinista como en saveFood
-                const nameKey = (food.name || '').toLowerCase().trim()
-                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
-                    .replace(/[^a-z0-9]/g, '-') 
-                    .replace(/-+/g, '-') 
-                    .replace(/^-|-$/g, ''); 
-                const deterministicId = `food-${nameKey}`;
-                
-                const payload = {
-                    name: food.name || '',
-                    scientificName: food.scientificName || '',
-                    image: food.image || '',
-                    category: food.category || '',
-                    description: food.description || '',
-                    metabolicBenefits: food.metabolicBenefits || [],
-                    nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
-                    recipes: food.recipes || [],
-                    id: deterministicId, 
-                    organizationId: targetOrg || null
-                };
-
-                // Usamos findUnique + create para evitar update destructivo
-                const existing = await prisma.food.findUnique({ where: { id: deterministicId } });
-                if (!existing) {
-                    await prisma.food.create({ data: payload as any }).catch(() => {});
-                }
-            }
-            return getFoods();
-        }
-
         return data as unknown as FoodItem[];
 }
 
@@ -191,14 +156,6 @@ export async function saveFood(food: Partial<FoodItem>, organizationIdParam?: st
         // Validation: user must be logged in to create records
         if (!user) throw new Error("Unauthorized");
         const finalOrgId = user.role === 'ADMIN' ? (food.organizationId || organizationIdParam || null) : user.organizationId;
-
-        const nameKey = (food.name || '').toLowerCase().trim()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
-            .replace(/[^a-z0-9]/g, '-') // Non-alphanumeric to dash
-            .replace(/-+/g, '-') // Collapse multiple dashes
-            .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
-        const deterministicId = `food-${nameKey}`;
-        const originalId = food.id; 
 
         const payload: any = {
             name: food.name || '',
@@ -209,27 +166,22 @@ export async function saveFood(food: Partial<FoodItem>, organizationIdParam?: st
             metabolicBenefits: food.metabolicBenefits || [],
             nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
             recipes: food.recipes || [],
-            id: deterministicId, 
             organizationId: finalOrgId
         };
 
-        const data = await prisma.food.upsert({
-            where: { id: deterministicId },
-            update: payload,
-            create: payload
-        });
-
-        // Si el ID cambió (cambio de nombre), eliminamos el registro antiguo
-        if (originalId && originalId !== deterministicId && originalId.startsWith('food-')) {
-            console.log(`Renaming food: deleting old ID ${originalId}`);
-            // Check authorization before delete
-            const oldFood = await prisma.food.findUnique({ where: { id: originalId } });
-            if (oldFood && (user.role === 'ADMIN' || oldFood.organizationId === user.organizationId)) {
-                await prisma.food.delete({ where: { id: originalId } });
-            }
+        let result;
+        if (food.id) {
+            result = await prisma.food.update({
+                where: { id: food.id },
+                data: payload
+            });
+        } else {
+            result = await prisma.food.create({
+                data: payload
+            });
         }
 
-        return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
+        return result as any;
 }
 
     // Función para limpiar duplicados (mantiene el más reciente)
@@ -294,15 +246,6 @@ export async function getMicronutrients() {
             orderBy: { name: 'asc' }
         });
         
-        // 1. Auto-Sincronización
-        if (!data || data.length === 0) {
-            console.log('Catalog empty, auto-syncing micronutrients...');
-            for (const micro of micronutrientsData) {
-                await saveMicronutrient({ ...(micro as any), organizationId: targetOrg || undefined }).catch(() => {});
-            }
-            return getMicronutrients();
-        }
-
         return (data as unknown) as Micronutrient[];
 }
 
@@ -310,14 +253,6 @@ export async function saveMicronutrient(micro: Partial<Micronutrient>, organizat
         const user = await getServerUser();
         if (!user) throw new Error("Unauthorized");
         const finalOrgId = user.role === 'ADMIN' ? (micro.organizationId || organizationIdParam || null) : user.organizationId;
-
-        const nameKey = (micro.name || '').toLowerCase().trim()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-z0-9]/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '');
-        const deterministicId = `micro-${nameKey}`;
-        const originalId = micro.id;
 
         const payload: any = {
             name: micro.name || '',
@@ -329,25 +264,22 @@ export async function saveMicronutrient(micro: Partial<Micronutrient>, organizat
             deficiencySigns: micro.deficiencySigns || [],
             dailyDose: micro.dailyDose || '',
             image: micro.image || null,
-            id: deterministicId, 
             organizationId: finalOrgId
         };
 
-        const data = await prisma.micronutrient.upsert({
-            where: { id: deterministicId },
-            update: payload,
-            create: payload
-        });
-
-        // Cleanup old ID if renamed
-        if (originalId && originalId !== deterministicId && originalId.startsWith('micro-')) {
-            const oldMicro = await prisma.micronutrient.findUnique({ where: { id: originalId } });
-            if (oldMicro && (user.role === 'ADMIN' || oldMicro.organizationId === user.organizationId)) {
-                await prisma.micronutrient.delete({ where: { id: originalId } });
-            }
+        let result;
+        if (micro.id) {
+            result = await prisma.micronutrient.update({
+                where: { id: micro.id },
+                data: payload
+            });
+        } else {
+            result = await prisma.micronutrient.create({
+                data: payload
+            });
         }
 
-        return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
+        return result as any;
 }
 
 export async function deleteMicronutrient(id: string) {
