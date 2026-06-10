@@ -888,13 +888,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <a href="https://www.tiktok.com/@biovital.360" target="_blank" rel="noopener noreferrer" className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent hover:underline">Ir a TikTok</a>
                                     </div>
                                     {(() => {
-                                        const defaultVideos = [
-                                            { id: 1, title: "¿Por qué no bajas de peso?", img: "https://images.unsplash.com/photo-1494597564530-871f2b93ac55?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7599900359984827656" },
-                                            { id: 2, title: "El secreto del Yacón", img: "https://images.unsplash.com/photo-1596422846543-74c6fc0e2418?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7600963485182250258" },
-                                            { id: 3, title: "Sana tu intestino", img: "https://images.unsplash.com/photo-1505253713660-8d4088c18ce8?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7601559572465093906" },
-                                            { id: 4, title: "Ansiedad y Glucosa", img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7633199556792028423" }
-                                        ];
-                                        const videos = landingConfig?.tiktokVideos || defaultVideos;
+                                        const videos = landingConfig?.tiktokVideos || [];
+                                        if (videos.length === 0) return null;
                                         const metrics = [
                                             { likes: "12.4K", comments: "284", bookmarks: "1.5K", shares: "142" },
                                             { likes: "9.8K", comments: "193", bookmarks: "942", shares: "88" },

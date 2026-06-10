@@ -19,7 +19,8 @@ import {
     Salad,
     Clock,
     Scale,
-    Apple
+    Apple,
+    Loader2
 } from "lucide-react";
 import { getPosts, getLandingConfig } from "@/actions/db-actions";
 import type { Post } from "@/lib/types";
@@ -32,7 +33,7 @@ interface NutrityLandingProps {
 
 export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingProps) {
     const [recentPosts, setRecentPosts] = useState<Post[]>([]);
-    const [landingConfig, setLandingConfig] = useState<any>({});
+    const [landingConfig, setLandingConfig] = useState<any>(null);
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
@@ -50,6 +51,14 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
+
+    if (!landingConfig) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#fbf8f1]">
+                <Loader2 className="w-8 h-8 animate-spin text-[#c19b6c]" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col min-h-screen w-full bg-[#fbf8f1] text-[#2d3748] overflow-x-hidden selection:bg-[#c19b6c] selection:text-white font-sans">
@@ -107,22 +116,22 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             </div>
 
                             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight tracking-tight mb-4 text-[#012a4a] whitespace-pre-line">
-                                {landingConfig.heroTitle || "REMISIÓN \n METABÓLICA"}
+                                {landingConfig?.heroTitle || ""}
                             </h1>
                             
                             <h2 className="text-sm md:text-lg font-bold tracking-widest text-[#1b3b36] mb-8 uppercase bg-[#1b3b36]/5 inline-block px-4 py-2 border-l-4 border-r-4 border-[#1b3b36]">
-                                {landingConfig.heroSubtitle || "De la Diabetes Tipo 2"}
+                                {landingConfig?.heroSubtitle || ""}
                             </h2>
 
                             <p className="text-base md:text-xl text-[#2d3748] italic font-serif leading-relaxed mb-10 max-w-2xl mx-auto">
-                                {landingConfig.heroDescription || "Recuperando tu salud metabólica con ciencia, hábitos y esperanza."}
+                                {landingConfig?.heroDescription || ""}
                             </p>
 
                             <button
                                 onClick={onStart}
                                 className="bg-[#c19b6c] text-[#012a4a] px-8 py-4 rounded-xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-[#c19b6c]/20 hover:scale-105 transition-all border border-[#c19b6c] mx-auto"
                             >
-                                {landingConfig.ctaText || "Comenzar mi Transformación"}
+                                {landingConfig?.ctaText || "Comenzar"}
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         </motion.div>
@@ -147,7 +156,7 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             className="flex justify-center"
                         >
                             <img 
-                                src={landingConfig.scienceImage || "/landing-img-1.jpg"} 
+                                src={landingConfig?.scienceImage || ""} 
                                 alt="Ciencia y órganos" 
                                 className="w-full max-w-3xl rounded-3xl shadow-2xl border-4 border-[#1b3b36]"
                             />
@@ -178,7 +187,7 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             className="flex justify-center mb-12"
                         >
                             <img 
-                                src={landingConfig.missionImage || "/landing-img-3.jpg"} 
+                                src={landingConfig?.missionImage || ""} 
                                 alt="Misión Metabólica" 
                                 className="w-full max-w-2xl rounded-3xl shadow-xl"
                             />
@@ -223,7 +232,7 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                                 viewport={{ once: true }}
                             >
                                 <img 
-                                    src={landingConfig.habitsImage || "/landing-img-2.jpg"} 
+                                    src={landingConfig?.habitsImage || ""} 
                                     alt="Hábitos de Movimiento" 
                                     className="w-full rounded-3xl shadow-xl"
                                 />
@@ -266,7 +275,7 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             className="flex justify-center mb-12"
                         >
                             <img 
-                                src={landingConfig.strategiesImage || "/landing-img-4.jpg"} 
+                                src={landingConfig?.strategiesImage || ""} 
                                 alt="Estrategias de Salud" 
                                 className="w-full max-w-3xl rounded-3xl shadow-xl border-4 border-white ring-1 ring-[#c19b6c]/20"
                             />
