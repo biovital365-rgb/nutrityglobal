@@ -100,16 +100,6 @@ export const dbService = {
 
         const { data, error } = await query.order('name', { ascending: true })
         
-        // 1. Auto-Sincronización si está vacío
-        if (!error && (!data || data.length === 0)) {
-            console.log('Catalog empty, auto-syncing foods...');
-            const { foodCatalog } = await import('../lib/food-data');
-            for (const food of foodCatalog) {
-                await this.saveFood({ ...food, organizationId }, organizationId).catch(() => {});
-            }
-            return this.getFoods(organizationId, includeDeleted);
-        }
-
         if (error) {
             console.error('getFoods error:', error)
             return []
@@ -118,14 +108,6 @@ export const dbService = {
     },
 
     async saveFood(food: Partial<FoodItem>, organizationId?: string) {
-        const nameKey = (food.name || '').toLowerCase().trim()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
-            .replace(/[^a-z0-9]/g, '-') // Non-alphanumeric to dash
-            .replace(/-+/g, '-') // Collapse multiple dashes
-            .replace(/^-|-$/g, ''); // Remove leading/trailing dashes
-        const deterministicId = `food-${nameKey}`;
-        const originalId = food.id; // Guardamos el ID original para detectar cambios de nombre
-
         const payload: any = {
             name: food.name || '',
             scientificName: food.scientificName || '',
@@ -135,27 +117,32 @@ export const dbService = {
             metabolicBenefits: food.metabolicBenefits || [],
             nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
             recipes: food.recipes || [],
-            id: deterministicId, 
         };
 
         const finalOrgId = food.organizationId || organizationId;
         if (finalOrgId) payload.organizationId = finalOrgId;
 
-        const { data, error } = await supabase
-            .from('Food')
-            .upsert(payload, { onConflict: 'id' })
-            .select()
-            .single()
-
-        if (error) throw error;
-
-        // Si el ID cambió (cambio de nombre), eliminamos el registro antiguo
-        if (originalId && originalId !== deterministicId && originalId.startsWith('food-')) {
-            console.log(`Renaming food: deleting old ID ${originalId}`);
-            await supabase.from('Food').delete().eq('id', originalId);
+        let result;
+        if (food.id) {
+            const { data, error } = await supabase
+                .from('Food')
+                .update(payload)
+                .eq('id', food.id)
+                .select()
+                .single();
+            if (error) throw error;
+            result = data;
+        } else {
+            const { data, error } = await supabase
+                .from('Food')
+                .insert([payload])
+                .select()
+                .single();
+            if (error) throw error;
+            result = data;
         }
 
-        return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
+        return result as any;
     },
 
     // Función para limpiar duplicados (mantiene el más reciente)
@@ -205,16 +192,6 @@ export const dbService = {
 
         const { data, error } = await query.order('name', { ascending: true })
         
-        // 1. Auto-Sincronización
-        if (!error && (!data || data.length === 0)) {
-            console.log('Catalog empty, auto-syncing micronutrients...');
-            const { micronutrientsData } = await import('../lib/micronutrients-data');
-            for (const micro of micronutrientsData) {
-                await this.saveMicronutrient({ ...(micro as any), organizationId }, organizationId).catch(() => {});
-            }
-            return this.getMicronutrients(organizationId, includeDeleted);
-        }
-
         if (error) {
             console.error('getMicronutrients error:', error)
             return []
@@ -223,14 +200,6 @@ export const dbService = {
     },
 
     async saveMicronutrient(micro: Partial<Micronutrient>, organizationId?: string) {
-        const nameKey = (micro.name || '').toLowerCase().trim()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-z0-9]/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '');
-        const deterministicId = `micro-${nameKey}`;
-        const originalId = micro.id;
-
         const payload: any = {
             name: micro.name || '',
             symbol: micro.symbol || '',
@@ -241,26 +210,32 @@ export const dbService = {
             deficiencySigns: micro.deficiencySigns || [],
             dailyDose: micro.dailyDose || '',
             image: micro.image || null,
-            id: deterministicId, 
         };
 
         const finalOrgId = micro.organizationId || organizationId;
         if (finalOrgId) payload.organizationId = finalOrgId;
 
-        const { data, error } = await supabase
-            .from('Micronutrient')
-            .upsert(payload, { onConflict: 'id' })
-            .select()
-            .single()
-
-        if (error) throw error;
-
-        // Cleanup old ID if renamed
-        if (originalId && originalId !== deterministicId && originalId.startsWith('micro-')) {
-            await supabase.from('Micronutrient').delete().eq('id', originalId);
+        let result;
+        if (micro.id) {
+            const { data, error } = await supabase
+                .from('Micronutrient')
+                .update(payload)
+                .eq('id', micro.id)
+                .select()
+                .single();
+            if (error) throw error;
+            result = data;
+        } else {
+            const { data, error } = await supabase
+                .from('Micronutrient')
+                .insert([payload])
+                .select()
+                .single();
+            if (error) throw error;
+            result = data;
         }
 
-        return { ...data, _previousId: (originalId !== deterministicId ? originalId : undefined) } as any;
+        return result as any;
     },
 
     async deleteMicronutrient(id: string) {
