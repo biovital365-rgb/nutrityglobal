@@ -2013,7 +2013,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             <div>
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Ingredientes</h5>
                                                                 <ul className="space-y-1">
-                                                                    {(recipe.ingredients || []).map((ing, i) => (
+                                                                    {(Array.isArray(recipe.ingredients) ? recipe.ingredients : typeof recipe.ingredients === 'string' ? [recipe.ingredients] : []).map((ing: any, i: number) => (
                                                                         <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
                                                                             <span className="text-nutrity-accent/50 font-bold mt-0.5">•</span>
                                                                             <span>{ing}</span>
@@ -2024,7 +2024,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             <div>
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Preparación</h5>
                                                                 <ol className="space-y-1">
-                                                                    {(recipe.preparation || []).map((inst, i) => (
+                                                                    {(Array.isArray(recipe.preparation) ? recipe.preparation : typeof recipe.preparation === 'string' ? [recipe.preparation] : []).map((inst: any, i: number) => (
                                                                         <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
                                                                             <span className="text-nutrity-accent/50 font-bold mt-0.5">{i + 1}.</span>
                                                                             <span>{inst}</span>
