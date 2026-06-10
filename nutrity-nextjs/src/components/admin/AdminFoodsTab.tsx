@@ -17,27 +17,21 @@ interface AdminFoodsTabProps {
     onOpenNew: () => void;
     onCloseModal: () => void;
     onSave: (e: React.FormEvent) => Promise<void>;
-    onSync: () => void;
+
     setEditingFood: React.Dispatch<React.SetStateAction<Partial<FoodItem>>>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export function AdminFoodsTab({
     foods, isSaving, showFoodModal, editingFood,
-    onEdit, onDelete, onRestore, onOpenNew, onCloseModal, onSave, onSync, setEditingFood,
+    onEdit, onDelete, onRestore, onOpenNew, onCloseModal, onSave, setEditingFood,
 }: AdminFoodsTabProps) {
     return (
         <>
             <motion.div key="foods-table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="text-lg font-display font-bold text-nutrity-primary">Catálogo de Alimentos</h3>
-                    <button
-                        onClick={onSync}
-                        className="px-4 py-2 rounded-xl border border-nutrity-accent text-nutrity-accent font-bold text-[10px] uppercase tracking-widest hover:bg-nutrity-accent/5 transition-all flex items-center gap-2"
-                    >
-                        <Loader2 className={`w-3.5 h-3.5 ${isSaving ? "animate-spin" : ""}`} />
-                        Sincronizar Catálogo
-                    </button>
+
                 </div>
                 <div className="nutrity-card bg-white overflow-hidden shadow-xl shadow-slate-200/50">
                     <div className="overflow-x-auto">

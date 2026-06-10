@@ -2,8 +2,7 @@ import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
-import { foodCatalog } from '../src/lib/food-data'
-import { micronutrientsData } from '../src/lib/micronutrients-data'
+
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
@@ -46,75 +45,7 @@ async function main() {
         }
     })
 
-    // Sembrar Alimentos
-    try {
-        console.log(`- Migrando ${foodCatalog.length} alimentos...`)
-        for (const food of foodCatalog) {
-            await prisma.food.upsert({
-                where: { id: food.id },
-                update: {
-                    name: food.name,
-                    scientificName: food.scientificName,
-                    image: food.image,
-                    category: food.category,
-                    description: food.description,
-                    metabolicBenefits: food.metabolicBenefits as any,
-                    nutrients: food.nutrients as any,
-                    recipes: food.recipes as any
-                },
-                create: {
-                    id: food.id,
-                    name: food.name,
-                    scientificName: food.scientificName,
-                    image: food.image,
-                    category: food.category,
-                    description: food.description,
-                    metabolicBenefits: food.metabolicBenefits as any,
-                    nutrients: food.nutrients as any,
-                    recipes: food.recipes as any
-                }
-            })
-        }
-        console.log('✅ Alimentos migrados.')
-    } catch (e) {
-        console.error('❌ Error migrando alimentos:', e)
-    }
 
-    // Sembrar Micronutrientes
-    try {
-        console.log(`- Migrando ${micronutrientsData.length} micronutrientes...`)
-        for (const m of micronutrientsData) {
-            await prisma.micronutrient.upsert({
-                where: { id: m.id },
-                update: {
-                    name: m.name,
-                    symbol: m.symbol,
-                    category: m.category,
-                    function: m.function,
-                    metabolicImpact: m.metabolicImpact,
-                    sources: m.sources as any,
-                    deficiencySigns: m.deficiencySigns as any,
-                    dailyDose: m.dailyDose,
-                    image: m.image
-                },
-                create: {
-                    id: m.id,
-                    name: m.name,
-                    symbol: m.symbol,
-                    category: m.category,
-                    function: m.function,
-                    metabolicImpact: m.metabolicImpact,
-                    sources: m.sources as any,
-                    deficiencySigns: m.deficiencySigns as any,
-                    dailyDose: m.dailyDose,
-                    image: m.image
-                }
-            })
-        }
-        console.log('✅ Micronutrientes migrados.')
-    } catch (e) {
-        console.error('❌ Error migrando micronutrientes:', e)
-    }
 
     // Usuarios de Prueba (Admin Maestro y User)
     try {

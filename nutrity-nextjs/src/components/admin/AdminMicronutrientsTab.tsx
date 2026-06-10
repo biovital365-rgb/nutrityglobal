@@ -15,26 +15,20 @@ interface AdminMicronutrientsTabProps {
     onRestore: (id: string) => void;
     onCloseModal: () => void;
     onSave: (e: React.FormEvent) => Promise<void>;
-    onSync: () => void;
+
     setEditingMicro: React.Dispatch<React.SetStateAction<Partial<Micronutrient>>>;
 }
 
 export function AdminMicronutrientsTab({
     micros, isSaving, showMicroModal, editingMicro,
-    onEdit, onDelete, onRestore, onCloseModal, onSave, onSync, setEditingMicro,
+    onEdit, onDelete, onRestore, onCloseModal, onSave, setEditingMicro,
 }: AdminMicronutrientsTabProps) {
     return (
         <>
             <motion.div key="micro-table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-display font-bold text-nutrity-primary">Micronutrientes</h3>
-                    <button
-                        onClick={onSync}
-                        className="px-4 py-2 rounded-xl border border-nutrity-accent text-nutrity-accent font-bold text-[10px] uppercase tracking-widest hover:bg-nutrity-accent/5 transition-all flex items-center gap-2"
-                    >
-                        <Loader2 className={`w-3.5 h-3.5 ${isSaving ? "animate-spin" : ""}`} />
-                        Sincronizar Catálogo
-                    </button>
+
                 </div>
                 <div className="nutrity-card bg-white overflow-hidden shadow-xl shadow-slate-200/50">
                     <div className="overflow-x-auto">
