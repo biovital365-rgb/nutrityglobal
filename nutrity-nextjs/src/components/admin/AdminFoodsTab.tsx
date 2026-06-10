@@ -174,7 +174,7 @@ export function AdminFoodsTab({
                                             <div className="space-y-4">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="bg-white p-3 rounded-lg border border-nutrity-border">
-                                                        <FieldInput label="Ingredientes (uno por línea)" multiline value={(recipe.ingredients || []).join('\n')} onChange={(text) => {
+                                                        <FieldInput label="Ingredientes (uno por línea)" multiline value={(Array.isArray(recipe.ingredients) ? recipe.ingredients : typeof recipe.ingredients === 'string' ? [recipe.ingredients] : []).join('\n')} onChange={(text) => {
                                                             const ingredients = text.split('\n').filter(line => line.trim() !== '');
                                                             const updated = [...(editingFood.recipes || [])];
                                                             updated[rIdx] = { ...updated[rIdx], ingredients };
@@ -182,7 +182,7 @@ export function AdminFoodsTab({
                                                         }} placeholder="1 taza de avena&#10;2 huevos..." />
                                                     </div>
                                                     <div className="bg-white p-3 rounded-lg border border-nutrity-border">
-                                                        <FieldInput label="Preparación (uno por línea)" multiline value={(recipe.preparation || []).join('\n')} onChange={(text) => {
+                                                        <FieldInput label="Preparación (uno por línea)" multiline value={(Array.isArray(recipe.preparation) ? recipe.preparation : typeof recipe.preparation === 'string' ? [recipe.preparation] : []).join('\n')} onChange={(text) => {
                                                             const preparation = text.split('\n').filter(line => line.trim() !== '');
                                                             const updated = [...(editingFood.recipes || [])];
                                                             updated[rIdx] = { ...updated[rIdx], preparation };
@@ -191,7 +191,7 @@ export function AdminFoodsTab({
                                                     </div>
                                                 </div>
                                                 <div className="bg-white p-3 rounded-lg border border-nutrity-border">
-                                                    <FieldInput label="Indicaciones Adicionales" multiline value={(recipe.instructions || []).join('\n')} onChange={(text) => {
+                                                    <FieldInput label="Indicaciones Adicionales" multiline value={(Array.isArray(recipe.instructions) ? recipe.instructions : typeof recipe.instructions === 'string' ? [recipe.instructions] : []).join('\n')} onChange={(text) => {
                                                         const instructions = text.split('\n').filter(line => line.trim() !== '');
                                                         const updated = [...(editingFood.recipes || [])];
                                                         updated[rIdx] = { ...updated[rIdx], instructions };
