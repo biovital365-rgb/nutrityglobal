@@ -1259,65 +1259,90 @@ export async function deletePost(id: string) {
   return true;
 }
 
-// --- LANDING PAGE CMS ---
+// --- LANDING PAGE CMS (SaaS Multi-tenant) ---
 export async function getLandingConfig(organizationId?: string) {
-  const { data, error } = await supabase
-    .from('Post')
-    .select('content')
-    .eq('slug', 'landing-page-config')
-    .maybeSingle();
-
-  if (error) {
-    console.error('Error fetching landing config:', error);
-    return null;
-  }
-  
-  if (data?.content) {
-    try {
-      return JSON.parse(data.content);
-    } catch (e) {
-      console.error('Error parsing landing config JSON', e);
-      return null;
+  try {
+    if (organizationId) {
+      const config = await prisma.organizationConfig.findUnique({
+        where: { organizationId }
+      });
+      if (config) return config;
     }
+
+    // Fallback a configuración global (usando Post temporalmente por retrocompatibilidad)
+    const { data, error } = await supabase
+      .from('Post')
+      .select('content')
+      .eq('slug', 'landing-page-config')
+      .maybeSingle();
+
+    if (!error && data?.content) {
+      return JSON.parse(data.content);
+    }
+  } catch (e) {
+    console.error('Error fetching landing config', e);
   }
   return null;
 }
 
 export async function saveLandingConfig(configData: any, organizationId?: string) {
-  const stringifiedContent = JSON.stringify(configData);
-  
-  // First see if it exists
-  const { data: existing } = await supabase
-    .from('Post')
-    .select('id')
-    .eq('slug', 'landing-page-config')
-    .maybeSingle();
+  const currentUser = await getServerUser();
+  if (!currentUser || !['ADMIN', 'COACH'].includes(currentUser.role)) throw new Error("Forbidden");
 
-  const id = existing?.id || crypto.randomUUID();
+  // Si se pasa un organizationId, o si el usuario es COACH y tiene uno propio, guardamos en Prisma
+  const targetOrgId = currentUser.role === 'ADMIN' ? (organizationId || null) : currentUser.organizationId;
 
-  const payload = {
-    id,
-    title: 'Configuración de la Landing Page',
-    slug: 'landing-page-config',
-    content: stringifiedContent,
-    category: 'SYSTEM',
-    isPublished: true,
-    organizationId: organizationId || null,
-    updatedAt: new Date().toISOString()
-  };
+  if (targetOrgId) {
+    const data = {
+      heroTitle: configData.heroTitle,
+      heroSubtitle: configData.heroSubtitle,
+      heroDescription: configData.heroDescription,
+      ctaText: configData.ctaText,
+      primaryColor: configData.primaryColor,
+      accentColor: configData.accentColor,
+      heroImage: configData.heroImage,
+      scienceImage: configData.scienceImage,
+      missionImage: configData.missionImage,
+      habitsImage: configData.habitsImage,
+      strategiesImage: configData.strategiesImage,
+      tiktokVideos: configData.tiktokVideos || [],
+    };
 
-  const { data, error } = await supabase
-    .from('Post')
-    .upsert(payload, { onConflict: 'id' })
-    .select()
-    .single();
+    const config = await prisma.organizationConfig.upsert({
+      where: { organizationId: targetOrgId },
+      update: data,
+      create: {
+        organizationId: targetOrgId,
+        ...data
+      }
+    });
+    revalidatePath('/', 'layout');
+    return config;
+  } else {
+    // Modo Global Admin (guarda en Post)
+    const stringifiedContent = JSON.stringify(configData);
+    const { data: existing } = await supabase.from('Post').select('id').eq('slug', 'landing-page-config').maybeSingle();
+    const id = existing?.id || crypto.randomUUID();
 
-  if (error) {
-    console.error('Error saving landing config:', error);
-    throw new Error(error.message);
+    const payload = {
+      id,
+      title: 'Configuración de la Landing Page Global',
+      slug: 'landing-page-config',
+      content: stringifiedContent,
+      category: 'SYSTEM',
+      isPublished: true,
+      organizationId: null,
+      updatedAt: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase.from('Post').upsert(payload, { onConflict: 'id' }).select().single();
+    if (error) {
+      console.error('Error saving global landing config:', error);
+      throw new Error(error.message);
+    }
+    revalidatePath('/', 'layout');
+    return data;
   }
-  revalidatePath('/', 'layout');
-  return data;
 }
 
 export async function requestMenuChanges(userId: string, weekStart: string, notes: string) {
@@ -1467,3 +1492,51 @@ export async function reviewAssignmentSubmission(submissionId: string, feedback:
 }
 
 
+
+
+// --- CLINIC REGISTRATION (B2B SaaS) ---
+export async function registerClinic(userId: string, clinicName: string, userName: string) {
+    try {
+        // 1. Crear Organización
+        const orgId = crypto.randomUUID();
+        const org = await prisma.organization.create({
+            data: {
+                id: orgId,
+                name: clinicName
+            }
+        });
+
+        // 2. Configuración por defecto
+        await prisma.organizationConfig.create({
+            data: {
+                organizationId: orgId,
+                primaryColor: '#012a4a',
+                accentColor: '#c19b6c',
+                heroTitle: 'REMISIÓN METABÓLICA',
+                heroSubtitle: 'De la Diabetes Tipo 2'
+            }
+        });
+
+        // 3. Actualizar Usuario
+        await prisma.user.upsert({
+            where: { id: userId },
+            update: {
+                role: 'COACH',
+                organizationId: orgId,
+                name: userName
+            },
+            create: {
+                id: userId,
+                email: '', // Placeholder, idealmente se pasa
+                role: 'COACH',
+                organizationId: orgId,
+                name: userName
+            }
+        });
+
+        return { success: true, organizationId: orgId };
+    } catch (e: any) {
+        console.error('Error registering clinic:', e);
+        return { success: false, error: e.message };
+    }
+}

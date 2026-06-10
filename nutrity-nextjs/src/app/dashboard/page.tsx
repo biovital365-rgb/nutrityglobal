@@ -70,7 +70,7 @@ export default function DashboardPage() {
           };
         }
 
-        if (!actualPlan) {
+        if (!actualPlan && dbProfile?.role !== 'COACH' && dbProfile?.role !== 'ADMIN') {
           router.push("/onboarding");
           return;
         }

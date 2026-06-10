@@ -21,10 +21,11 @@ export async function login(formData: FormData) {
   }
 
   if (authData?.user) {
+      const orgId = formData.get("organizationId") as string | undefined;
       await syncUserProfile({
           uid: authData.user.id,
-          email: authData.user.email
-      });
+          email: authData.user.email,
+      }, undefined, orgId);
   }
 
   revalidatePath("/", "layout");
@@ -46,10 +47,11 @@ export async function signup(formData: FormData) {
   }
 
   if (authData?.user) {
+      const orgId = formData.get("organizationId") as string | undefined;
       await syncUserProfile({
           uid: authData.user.id,
-          email: authData.user.email
-      });
+          email: authData.user.email,
+      }, undefined, orgId);
   }
 
   revalidatePath("/", "layout");

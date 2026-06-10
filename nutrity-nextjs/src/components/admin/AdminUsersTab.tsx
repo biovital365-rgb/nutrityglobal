@@ -23,6 +23,7 @@ interface AdminUsersTabProps {
     onDeleteFromCardex: (user: any) => void;
     /** User Status Protocol: Change ACTIVE / BLOCKED / OBSERVED */
     onStatusChange?: (userId: string, status: 'ACTIVE' | 'BLOCKED' | 'OBSERVED') => Promise<void>;
+    onAddUser?: () => void;
 }
 
 export function AdminUsersTab({
@@ -30,11 +31,18 @@ export function AdminUsersTab({
     showCardexModal, selectedCardexUser,
     onOpenCardex, onCloseCardex, onEditUser, onDelete, onRestore,
     onCloseUserModal, onSaveUser, setEditingUser, onDeleteFromCardex,
-    onStatusChange,
+    onStatusChange, onAddUser,
 }: AdminUsersTabProps) {
     return (
         <>
             <motion.div key="users-table" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                {onAddUser && (
+                    <div className="mb-4 flex justify-end">
+                        <button onClick={onAddUser} className="bg-nutrity-primary text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 hover:bg-nutrity-accent transition-all shadow-lg">
+                            Registrar Paciente
+                        </button>
+                    </div>
+                )}
                 <div className="nutrity-card bg-white overflow-hidden shadow-xl shadow-slate-200/50">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
