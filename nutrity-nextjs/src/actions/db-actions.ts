@@ -151,34 +151,36 @@ export async function getFoods() {
         // 1. Auto-Sincronización si está vacío
         if (!data || data.length === 0) {
             console.log('Catalog empty, auto-syncing foods...');
+            // Solo insertamos los que no existan.
             for (const food of foodCatalog) {
-                await saveFood({ ...food, organizationId: targetOrg || undefined }).catch(() => {});
-            }
-            return getFoods();
-        }
+                // Generamos ID determinista como en saveFood
+                const nameKey = (food.name || '').toLowerCase().trim()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                    .replace(/[^a-z0-9]/g, '-') 
+                    .replace(/-+/g, '-') 
+                    .replace(/^-|-$/g, ''); 
+                const deterministicId = `food-${nameKey}`;
+                
+                const payload = {
+                    name: food.name || '',
+                    scientificName: food.scientificName || '',
+                    image: food.image || '',
+                    category: food.category || '',
+                    description: food.description || '',
+                    metabolicBenefits: food.metabolicBenefits || [],
+                    nutrients: food.nutrients || { protein: '', fiber: '', sugar: '' },
+                    recipes: food.recipes || [],
+                    id: deterministicId, 
+                    organizationId: targetOrg || null
+                };
 
-        // 2. Depuración Silenciosa de Duplicados (Sin necesidad de botón)
-        if (data && data.length > 0) {
-            const seen = new Set();
-            const toDelete: string[] = [];
-            const uniqueData: FoodItem[] = [];
-
-            for (const food of data) {
-                const key = `${food.name.toLowerCase().trim()}-${food.organizationId || 'global'}`;
-                if (seen.has(key)) {
-                    toDelete.push(food.id);
-                } else {
-                    seen.add(key);
-                    uniqueData.push(food as unknown as FoodItem);
+                // Usamos findUnique + create para evitar update destructivo
+                const existing = await prisma.food.findUnique({ where: { id: deterministicId } });
+                if (!existing) {
+                    await prisma.food.create({ data: payload as any }).catch(() => {});
                 }
             }
-
-            if (toDelete.length > 0) {
-                console.log(`Silent cleaning ${toDelete.length} duplicate foods...`);
-                await prisma.food.deleteMany({ where: { id: { in: toDelete } } });
-                console.log('Food cleanup completed successfully.');
-                return uniqueData;
-            }
+            return getFoods();
         }
 
         return data as unknown as FoodItem[];
@@ -301,31 +303,7 @@ export async function getMicronutrients() {
             return getMicronutrients();
         }
 
-        // 2. Depuración Silenciosa
-        if (data && data.length > 0) {
-            const seen = new Set();
-            const toDelete: string[] = [];
-            const uniqueData: Micronutrient[] = [];
-
-            for (const micro of data) {
-                const key = `${micro.name.toLowerCase().trim()}-${micro.organizationId || 'global'}`;
-                if (seen.has(key)) {
-                    toDelete.push(micro.id);
-                } else {
-                    seen.add(key);
-                    uniqueData.push(micro as unknown as Micronutrient);
-                }
-            }
-
-            if (toDelete.length > 0) {
-                console.log(`Silent cleaning ${toDelete.length} duplicate micronutrients...`);
-                await prisma.micronutrient.deleteMany({ where: { id: { in: toDelete } } });
-                console.log('Micronutrient cleanup completed successfully.');
-                return uniqueData;
-            }
-        }
-
-        return data as unknown as Micronutrient[];
+        return (data || []) as Micronutrient[];
 }
 
 export async function saveMicronutrient(micro: Partial<Micronutrient>, organizationIdParam?: string) {
@@ -769,14 +747,23 @@ export async function getCourses(organizationId?: string, includeDeleted = false
 }
 
 export async function getCourseWithLessons(courseId: string) {
-        const { data, error } = await supabase
-            .from('Course')
-            .select('*, lessons:Lesson(*, quiz:Quiz(*), assignment:Assignment(*))')
-            .eq('id', courseId)
-            .single()
+        const data = await prisma.course.findUnique({
+            where: { id: courseId },
+            include: {
+                lessons: {
+                    include: {
+                        quiz: true,
+                        assignment: true
+                    },
+                    orderBy: {
+                        order: 'asc'
+                    }
+                }
+            }
+        });
 
-        if (error) throw error
-        return data as Course
+        if (!data) throw new Error('Course not found');
+        return data as unknown as Course;
 }
 
 export async function saveCourse(course: Partial<Course>, organizationId?: string) {

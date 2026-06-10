@@ -589,13 +589,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             <aside className="hidden lg:flex flex-col w-64 bg-nutrity-primary text-white border-r border-white/5">
                 <div className="p-8">
                     <div className="flex items-center gap-3 mb-10">
-                        <div className="w-10 h-10 bg-nutrity-accent rounded-xl flex items-center justify-center shadow-lg shadow-nutrity-accent/20">
-                            <Activity className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-display font-bold leading-none">Nutrity</h2>
-                            <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-[0.2em] leading-none">Global AI</span>
-                        </div>
+                        <img 
+                            src="https://drive.google.com/uc?export=view&id=1LSl9LF795Q6E2YnjvZ0kZ40DjVuk7LuS" 
+                            alt="Nutrity Global Logo" 
+                            className="w-40 h-auto object-contain drop-shadow-md" 
+                        />
                     </div>
                     <nav className="space-y-1">
                         {navItems.map((item) => (

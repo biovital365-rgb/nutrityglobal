@@ -57,13 +57,11 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
             <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "backdrop-blur-xl bg-[#fbf8f1]/90 border-b border-[#c19b6c]/20 py-3 shadow-lg" : "bg-transparent py-5"}`}>
                 <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#012a4a] rounded-xl flex items-center justify-center shadow-lg shadow-[#012a4a]/20">
-                            <Leaf className="w-5 h-5 text-[#c19b6c]" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-display font-bold leading-none text-[#012a4a]">BioVital.360</h2>
-                            <span className="text-[9px] font-bold text-[#c19b6c] uppercase tracking-[0.25em]">MRGA</span>
-                        </div>
+                        <img 
+                            src="https://drive.google.com/uc?export=view&id=1LSl9LF795Q6E2YnjvZ0kZ40DjVuk7LuS" 
+                            alt="Nutrity Global Logo" 
+                            className="w-40 h-auto object-contain drop-shadow-md" 
+                        />
                     </div>
                     <nav className="hidden lg:flex items-center gap-8 bg-white/50 backdrop-blur-md px-8 py-2 rounded-full border border-[#c19b6c]/20">
                         <a href="#doble-ciclo" className="text-xs font-bold uppercase tracking-widest text-[#1b3b36] hover:text-[#c19b6c] transition-colors">La Ciencia</a>
