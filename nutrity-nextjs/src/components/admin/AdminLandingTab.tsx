@@ -108,6 +108,56 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-nutrity-gray-text flex items-center gap-2">
+                <LayoutTemplate className="w-4 h-4" />
+                Color Principal (SaaS)
+              </label>
+              <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    name="primaryColor"
+                    value={formData.primaryColor || "#012a4a"}
+                    onChange={handleChange}
+                    className="w-12 h-12 rounded cursor-pointer border border-nutrity-border p-1"
+                  />
+                  <input
+                    type="text"
+                    name="primaryColor"
+                    value={formData.primaryColor || "#012a4a"}
+                    onChange={handleChange}
+                    className="flex-1 bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 outline-none"
+                    placeholder="Ej. #012a4a"
+                  />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-nutrity-gray-text flex items-center gap-2">
+                <LayoutTemplate className="w-4 h-4" />
+                Color de Acento (SaaS)
+              </label>
+              <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    name="accentColor"
+                    value={formData.accentColor || "#c19b6c"}
+                    onChange={handleChange}
+                    className="w-12 h-12 rounded cursor-pointer border border-nutrity-border p-1"
+                  />
+                  <input
+                    type="text"
+                    name="accentColor"
+                    value={formData.accentColor || "#c19b6c"}
+                    onChange={handleChange}
+                    className="flex-1 bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 outline-none"
+                    placeholder="Ej. #c19b6c"
+                  />
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-bold text-nutrity-gray-text flex items-center gap-2">
               <FileText className="w-4 h-4" />

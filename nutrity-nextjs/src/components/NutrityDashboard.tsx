@@ -59,6 +59,7 @@ import { useNutrityData } from '../hooks/useNutrityData';
 import * as dbService from "@/actions/db-actions";
 import { useDropzone } from "react-dropzone";
 import { AdminPanel } from "./AdminPanel";
+import { SuperadminPanel } from "./SuperadminPanel";
 import { ThemeInjector } from "./ThemeInjector";
 import SubscriptionTab from "./SubscriptionTab";
 import { getDirectImageUrl } from '../lib/utils';
@@ -78,7 +79,8 @@ interface NutrityDashboardProps {
 }
 
 export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, onRequireAuth, onLogout, isGeneratingPDF, onMenuUpdate }: NutrityDashboardProps) {
-    const [activeTab, setActiveTab] = useState("main");
+    const isCoachOrAdminInit = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com';
+    const [activeTab, setActiveTab] = useState(isCoachOrAdminInit ? "organization" : "main");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     if (user?.profile?.status === 'BLOCKED') {
@@ -195,7 +197,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     useEffect(() => {
         // Solo marcar como completo si tenemos el objeto de perfil y los campos requeridos
         // Dilan e invitados deben tener estos datos para no ser redirigidos
-        if (user?.profile && user?.email !== 'admin@nutrity.global' && user?.profile?.role !== 'ADMIN') {
+        if (user?.profile && user?.email !== 'admin@nutrity.global' && user?.profile?.role !== 'ADMIN' && user?.profile?.role !== 'COACH') {
             const hasPhone = !!user.profile.phone;
             
             // Relajamos la validación para evitar loops infinitos si el usuario prefiere no llenar todo
@@ -618,7 +620,13 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         }
     };
 
-    const navItems = [
+    const isCoachOrAdmin = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com';
+
+    const navItems = isCoachOrAdmin ? [
+        { id: "organization", icon: Users, label: user?.profile?.role === 'ADMIN' ? "Admin Global" : "Mi Organización" },
+        { id: "subscription", icon: CreditCard, label: "Mi Plan", disabled: !isProfileComplete },
+        { id: "profile", icon: User, label: "Perfil" }
+    ] : [
         { id: "main", icon: LayoutDashboard, label: "Panel", disabled: !isProfileComplete },
         { id: "agenda", icon: Calendar, label: "Agenda", disabled: !isProfileComplete },
         { id: "coach", icon: Brain, label: "IA Coach", disabled: !isProfileComplete },
@@ -629,8 +637,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
         { id: "menu", icon: ClipboardCheck, label: "Menú", disabled: !isProfileComplete },
         { id: "goals", icon: Target, label: "Metas", disabled: !isProfileComplete },
         { id: "profile", icon: User, label: "Perfil" },
-        { id: "subscription", icon: CreditCard, label: "Mi Plan", disabled: !isProfileComplete },
-        ...(user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com' ? [{ id: "organization", icon: Users, label: user?.profile?.role === 'ADMIN' ? "Admin Global" : "Mi Organización" }] : [])
+        { id: "subscription", icon: CreditCard, label: "Mi Plan", disabled: !isProfileComplete }
     ];
 
     const filteredFoods = (foods || []).filter(f =>
@@ -650,14 +657,14 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
     return (
         <div id="dashboard-container" className="flex h-screen bg-nutrity-bg text-nutrity-primary overflow-hidden font-body pb-[90px] md:pb-0">
-            <ThemeInjector plan={user?.profile?.plan} role={user?.profile?.role} />
+            <ThemeInjector plan={user?.profile?.plan} role={user?.profile?.role} organizationId={user?.profile?.organizationId} />
             {/* Desktop Sidebar */}
             <aside className="hidden lg:flex flex-col w-64 bg-nutrity-primary text-white border-r border-white/5 overflow-y-auto hide-scroll-indicator">
                 <div className="p-8 min-h-max">
                     <div className="flex items-center gap-3 mb-10">
                         <img 
-                            src="https://drive.google.com/uc?export=view&id=1LSl9LF795Q6E2YnjvZ0kZ40DjVuk7LuS" 
-                            alt="Nutrity Global Logo" 
+                            src={landingConfig?.logoUrl ? landingConfig.logoUrl : "https://drive.google.com/uc?export=view&id=1LSl9LF795Q6E2YnjvZ0kZ40DjVuk7LuS"} 
+                            alt="Clinic Logo" 
                             className="w-40 h-auto object-contain drop-shadow-md" 
                         />
                     </div>
@@ -681,7 +688,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                 <header className="h-20 bg-white border-b border-nutrity-border flex items-center justify-between px-8 z-20">
                     <div className="flex items-center gap-4">
                         <button className="lg:hidden p-2" onClick={() => setIsSidebarOpen(true)}><LayoutDashboard /></button>
-                        <h1 className="text-sm md:text-xl font-display font-bold text-nutrity-primary tracking-tight truncate max-w-[150px] md:max-w-none">Nutrity V7 - Bio-Panel Médico</h1>
+                        <h1 className="text-sm md:text-xl font-display font-bold text-nutrity-primary tracking-tight truncate max-w-[150px] md:max-w-none">{landingConfig?.appTitle || "Nutrity V7 - Bio-Panel Médico"}</h1>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="hidden md:flex flex-col text-right">
@@ -719,6 +726,15 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
 
                 <div className="flex-1 overflow-y-auto p-8 scrollbar-hide">
                     <AnimatePresence mode="wait">
+                        {activeTab === "organization" && (
+                            <motion.div key="organization" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="h-full">
+                                {user?.profile?.role === "ADMIN" ? (
+                                    <SuperadminPanel user={user} onLogout={onLogout} />
+                                ) : (
+                                    <AdminPanel user={user} onLogout={onLogout} />
+                                )}
+                            </motion.div>
+                        )}
                         {activeTab === "main" && (
                             <motion.div key="main" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                                 {/* Hero Card - Removing 'nutrity-card' to avoid baseline white override */}
@@ -1422,9 +1438,6 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                             </motion.div>
                         )}
 
-                        {(activeTab === "organization" && (user?.profile?.role === 'ADMIN' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com')) && (
-                            <AdminPanel user={user} />
-                        )}
 
                         {activeTab === "catalog" && (
                             <motion.div key="catalog" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
@@ -2203,7 +2216,12 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             {/* Mobile Bottom Navigation */}
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-nutrity-border z-40 pb-safe box-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory hide-scroll-indicator">
-                    {[
+                    {(isCoachOrAdmin ? [
+                        { id: 'organization', icon: Users, label: user?.profile?.role === 'ADMIN' ? 'Admin' : 'Mi Org' },
+                        { id: 'subscription', icon: CreditCard, label: 'Planes' },
+                        { id: 'profile', icon: User, label: 'Perfil' },
+                        { id: 'logout', icon: LogOut, label: 'Salir', color: 'text-red-500' },
+                    ] : [
                         { id: 'main', icon: LayoutDashboard, label: 'Panel' },
                         { id: 'agenda', icon: Calendar, label: 'Agenda' },
                         { id: 'coach', icon: Brain, label: 'IA Coach' },
@@ -2214,10 +2232,9 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                         { id: 'menu', icon: ClipboardCheck, label: 'Menú' },
                         { id: 'goals', icon: Target, label: 'Metas' },
                         { id: 'subscription', icon: CreditCard, label: 'Planes' },
-                        ...(user?.profile?.role === 'ADMIN' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com' ? [{ id: 'organization', icon: Users, label: 'Admin' }] : []),
                         { id: 'profile', icon: User, label: 'Perfil' },
                         { id: 'logout', icon: LogOut, label: 'Salir', color: 'text-red-500' },
-                    ].map((item: any) => {
+                    ]).map((item: any) => {
                         const isActive = activeTab === item.id;
                         const isLogout = item.id === 'logout';
                         const isDisabled = !isProfileComplete && item.id !== 'profile' && !isLogout;

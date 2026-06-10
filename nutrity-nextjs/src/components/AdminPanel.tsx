@@ -100,6 +100,9 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [editingUser, setEditingUser] = useState<any>(null);
     const [showCardexModal, setShowCardexModal] = useState(false);
     const [selectedCardexUser, setSelectedCardexUser] = useState<any>(null);
+    
+    const [showAddUserModal, setShowAddUserModal] = useState(false);
+    const [newUser, setNewUser] = useState({ name: "", email: "", phone: "", age: "", password: "" });
 
     // Delete confirmation
     const [deleteTarget, setDeleteTarget] = useState<{ type: AdminSection; id: string; name: string } | null>(null);
@@ -211,6 +214,28 @@ export function AdminPanel({ user }: AdminPanelProps) {
         finally { setIsSaving(false); }
     };
 
+    const handleCreateUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        try {
+            // Import dynamically or assume it's imported at top
+            const { createPatientByCoach } = await import("@/actions/admin-actions");
+            const result = await createPatientByCoach(newUser);
+            if (result.success) {
+                notify("success", "Paciente registrado exitosamente.");
+                setShowAddUserModal(false);
+                setNewUser({ name: "", email: "", phone: "", age: "", password: "" });
+                const updated = await dbService.getAllUsers(user?.profile?.organization?.id);
+                setUsers(updated);
+            }
+        } catch (err: any) {
+            console.error("Error creating user:", err);
+            notify("error", err.message || "Error al crear el paciente");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleSaveAppointment = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingAppt) return;
@@ -273,6 +298,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const sections: { id: AdminSection; icon: any; label: string; count: number }[] = isCoach ? [
         { id: "conversions", icon: TrendingUp, label: "Mis Conversiones", count: users.length },
         { id: "users", icon: Users, label: "Mis Pacientes", count: users.length },
+        { id: "landing", icon: LayoutTemplate, label: "Mi Clínica B2B", count: 1 },
     ] : [
         { id: "conversions", icon: TrendingUp, label: "Conversiones", count: users.length },
         { id: "foods", icon: Utensils, label: "Alimentos", count: foods.length },
@@ -338,6 +364,34 @@ export function AdminPanel({ user }: AdminPanelProps) {
                     </button>
                 ))}
             </div>
+
+            <AnimatePresence>
+                {showAddUserModal && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-nutrity-primary/60 backdrop-blur-md flex items-center justify-center p-4">
+                        <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                            <div className="p-8 border-b border-nutrity-border flex items-center justify-between shrink-0">
+                                <div>
+                                    <h3 className="text-xl font-bold font-display flex items-center gap-2"><Users className="w-5 h-5 text-nutrity-accent" /> Registrar Nuevo Paciente</h3>
+                                    <p className="text-xs text-nutrity-gray-text font-medium mt-1">Crea una cuenta para tu paciente. Se enviará una confirmación a su email.</p>
+                                </div>
+                                <button onClick={() => setShowAddUserModal(false)} className="p-2 rounded-full hover:bg-nutrity-bg"><X className="w-5 h-5 text-nutrity-gray-text" /></button>
+                            </div>
+                            <form onSubmit={handleCreateUser} className="p-8 space-y-6 overflow-y-auto">
+                                <FieldInput label="Nombre Completo *" value={newUser.name} onChange={(v) => setNewUser({ ...newUser, name: v })} required />
+                                <FieldInput label="Email del Paciente *" type="email" value={newUser.email} onChange={(v) => setNewUser({ ...newUser, email: v })} required />
+                                <FieldInput label="Contraseña Temporal *" type="password" value={newUser.password} onChange={(v) => setNewUser({ ...newUser, password: v })} placeholder="Asigna una contraseña segura" required />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FieldInput label="Celular (Opcional)" value={newUser.phone} onChange={(v) => setNewUser({ ...newUser, phone: v })} />
+                                    <FieldInput label="Edad (Opcional)" type="number" value={newUser.age} onChange={(v) => setNewUser({ ...newUser, age: v })} />
+                                </div>
+                                <button disabled={isSaving} type="submit" className="w-full bg-nutrity-primary text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-nutrity-accent transition-all flex items-center justify-center gap-2 mt-4">
+                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} Registrar Paciente
+                                </button>
+                            </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Search + Add bar */}
             {!["menu", "crm", "reports", "blog", "landing", "conversions"].includes(section) && (
@@ -444,6 +498,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                         editingUser={editingUser}
                         showCardexModal={showCardexModal}
                         selectedCardexUser={selectedCardexUser}
+                        onAddUser={() => setShowAddUserModal(true)}
                         onOpenCardex={(u) => { setSelectedCardexUser(u); setShowCardexModal(true); }}
                         onCloseCardex={() => setShowCardexModal(false)}
                         onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }}
