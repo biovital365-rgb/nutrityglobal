@@ -623,7 +623,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
     const isCoachOrAdmin = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com';
 
     const navItems = isCoachOrAdmin ? [
-        { id: "organization", icon: Users, label: user?.profile?.role === 'ADMIN' ? "Admin Global" : "Mi Organización" },
+        { id: "organization", icon: Users, label: user?.profile?.role === 'ADMIN' ? "Superadmin Global" : "Mi Organización" },
+        ...(user?.profile?.role === 'ADMIN' ? [{ id: "admin_catalog", icon: ClipboardCheck, label: "Panel Administración" }] : []),
         { id: "subscription", icon: CreditCard, label: "Mi Plan", disabled: !isProfileComplete },
         { id: "profile", icon: User, label: "Perfil" }
     ] : [
@@ -733,6 +734,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                 ) : (
                                     <AdminPanel user={user} onLogout={onLogout} />
                                 )}
+                            </motion.div>
+                        )}
+                        {activeTab === "admin_catalog" && user?.profile?.role === "ADMIN" && (
+                            <motion.div key="admin_catalog" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="h-full">
+                                <AdminPanel user={user} onLogout={onLogout} />
                             </motion.div>
                         )}
                         {activeTab === "main" && (
@@ -2217,7 +2223,8 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-nutrity-border z-40 pb-safe box-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory hide-scroll-indicator">
                     {(isCoachOrAdmin ? [
-                        { id: 'organization', icon: Users, label: user?.profile?.role === 'ADMIN' ? 'Admin' : 'Mi Org' },
+                        { id: 'organization', icon: Users, label: user?.profile?.role === 'ADMIN' ? 'Global' : 'Mi Org' },
+                        ...(user?.profile?.role === 'ADMIN' ? [{ id: 'admin_catalog', icon: ClipboardCheck, label: 'Catálogo' }] : []),
                         { id: 'subscription', icon: CreditCard, label: 'Planes' },
                         { id: 'profile', icon: User, label: 'Perfil' },
                         { id: 'logout', icon: LogOut, label: 'Salir', color: 'text-red-500' },

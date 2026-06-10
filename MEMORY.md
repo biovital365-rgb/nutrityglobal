@@ -111,15 +111,17 @@
 20. **Diagnóstico Nivel Pro (NMG & Biometría)**: El componente `NutrityOnboarding.tsx` fue rediseñado a un formato "Premium", reemplazando inputs libres por rangos estructurados e incorporando indagación inductiva del "Síndrome de Dirk Hamer" (DHS), asegurando consistencia clínica pre-procesada antes de enviar a Gemini. La paleta de colores del formulario (Forest Green, Cream, Gold) ahora emula directamente la experiencia visual del eBook oficial.
 21. **Sincronización de Blog y Ajuste de Hero Landing**: Se centralizó el estado de los artículos de blog en el componente padre `AdminPanel.tsx` para sincronizar en tiempo real el contador en la barra de navegación del administrador. Se redefinió la interfaz `AdminBlogTabProps` para eliminar tipos implícitos y usar tipado estricto (KISS/Type Safety), solucionando lints de estado síncronos. En `NutrityLanding.tsx`, se removió la opacidad reducida (opacity-90), el desenfoque artificial (backdrop-blur) y se redujo la capa blanca superior a `bg-white/10` para lograr que la imagen principal del landing luzca nítida, contrastada y fiel a su versión original como fondo de la sección.
 22. **TikTok CMS Dinámico y Generación de Menú en Servidor**: Se añadió soporte en el CMS para gestionar los 4 videos de TikTok (título, enlace real e imagen de portada base64 o URL) de forma dinámica, cargando en el dashboard del paciente con estética nativa móvil de TikTok (simulando interacciones verticales, disco musical y tickers animados definidos en globals.css). Asimismo, la generación de menú semanal se movió al servidor en `generateAIWeeklyMenuSecure` (evitando key exposure), configurando un plan de 7 días consecutivos a partir del día siguiente a la generación y aplicando fallback automático a `gemini-1.5-flash` si `gemini-2.5-flash` supera límites de cuota (429).
+23. **Supabase Single Source of Truth (SSOT)**: Se erradicó la dependencia de catálogos estáticos (`food-data.ts`, `micronutrients-data.ts`) y la función destructiva `forceSyncCatalog`. Para evitar la superposición o pérdida de datos cargados vía SQL puro, las vistas de Alimentos y Micronutrientes dependen ahora única y estrictamente de la DB. Si la DB está vacía, la interfaz responde limpiamente sin "auto-sembrar" el modelo antiguo.
+24. **Prevención de Data Ghosting**: Se reemplazaron todos los *fallbacks* (valores por defecto) hardcodeados en `NutrityLanding` (como "De la Diabetes Tipo 2" y videos de TikTok residuales de una app anterior) por estados estrictamente anulables (`null`). Esto elimina el molesto parpadeo ("flash of old app data") en la carga inicial y asegura que la web proyecte la identidad de marca dinámica configurada desde el Admin Panel.
 
-106: ---
-107: 
-108: ## 💡 Decisiones de Diseño Importantes
-109: - **User Status Protocol**: El sistema maneja estados `ACTIVE`, `BLOCKED` y `OBSERVED`.
-110: - **Emotional-Driven AI**: La IA no solo prescribe dieta, sino que decodifica el síntoma biológico según la consciencia del usuario.
-111: - **Premium Onboarding UI**: Se utiliza una paleta de colores específica (Forest Green, Gold, Cream) para emular la estética de un "libro/revista" clínica, elevando el valor percibido del diagnóstico.
-112: - **Admin Maintenance**: El Admin Panel es ahora la herramienta principal para la salud del sistema y auditoría de diagnósticos.
-113: - **Estabilidad en Producción (Vercel & Supabase)**: 
+---
+
+## 💡 Decisiones de Diseño Importantes
+- **User Status Protocol**: El sistema maneja estados `ACTIVE`, `BLOCKED` y `OBSERVED`.
+- **Emotional-Driven AI**: La IA no solo prescribe dieta, sino que decodifica el síntoma biológico según la consciencia del usuario.
+- **Premium Onboarding UI**: Se utiliza una paleta de colores específica (Forest Green, Gold, Cream) para emular la estética de un "libro/revista" clínica, elevando el valor percibido del diagnóstico.
+- **Admin Maintenance**: El Admin Panel es ahora la herramienta principal para la salud del sistema y auditoría de diagnósticos.
+- **Estabilidad en Producción (Vercel & Supabase)**:
     * Se eliminaron los imports dinámicos en Server Actions (ej. `await import('@/lib/food-data')`) reemplazándolos por imports estáticos, solucionando Errores 500 en Vercel durante el renderizado de Server Components.
     * Se adoptó oficialmente el **Transaction Pooler IPv4 (puerto 6543) de Supabase** (`aws-0-us-[region].pooler.supabase.com`) con el flag `?pgbouncer=true` en `DATABASE_URL` para garantizar la conexión desde Vercel (que no soporta IPv6 nativo en Serverless Functions).
     * Se incluyó comportamiento responsivo nativo en el sidebar de navegación (`overflow-y-auto`) para pantallas de laptops pequeñas, evitando pérdida de accesibilidad a funciones críticas (Planes y Organización).
