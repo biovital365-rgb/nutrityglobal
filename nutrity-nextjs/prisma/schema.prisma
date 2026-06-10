@@ -396,22 +396,3 @@ model OrganizationConfig {
   updatedAt       DateTime     @updatedAt
   organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
-
-model Micronutrient {
-  id              String        @id @default(cuid())
-  organizationId  String?
-  name            String
-  symbol          String
-  category        String
-  function        String
-  metabolicImpact String
-  sources         Json          // Array de strings
-  deficiencySigns Json          // Array de strings
-  dailyDose       String
-  image           String
-  createdAt       DateTime      @default(now())
-  deletedAt       DateTime?
-  organization    Organization? @relation(fields: [organizationId], references: [id])
-
-  @@index([organizationId])
-}
