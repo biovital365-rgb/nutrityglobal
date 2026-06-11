@@ -2012,9 +2012,9 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <div className="space-y-4">
                                             {selectedFood.recipes.map((recipe, idx) => (
                                                 <div key={idx} className="bg-white rounded-2xl border border-nutrity-border shadow-sm overflow-hidden flex flex-col md:flex-row">
-                                                    {(recipe.image || recipe.imageUrl) && (
+                                                    {(recipe.image || (recipe as any).imageUrl) && (
                                                         <div className="w-full md:w-48 h-48 md:h-auto shrink-0 relative">
-                                                            <img src={getDirectImageUrl(recipe.image || recipe.imageUrl)} alt={recipe.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                                            <img src={getDirectImageUrl(recipe.image || (recipe as any).imageUrl)} alt={recipe.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                                         </div>
                                                     )}
                                                     <div className="p-5 flex-1">
