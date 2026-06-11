@@ -155,7 +155,7 @@ export function AdminFoodsTab({
                                             <div className="p-3 bg-white rounded-lg border border-nutrity-border">
                                                 <Base64ImageUpload
                                                     label="Imagen de la Receta"
-                                                    value={recipe.image || ""}
+                                                    value={recipe.image || (recipe as any).imageUrl || ""}
                                                     onChange={(img) => {
                                                         const updated = [...(editingFood.recipes || [])];
                                                         updated[rIdx] = { ...updated[rIdx], image: img };

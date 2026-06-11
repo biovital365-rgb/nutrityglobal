@@ -1807,7 +1807,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                             </motion.div>
                         )}
 
-                        {!["main", "coach", "micronutrients", "measurements", "academy", "subscription", "organization", "catalog", "menu", "goals", "agenda", "profile"].includes(activeTab) && (
+                        {!["main", "coach", "micronutrients", "measurements", "academy", "subscription", "organization", "catalog", "admin_catalog", "menu", "goals", "agenda", "profile"].includes(activeTab) && (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center p-20 text-center space-y-6">
                                 <div className="w-20 h-20 bg-nutrity-bg rounded-3xl flex items-center justify-center text-nutrity-accent/20">
                                     <FlaskConical className="w-10 h-10" />
@@ -1976,7 +1976,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <Zap className="w-4 h-4 text-nutrity-accent" /> Beneficios Metabólicos
                                     </h3>
                                     <div className="flex flex-wrap gap-2">
-                                        {selectedFood.metabolicBenefits.map((benefit, i) => (
+                                        {(selectedFood.metabolicBenefits || []).map((benefit: string, i: number) => (
                                             <span key={i} className="px-3 py-1.5 bg-nutrity-success/10 text-nutrity-success text-xs font-bold rounded-lg border border-nutrity-success/20">
                                                 {benefit}
                                             </span>
@@ -2046,6 +2046,26 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                 </ol>
                                                             </div>
                                                         </div>
+                                                        {(recipe as any).tip && (
+                                                            <div className="mt-6 p-4 rounded-xl bg-indigo-50 border border-indigo-100">
+                                                                <div className="flex gap-2 items-start">
+                                                                    <Info className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                                                                    <p className="text-sm font-medium text-indigo-900 leading-relaxed">
+                                                                        {(recipe as any).tip}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {(recipe as any).additionalNotes && (
+                                                            <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-100">
+                                                                <div className="flex gap-2 items-start">
+                                                                    <Zap className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                                                    <p className="text-sm font-medium text-amber-900 leading-relaxed">
+                                                                        {(recipe as any).additionalNotes}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                         {recipe.instructions && recipe.instructions?.length > 0 && (
                                                             <div className="mt-6">
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Perfil Metabólico</h5>
