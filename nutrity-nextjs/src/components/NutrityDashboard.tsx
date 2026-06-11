@@ -2012,9 +2012,9 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                         <div className="space-y-4">
                                             {selectedFood.recipes.map((recipe, idx) => (
                                                 <div key={idx} className="bg-white rounded-2xl border border-nutrity-border shadow-sm overflow-hidden flex flex-col md:flex-row">
-                                                    {recipe.image && (
+                                                    {(recipe.image || recipe.imageUrl) && (
                                                         <div className="w-full md:w-48 h-48 md:h-auto shrink-0 relative">
-                                                            <img src={getDirectImageUrl(recipe.image)} alt={recipe.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                                            <img src={getDirectImageUrl(recipe.image || recipe.imageUrl)} alt={recipe.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                                         </div>
                                                     )}
                                                     <div className="p-5 flex-1">
@@ -2026,7 +2026,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             <div>
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Ingredientes</h5>
                                                                 <ul className="space-y-1">
-                                                                    {(Array.isArray(recipe.ingredients) ? recipe.ingredients : typeof recipe.ingredients === 'string' ? [recipe.ingredients] : []).map((ing: any, i: number) => (
+                                                                    {(Array.isArray(recipe.ingredients) ? recipe.ingredients : typeof recipe.ingredients === 'string' ? recipe.ingredients.split('\n') : []).filter((i: string) => i.trim() !== '').map((ing: any, i: number) => (
                                                                         <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
                                                                             <span className="text-nutrity-accent/50 font-bold mt-0.5">•</span>
                                                                             <span>{ing}</span>
@@ -2037,7 +2037,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                             <div>
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Preparación</h5>
                                                                 <ol className="space-y-1">
-                                                                    {(Array.isArray(recipe.preparation) ? recipe.preparation : typeof recipe.preparation === 'string' ? [recipe.preparation] : []).map((inst: any, i: number) => (
+                                                                    {(Array.isArray(recipe.preparation) ? recipe.preparation : typeof recipe.preparation === 'string' ? recipe.preparation.split('\n') : []).filter((i: string) => i.trim() !== '').map((inst: any, i: number) => (
                                                                         <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
                                                                             <span className="text-nutrity-accent/50 font-bold mt-0.5">{i + 1}.</span>
                                                                             <span>{inst}</span>
