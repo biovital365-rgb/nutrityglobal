@@ -106,6 +106,7 @@ export function AdminCoursesTab({
                                 <FieldInput label="Thumbnail URL" value={editingCourse.thumbnail || ""} onChange={(v) => setEditingCourse(p => ({ ...p, thumbnail: v }))} placeholder="https://images.unsplash.com/..." />
                                 <FieldInput label="Enlace de Pago PayPal (NCP)" value={editingCourse.paypalUrl || ""} onChange={(v) => setEditingCourse(p => ({ ...p, paypalUrl: v }))} placeholder="https://www.paypal.com/ncp/payment/..." />
 
+
                                 {/* ─── Lessons Section ─── */}
                                 <div className="pt-6 border-t border-nutrity-border">
                                     <div className="flex items-center justify-between mb-4">
@@ -164,7 +165,7 @@ export function AdminCoursesTab({
                                                                 <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">Título de la Lección</label>
                                                                 <input
                                                                     type="text"
-                                                                    value={lesson.title}
+                                                                    value={lesson.title || ''}
                                                                     onChange={(e) => {
                                                                         const newLessons = [...(editingCourse.lessons || [])];
                                                                         newLessons[idx] = { ...lesson, title: e.target.value };
@@ -179,7 +180,7 @@ export function AdminCoursesTab({
                                                                 <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest block mb-1.5">Duración</label>
                                                                 <input
                                                                     type="text"
-                                                                    value={lesson.duration}
+                                                                    value={lesson.duration || ''}
                                                                     onChange={(e) => {
                                                                         const newLessons = [...(editingCourse.lessons || [])];
                                                                         newLessons[idx] = { ...lesson, duration: e.target.value };
@@ -327,12 +328,12 @@ export function AdminCoursesTab({
                                                                 </div>
                                                                 {lesson.assignment && (
                                                                     <div className="space-y-2">
-                                                                        <input type="text" value={lesson.assignment.title} onChange={e => {
+                                                                        <input type="text" value={lesson.assignment.title || ''} onChange={e => {
                                                                             const newLessons = [...(editingCourse.lessons || [])];
                                                                             newLessons[idx].assignment!.title = e.target.value;
                                                                             setEditingCourse(p => ({ ...p, lessons: newLessons }));
                                                                         }} className="w-full bg-slate-50 border border-nutrity-border/50 text-sm p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-nutrity-primary/20" placeholder="Título de la tarea" />
-                                                                        <textarea value={lesson.assignment.description} onChange={e => {
+                                                                        <textarea value={lesson.assignment.description || ''} onChange={e => {
                                                                             const newLessons = [...(editingCourse.lessons || [])];
                                                                             newLessons[idx].assignment!.description = e.target.value;
                                                                             setEditingCourse(p => ({ ...p, lessons: newLessons }));
@@ -359,7 +360,7 @@ export function AdminCoursesTab({
                                                                 </div>
                                                                 {lesson.quiz && (
                                                                     <div className="space-y-2">
-                                                                        <input type="text" value={lesson.quiz.title} onChange={e => {
+                                                                        <input type="text" value={lesson.quiz.title || ''} onChange={e => {
                                                                             const newLessons = [...(editingCourse.lessons || [])];
                                                                             newLessons[idx].quiz!.title = e.target.value;
                                                                             setEditingCourse(p => ({ ...p, lessons: newLessons }));
@@ -373,26 +374,26 @@ export function AdminCoursesTab({
                                                                                     setEditingCourse(p => ({ ...p, lessons: newLessons }));
                                                                                 }} className="text-[10px] font-bold text-nutrity-accent">+ Añadir</button>
                                                                             </div>
-                                                                            {lesson.quiz.questions.map((q, qIdx) => (
+                                                                            {(lesson.quiz.questions || []).map((q: any, qIdx: number) => (
                                                                                 <div key={qIdx} className="space-y-1 p-2 bg-white rounded border border-nutrity-border/50 relative group/q">
                                                                                     <button type="button" onClick={() => {
                                                                                         const newLessons = [...(editingCourse.lessons || [])];
                                                                                         newLessons[idx].quiz!.questions.splice(qIdx, 1);
                                                                                         setEditingCourse(p => ({ ...p, lessons: newLessons }));
                                                                                     }} className="absolute top-1 right-1 text-red-500 opacity-0 group-hover/q:opacity-100"><Trash2 className="w-3 h-3"/></button>
-                                                                                    <input type="text" value={q.text} onChange={e => {
+                                                                                    <input type="text" value={q.text || ''} onChange={e => {
                                                                                         const newLessons = [...(editingCourse.lessons || [])];
                                                                                         newLessons[idx].quiz!.questions[qIdx].text = e.target.value;
                                                                                         setEditingCourse(p => ({ ...p, lessons: newLessons }));
                                                                                     }} className="w-full text-xs p-1 border-b border-nutrity-border/50 focus:outline-none" placeholder="Pregunta" />
-                                                                                    {q.options.map((opt, oIdx) => (
+                                                                                    {(q.options || []).map((opt: string, oIdx: number) => (
                                                                                         <div key={oIdx} className="flex items-center gap-1">
                                                                                             <input type="radio" name={`correct-${idx}-${qIdx}`} checked={q.correctIndex === oIdx} onChange={() => {
                                                                                                 const newLessons = [...(editingCourse.lessons || [])];
                                                                                                 newLessons[idx].quiz!.questions[qIdx].correctIndex = oIdx;
                                                                                                 setEditingCourse(p => ({ ...p, lessons: newLessons }));
                                                                                             }} className="w-3 h-3" />
-                                                                                            <input type="text" value={opt} onChange={e => {
+                                                                                            <input type="text" value={opt || ''} onChange={e => {
                                                                                                 const newLessons = [...(editingCourse.lessons || [])];
                                                                                                 newLessons[idx].quiz!.questions[qIdx].options[oIdx] = e.target.value;
                                                                                                 setEditingCourse(p => ({ ...p, lessons: newLessons }));

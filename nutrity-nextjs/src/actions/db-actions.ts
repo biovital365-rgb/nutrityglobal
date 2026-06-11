@@ -795,36 +795,35 @@ export async function deleteCourse(id: string) {
 }
 
 export async function toggleLessonProgress(userId: string, lessonId: string, completed: boolean) {
-        const { data: existing } = await supabase
-            .from('LessonProgress')
-            .select('id')
-            .eq('userId', userId)
-            .eq('lessonId', lessonId)
-            .maybeSingle();
+        const internalId = await getInternalId(userId);
+        
+        await prisma.lessonProgress.upsert({
+            where: {
+                userId_lessonId: {
+                    userId: internalId,
+                    lessonId: lessonId
+                }
+            },
+            update: {
+                completed
+            },
+            create: {
+                userId: internalId,
+                lessonId: lessonId,
+                completed
+            }
+        });
 
-        const progressId = existing?.id || crypto.randomUUID();
-
-        const { error } = await supabase
-            .from('LessonProgress')
-            .upsert({
-                id: progressId,
-                userId,
-                lessonId,
-                completed,
-                updatedAt: new Date().toISOString()
-            }, { onConflict: 'id' })
-
-        if (error) throw error
-        return true
+        return true;
 }
 
 export async function getLessonsProgress(userId: string) {
-        const { data, error } = await supabase
-            .from('LessonProgress')
-            .select('lessonId, completed')
-            .eq('userId', userId)
+        const internalId = await getInternalId(userId);
+        const data = await prisma.lessonProgress.findMany({
+            where: { userId: internalId },
+            select: { lessonId: true, completed: true }
+        });
 
-        if (error) throw error
         const progress: Record<string, boolean> = {};
         data.forEach(item => {
             progress[item.lessonId] = item.completed;
@@ -1481,6 +1480,23 @@ export async function getAssignmentSubmissions(organizationId?: string) {
         orderBy: { createdAt: 'desc' }
     });
     return submissions;
+}
+
+export async function getQuizAttempts(organizationId?: string) {
+    const whereClause: any = {};
+    if (organizationId) {
+        whereClause.organizationId = organizationId;
+    }
+
+    const attempts = await prisma.quizAttempt.findMany({
+        where: whereClause,
+        include: { 
+            user: { select: { name: true, email: true } },
+            quiz: { select: { title: true, lesson: { select: { title: true } } } }
+        },
+        orderBy: { createdAt: 'desc' }
+    });
+    return attempts;
 }
 
 export async function reviewAssignmentSubmission(submissionId: string, feedback: string) {

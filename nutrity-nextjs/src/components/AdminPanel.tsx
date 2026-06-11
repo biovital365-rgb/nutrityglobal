@@ -77,6 +77,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const [landingConfig, setLandingConfig] = useState<any>({});
     const [posts, setPosts] = useState<Post[]>([]);
     const [submissions, setSubmissions] = useState<any[]>([]);
+    const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
 
     // Modal state for foods
     const [showFoodModal, setShowFoodModal] = useState(false);
@@ -117,7 +118,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const loadAll = useCallback(async () => {
         const orgId = user?.profile?.organization?.id;
         try {
-            const [foodData, microData, courseData, userData, appointmentData, reportData, landingData, postData, submissionsData] = await Promise.all([
+            const [foodData, microData, courseData, userData, appointmentData, reportData, landingData, postData, submissionsData, quizAttemptsData] = await Promise.all([
                 dbService.getFoods().catch(() => []),
                 dbService.getMicronutrients().catch(() => []),
                 dbService.getCourses(orgId, showDeleted).catch(() => []),
@@ -127,6 +128,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                 dbService.getLandingConfig(orgId).catch(() => ({})),
                 dbService.getPosts(orgId, false).catch(() => []),
                 dbService.getAssignmentSubmissions(orgId).catch(() => []),
+                dbService.getQuizAttempts(orgId).catch(() => []),
             ]);
             setFoods(foodData);
             setMicros(microData);
@@ -137,6 +139,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
             setLandingConfig(landingData || {});
             setPosts(postData);
             setSubmissions(submissionsData);
+            setQuizAttempts(quizAttemptsData);
         } catch (err) {
             console.error("Admin data load error:", err);
             notify("error", "Error al cargar datos");
