@@ -34,14 +34,16 @@ export function LessonQuiz({ lessonId, quiz, userId }: LessonQuizProps) {
         try {
             // Calculate score client-side for simplicity before sending to backend
             let correctCount = 0;
-            (quiz.questions || []).forEach((q, idx) => {
-                if (answers[idx] === q.correctIndex) {
-                    correctCount++;
-                }
+            const answersArray = (quiz.questions || []).map((q, idx) => {
+                const selectedIndex = answers[idx];
+                const isCorrect = selectedIndex === q.correctIndex;
+                if (isCorrect) correctCount++;
+                return { questionIndex: idx, selectedIndex, isCorrect };
             });
+            
             const score = Math.round((correctCount / (quiz?.questions?.length || 1)) * 10);
             
-            const response = await submitQuizAttempt(lessonId, score);
+            const response = await submitQuizAttempt(lessonId, score, answersArray);
             setResult({ score, passed: response.passed });
         } catch (error) {
             console.error('Error al enviar el cuestionario:', error);
