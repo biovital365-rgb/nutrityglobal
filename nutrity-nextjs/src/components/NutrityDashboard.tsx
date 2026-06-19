@@ -2230,19 +2230,6 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {recipe.instructions && (Array.isArray(recipe.instructions) ? recipe.instructions : typeof recipe.instructions === 'string' ? [recipe.instructions] : []).filter((i: string) => i.trim() !== '').length > 0 && (
-                                                            <div className="mt-6">
-                                                                <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Perfil Metabólico</h5>
-                                                                <ul className="space-y-1">
-                                                                    {(Array.isArray(recipe.instructions) ? recipe.instructions : typeof recipe.instructions === 'string' ? [recipe.instructions] : []).filter((i: string) => i.trim() !== '').map((inst: any, i: number) => (
-                                                                        <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
-                                                                            <span className="text-amber-500 font-bold mt-0.5">•</span>
-                                                                            <span>{inst}</span>
-                                                                        </li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
