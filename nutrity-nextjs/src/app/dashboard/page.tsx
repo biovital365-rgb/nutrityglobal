@@ -1,11 +1,11 @@
 "use client";
 
 import { NutrityDashboard } from "@/components/NutrityDashboard";
-import { NutrityReportTemplate } from "@/components/NutrityReportTemplate";
+
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { getLatestEvaluation, getLatestBiologicalDiagnosis } from "@/actions/db-actions";
+import { getLatestEvaluation, getLatestBiologicalDiagnosis, getUserAssignmentSubmissions, getUserQuizAttempts } from "@/actions/db-actions";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -13,6 +13,8 @@ export default function DashboardPage() {
   const [evaluation, setEvaluation] = useState<any>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [currentMenu, setCurrentMenu] = useState<any>(null);
+  const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
+  const [userQuizAttempts, setUserQuizAttempts] = useState<any[]>([]);
   const reportRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -37,6 +39,13 @@ export default function DashboardPage() {
         );
         // Merge the DB profile so user.profile is always available in dashboard
         setUser({ ...authUser, profile: dbProfile });
+
+        const [subs, quizzes] = await Promise.all([
+          getUserAssignmentSubmissions(authUser.id).catch(() => []),
+          getUserQuizAttempts(authUser.id).catch(() => [])
+        ]);
+        setUserSubmissions(subs);
+        setUserQuizAttempts(quizzes);
 
         let evalData = await getLatestEvaluation(authUser.id);
         let actualPlan = null;
@@ -89,29 +98,32 @@ export default function DashboardPage() {
     if (isGeneratingPDF) return;
     setIsGeneratingPDF(true);
     try {
-      const [{ toJpeg }, { default: jsPDF }] = await Promise.all([
-        import("html-to-image"),
-        import("jspdf"),
-      ]);
-
-      const container = reportRef.current;
-      if (!container) throw new Error("Report container not found");
-
-      const pages = container.querySelectorAll<HTMLElement>("[id^='pdf-page-']");
-      if (pages.length === 0) throw new Error("No PDF pages found");
-
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const A4_W = 210;
-      const A4_H = 297;
-
-      for (let i = 0; i < pages.length; i++) {
-        const imgData = await toJpeg(pages[i], { quality: 0.92, backgroundColor: "#fdfcf9" });
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, 0, A4_W, A4_H);
+      const response = await fetch('/api/reporting/expedient');
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${await response.text()}`);
       }
-
-      const name = evaluation?.name || user?.profile?.name || "Paciente";
-      pdf.save(`Nutrity_Reporte_${name.replace(/\s+/g, "_")}.pdf`);
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Intentamos usar el content-disposition si viene, si no fallback
+      const disposition = response.headers.get('content-disposition');
+      let filename = `Expediente_Nutrity_${user?.id?.slice(-6) || 'Paciente'}.pdf`;
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+          const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+          const matches = filenameRegex.exec(disposition);
+          if (matches != null && matches[1]) { 
+            filename = matches[1].replace(/['"]/g, '');
+          }
+      }
+      
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
       // Log the PDF download to the database
       try {
@@ -125,7 +137,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error("PDF generation failed:", err);
-      alert("No se pudo generar el reporte. Asegúrate de tener un diagnóstico activo.");
+      alert("No se pudo generar el expediente. Intenta nuevamente.");
       try {
         const { logPDFReport } = await import("@/actions/db-actions");
         const userId = user?.id || user?.uid;
@@ -152,6 +164,8 @@ export default function DashboardPage() {
       <NutrityDashboard
         user={user}
         results={evaluation || {}}
+        userSubmissions={userSubmissions}
+        userQuizAttempts={userQuizAttempts}
         onLogout={async () => {
           await supabase.auth.signOut();
           router.push("/");
@@ -162,15 +176,6 @@ export default function DashboardPage() {
         onMenuUpdate={(menu) => setCurrentMenu(menu)}
         onRequireAuth={() => router.push("/auth")}
       />
-
-      {/* Off-screen PDF template — rendered but hidden, captured by html2canvas */}
-      <div
-        ref={reportRef}
-        aria-hidden="true"
-        style={{ position: "absolute", left: "-9999px", top: 0, zIndex: -1 }}
-      >
-        <NutrityReportTemplate results={reportResults} />
-      </div>
     </>
   );
 }

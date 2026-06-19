@@ -50,7 +50,8 @@ import {
     Bookmark,
     Music,
     Crown,
-    Lock
+    Lock,
+    FileText
 } from "lucide-react";
 import { PricingTable } from './PricingTable';
 import { Course, Micronutrient } from "../lib/types";
@@ -77,9 +78,11 @@ interface NutrityDashboardProps {
     onLogout: () => void;
     isGeneratingPDF?: boolean;
     onMenuUpdate?: (menu: any) => void;
+    userSubmissions?: any[];
+    userQuizAttempts?: any[];
 }
 
-export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, onRequireAuth, onLogout, isGeneratingPDF, onMenuUpdate }: NutrityDashboardProps) {
+export function NutrityDashboard({ results, user, userSubmissions = [], userQuizAttempts = [], onViewDetail, onGeneratePDF, onRequireAuth, onLogout, isGeneratingPDF, onMenuUpdate }: NutrityDashboardProps) {
     const isCoachOrAdminInit = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com';
     const [activeTab, setActiveTab] = useState(isCoachOrAdminInit ? "organization" : "main");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -1378,51 +1381,108 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                     <p className="text-sm text-nutrity-gray-text leading-relaxed font-medium">
                                                         {activeLesson?.description ? activeLesson.description : selectedCourse.description}
                                                     </p>
+                                                    {activeLesson?.videoInstructions && (
+                                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mt-4">
+                                                            <h4 className="text-xs font-bold uppercase tracking-widest text-nutrity-accent mb-2 flex items-center gap-2"><Play className="w-3 h-3" /> Instrucciones del Video</h4>
+                                                            <p className="text-sm text-nutrity-gray-text">{activeLesson.videoInstructions}</p>
+                                                        </div>
+                                                    )}
+                                                    {(activeLesson && !activeLesson.quiz && !activeLesson.assignment && !lessonProgress[activeLesson.id]) && (
+                                                        <button 
+                                                            onClick={async () => {
+                                                                await dbService.markLessonVideoWatched(activeLesson.id);
+                                                                setLessonProgress(prev => ({ ...prev, [activeLesson.id]: true }));
+                                                            }}
+                                                            className="mt-4 bg-nutrity-success text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-nutrity-success/20 hover:bg-green-600 transition-all flex items-center gap-2"
+                                                        >
+                                                            <CheckCircle2 className="w-4 h-4" /> Marcar como Completada
+                                                        </button>
+                                                    )}
                                                 </div>
+
+                                                {(activeLesson?.presentationUrl || activeLesson?.pdfUrl) && (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                                                        {activeLesson?.presentationUrl && (
+                                                            <div className="bg-white border border-nutrity-border p-5 rounded-2xl flex flex-col items-start gap-3 shadow-sm hover:border-blue-200 transition-colors">
+                                                                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                                                                    <BookOpen className="w-5 h-5" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <h4 className="font-bold text-sm text-nutrity-primary">Presentación de la Lección</h4>
+                                                                    {activeLesson.presentationInstructions && <p className="text-xs text-nutrity-gray-text mt-1.5 leading-relaxed">{activeLesson.presentationInstructions}</p>}
+                                                                </div>
+                                                                <a href={`/api/academic/download?lessonId=${activeLesson.id}&type=presentation`} target="_blank" rel="noopener noreferrer" className="mt-2 px-4 py-2.5 text-xs font-bold bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors w-full text-center flex items-center justify-center gap-2 uppercase tracking-widest">
+                                                                    <ArrowUpRight className="w-3.5 h-3.5" /> Ver Presentación
+                                                                </a>
+                                                            </div>
+                                                        )}
+                                                        {activeLesson?.pdfUrl && (
+                                                            <div className="bg-white border border-nutrity-border p-5 rounded-2xl flex flex-col items-start gap-3 shadow-sm hover:border-rose-200 transition-colors">
+                                                                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+                                                                    <FileText className="w-5 h-5" />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <h4 className="font-bold text-sm text-nutrity-primary">Recurso PDF Adicional</h4>
+                                                                    {activeLesson.pdfInstructions && <p className="text-xs text-nutrity-gray-text mt-1.5 leading-relaxed">{activeLesson.pdfInstructions}</p>}
+                                                                </div>
+                                                                <a href={`/api/academic/download?lessonId=${activeLesson.id}&type=pdf`} target="_blank" rel="noopener noreferrer" className="mt-2 px-4 py-2.5 text-xs font-bold bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors w-full text-center flex items-center justify-center gap-2 uppercase tracking-widest">
+                                                                    <Download className="w-3.5 h-3.5" /> Descargar PDF
+                                                                </a>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 
                                                 {activeLesson?.assignment && (
-                                                    <LessonAssignment lessonId={activeLesson.id} assignment={activeLesson.assignment} userId={user?.id || user?.uid} />
+                                                    <LessonAssignment lessonId={activeLesson.id} assignment={activeLesson.assignment} userId={user?.id || user?.uid} existingSubmission={userSubmissions.find(s => s.assignmentId === activeLesson.assignment.id)} />
                                                 )}
                                                 
                                                 {activeLesson?.quiz && (
-                                                    <LessonQuiz lessonId={activeLesson.id} quiz={activeLesson.quiz} userId={user?.id || user?.uid} />
+                                                    <LessonQuiz lessonId={activeLesson.id} quiz={activeLesson.quiz} userId={user?.id || user?.uid} existingAttempts={userQuizAttempts.filter(a => a.quizId === activeLesson.quiz.id)} />
                                                 )}
                                             </div>
                                             <div className="space-y-6">
                                                 <h3 className="font-display font-bold text-lg">Currículo del Curso</h3>
                                                 <div className="space-y-3">
-                                                    {(selectedCourse.lessons || []).sort((a: any, b: any) => a.order - b.order).map((lesson: any, idx: number) => {
-                                                        const getCourseNumberLocal = (title: string): number => {
-                                                            const t = title.toLowerCase();
-                                                            if (t.includes('método 50') || t.includes('metodo 50') || t.includes('curso 1')) return 1;
-                                                            if (t.includes('código vitalidad') || t.includes('codigo vitalidad') || t.includes('curso 2')) return 2;
-                                                            if (t.includes('escudo de fibra') || t.includes('curso 3')) return 3;
-                                                            if (t.includes('microbiota') || t.includes('curso 4')) return 4;
-                                                            if (t.includes('ayuno') || t.includes('curso 5')) return 5;
-                                                            if (t.includes('mantenimiento') || t.includes('curso 6')) return 6;
-                                                            if (t.includes('bioquímica') || t.includes('bioquimica') || t.includes('curso 7')) return 7;
-                                                            if (t.includes('psico') || t.includes('curso 8')) return 8;
-                                                            return 99;
-                                                        };
-                                                        const plan = (user?.profile?.plan || 'FREE').toUpperCase();
-                                                        const courseNum = getCourseNumberLocal(selectedCourse.title);
-                                                        const isLessonLocked = plan === 'FREE' && courseNum === 1 && idx >= 2;
-                                                        
-                                                        return (
-                                                        <div key={lesson.id}
-                                                            onClick={async () => {
-                                                                if (isLessonLocked) {
-                                                                    alert("Esta lección requiere actualizar tu plan a Básico o Premium para acceder.");
-                                                                    return;
-                                                                }
-                                                                setActiveLesson(lesson);
-                                                                if ((user?.id || user?.uid)) {
-                                                                    const newStatus = !lessonProgress[lesson.id];
-                                                                    await dbService.toggleLessonProgress(user?.id, lesson.id, newStatus);
-                                                                    setLessonProgress(prev => ({ ...prev, [lesson.id]: newStatus }));
-                                                                }
-                                                            }}
-                                                            className={`p-4 rounded-2xl border transition-all ${isLessonLocked ? 'opacity-60 bg-slate-50 cursor-not-allowed border-slate-200 hover:border-slate-300' : 'cursor-pointer ' + (activeLesson?.id === lesson.id ? 'ring-2 ring-nutrity-accent shadow-md' : '')} ${lessonProgress[lesson.id] && !isLessonLocked ? 'bg-nutrity-success/5 border-nutrity-success/30 opacity-70' : (!isLessonLocked ? 'bg-white border-nutrity-border hover:border-nutrity-accent/30' : '')}`}>
+                                                    {(() => {
+                                                        const sortedLessons = (selectedCourse.lessons || []).sort((a: any, b: any) => a.order - b.order);
+                                                        return sortedLessons.map((lesson: any, idx: number) => {
+                                                            const getCourseNumberLocal = (title: string): number => {
+                                                                const t = title.toLowerCase();
+                                                                if (t.includes('método 50') || t.includes('metodo 50') || t.includes('curso 1')) return 1;
+                                                                if (t.includes('código vitalidad') || t.includes('codigo vitalidad') || t.includes('curso 2')) return 2;
+                                                                if (t.includes('escudo de fibra') || t.includes('curso 3')) return 3;
+                                                                if (t.includes('microbiota') || t.includes('curso 4')) return 4;
+                                                                if (t.includes('ayuno') || t.includes('curso 5')) return 5;
+                                                                if (t.includes('mantenimiento') || t.includes('curso 6')) return 6;
+                                                                if (t.includes('bioquímica') || t.includes('bioquimica') || t.includes('curso 7')) return 7;
+                                                                if (t.includes('psico') || t.includes('curso 8')) return 8;
+                                                                return 99;
+                                                            };
+                                                            const plan = (user?.profile?.plan || 'FREE').toUpperCase();
+                                                            const courseNum = getCourseNumberLocal(selectedCourse.title);
+                                                            
+                                                            // Lógica de plan
+                                                            const isPlanLocked = (courseNum === 1 && plan === 'FREE' && idx >= 2) || 
+                                                                               ((courseNum === 2 || courseNum === 3) && plan === 'FREE') || 
+                                                                               (courseNum >= 4 && (plan === 'FREE' || plan === 'BASIC' || plan === 'BÁSICO' || plan === 'BASICO'));
+                                                            
+                                                            // Bloqueo secuencial
+                                                            const isSequentialLocked = idx > 0 && !lessonProgress[sortedLessons[idx - 1].id];
+                                                            
+                                                            const isLessonLocked = isPlanLocked || isSequentialLocked;
+                                                            const lockMessage = isPlanLocked ? "Requiere actualizar plan" : "Completa la lección anterior";
+
+                                                            return (
+                                                            <div key={lesson.id}
+                                                                onClick={async () => {
+                                                                    if (isLessonLocked) {
+                                                                        alert(`Esta lección está bloqueada: ${lockMessage}`);
+                                                                        return;
+                                                                    }
+                                                                    setActiveLesson(lesson);
+                                                                }}
+                                                                className={`p-4 rounded-2xl border transition-all ${isLessonLocked ? 'opacity-60 bg-slate-50 cursor-not-allowed border-slate-200 hover:border-slate-300' : 'cursor-pointer ' + (activeLesson?.id === lesson.id ? 'ring-2 ring-nutrity-accent shadow-md' : '')} ${lessonProgress[lesson.id] && !isLessonLocked ? 'bg-nutrity-success/5 border-nutrity-success/30 opacity-70' : (!isLessonLocked ? 'bg-white border-nutrity-border hover:border-nutrity-accent/30' : '')}`}>
                                                             <div className="flex gap-4">
                                                                 <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center font-bold text-xs ${lessonProgress[lesson.id] && !isLessonLocked ? 'bg-nutrity-success text-white' : (activeLesson?.id === lesson.id && !isLessonLocked ? 'bg-nutrity-accent text-white' : 'bg-nutrity-bg text-nutrity-gray-text')}`}>
                                                                     {isLessonLocked ? <Lock className="w-4 h-4 opacity-50" /> : (lessonProgress[lesson.id] ? <CheckCircle2 className="w-4 h-4" /> : lesson.order)}
@@ -1443,7 +1503,9 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    )})}
+                                                    );
+                                                    });
+                                                    })()}
                                                 </div>
                                             </div>
                                         </div>
@@ -2148,7 +2210,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                 </ol>
                                                             </div>
                                                         </div>
-                                                        {(recipe as any).tip && (
+                                                        {(recipe as any).tip && typeof (recipe as any).tip === 'string' && (recipe as any).tip.trim() !== '' && (
                                                             <div className="mt-6 p-4 rounded-xl bg-indigo-50 border border-indigo-100">
                                                                 <div className="flex gap-2 items-start">
                                                                     <Info className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
@@ -2158,7 +2220,7 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {(recipe as any).additionalNotes && (
+                                                        {(recipe as any).additionalNotes && typeof (recipe as any).additionalNotes === 'string' && (recipe as any).additionalNotes.trim() !== '' && (
                                                             <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-100">
                                                                 <div className="flex gap-2 items-start">
                                                                     <Zap className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
@@ -2168,11 +2230,11 @@ export function NutrityDashboard({ results, user, onViewDetail, onGeneratePDF, o
                                                                 </div>
                                                             </div>
                                                         )}
-                                                        {recipe.instructions && recipe.instructions?.length > 0 && (
+                                                        {recipe.instructions && (Array.isArray(recipe.instructions) ? recipe.instructions : typeof recipe.instructions === 'string' ? [recipe.instructions] : []).filter((i: string) => i.trim() !== '').length > 0 && (
                                                             <div className="mt-6">
                                                                 <h5 className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-2 border-b border-nutrity-border pb-1">Perfil Metabólico</h5>
                                                                 <ul className="space-y-1">
-                                                                    {(Array.isArray(recipe.instructions) ? recipe.instructions : []).map((inst: any, i: number) => (
+                                                                    {(Array.isArray(recipe.instructions) ? recipe.instructions : typeof recipe.instructions === 'string' ? [recipe.instructions] : []).filter((i: string) => i.trim() !== '').map((inst: any, i: number) => (
                                                                         <li key={i} className="text-sm text-nutrity-gray-text font-medium flex gap-2">
                                                                             <span className="text-amber-500 font-bold mt-0.5">•</span>
                                                                             <span>{inst}</span>

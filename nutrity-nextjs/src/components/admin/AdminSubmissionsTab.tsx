@@ -8,7 +8,7 @@ interface AdminSubmissionsTabProps {
     submissions: any[];
     quizAttempts?: any[];
     isSaving: boolean;
-    onReview: (submissionId: string, feedback: string) => Promise<void>;
+    onReview: (submissionId: string, feedback: string, status: 'APPROVED' | 'REJECTED' | 'REVIEWED') => Promise<void>;
 }
 
 export function AdminSubmissionsTab({ submissions, quizAttempts = [], isSaving, onReview }: AdminSubmissionsTabProps) {
@@ -48,9 +48,9 @@ export function AdminSubmissionsTab({ submissions, quizAttempts = [], isSaving, 
         return matchesSearch && matchesFilter && matchesCourse;
     });
 
-    const handleReview = async () => {
+    const handleReview = async (status: 'APPROVED' | 'REJECTED' | 'REVIEWED') => {
         if (!selectedSub || !feedback.trim() || activeTab === 'QUIZZES') return;
-        await onReview(selectedSub.id, feedback);
+        await onReview(selectedSub.id, feedback, status);
         setSelectedSub(null);
         setFeedback('');
     };
@@ -117,9 +117,13 @@ export function AdminSubmissionsTab({ submissions, quizAttempts = [], isSaving, 
                                     <span className="flex items-center gap-1 text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-full">
                                         <Clock className="w-3 h-3" /> PENDIENTE
                                     </span>
+                                ) : sub.status === 'REJECTED' ? (
+                                    <span className="flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full">
+                                        <XCircle className="w-3 h-3" /> RECHAZADA
+                                    </span>
                                 ) : (
                                     <span className="flex items-center gap-1 text-[10px] font-bold text-nutrity-success bg-nutrity-success/10 px-2 py-1 rounded-full">
-                                        <CheckCircle2 className="w-3 h-3" /> REVISADA
+                                        <CheckCircle2 className="w-3 h-3" /> {sub.status === 'APPROVED' ? 'APROBADA' : 'REVISADA'}
                                     </span>
                                 )}
                             </div>
@@ -191,18 +195,32 @@ export function AdminSubmissionsTab({ submissions, quizAttempts = [], isSaving, 
                                         placeholder="Escribe tus comentarios y retroalimentación aquí..."
                                         className="w-full bg-white border border-nutrity-border rounded-xl p-4 min-h-[120px] resize-y focus:outline-none focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent text-sm"
                                     />
-                                    <button
-                                        onClick={handleReview}
-                                        disabled={isSaving || !feedback.trim() || (selectedSub.status === 'REVIEWED' && feedback === selectedSub.feedback)}
-                                        className="w-full bg-nutrity-primary text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg hover:bg-nutrity-accent transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        {isSaving ? 'Guardando...' : (
-                                            <>
-                                                <Send className="w-4 h-4" />
-                                                {selectedSub.status === 'PENDING' ? 'Enviar Revisión' : 'Actualizar Feedback'}
-                                            </>
-                                        )}
-                                    </button>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => handleReview('APPROVED')}
+                                            disabled={isSaving || !feedback.trim()}
+                                            className="flex-1 bg-nutrity-success text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest shadow-lg hover:bg-nutrity-success/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            {isSaving ? 'Guardando...' : (
+                                                <>
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                    {selectedSub.status === 'PENDING' ? 'Aprobar Tarea' : 'Actualizar & Aprobar'}
+                                                </>
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => handleReview('REJECTED')}
+                                            disabled={isSaving || !feedback.trim()}
+                                            className="flex-1 bg-white border-2 border-red-500 text-red-500 py-4 rounded-xl font-bold text-sm uppercase tracking-widest shadow-sm hover:bg-red-50 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            {isSaving ? 'Guardando...' : (
+                                                <>
+                                                    <XCircle className="w-4 h-4" />
+                                                    {selectedSub.status === 'PENDING' ? 'Pedir Reenvío' : 'Actualizar & Rechazar'}
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ) : (

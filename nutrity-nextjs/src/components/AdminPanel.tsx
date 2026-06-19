@@ -584,11 +584,12 @@ export function AdminPanel({ user }: AdminPanelProps) {
                 {section === "submissions" && (
                     <AdminSubmissionsTab 
                         submissions={submissions} 
+                        quizAttempts={quizAttempts}
                         isSaving={isSaving}
-                        onReview={async (subId, feedback) => {
+                        onReview={async (subId, feedback, status = 'REVIEWED') => {
                             setIsSaving(true);
                             try {
-                                await dbService.reviewAssignmentSubmission(subId, feedback);
+                                await dbService.reviewAssignmentSubmission(subId, feedback, status);
                                 const orgId = user?.profile?.organization?.id;
                                 const refreshed = await dbService.getAssignmentSubmissions(orgId);
                                 setSubmissions(refreshed);

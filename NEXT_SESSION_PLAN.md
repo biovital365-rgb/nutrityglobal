@@ -1,33 +1,24 @@
-# Plan de Próxima Sesión: Escalamiento del LMS (Cursos 2-6)
+# Plan de Próxima Sesión: Módulo de Reporting / Expediente PDF
 
-## 🎯 Objetivo Principal
-Cerrar el ciclo de desarrollo del LMS replicando la estructura operativa, evaluativa y de UX del **Curso 1 ("El Método 50-25-25")** hacia los **Cursos 2 al 6**, garantizando un lanzamiento del programa educativo completo con consistencia técnica y editorial.
+## 🎯 Prioridad Principal
+Consolidar y evolucionar el módulo de **Reporting / PDF** con la identidad visual de BioVital.360. El objetivo es entregar un expediente clínico completo que integre datos reales de la base de datos, generado enteramente *server-side*, y protegido bajo las reglas del plan de suscripción del usuario.
 
-## 🛠️ Fases de Ejecución Proyectadas (Fase 3 del LMS)
+## 📋 Estado Actual y Diagnóstico (MVP completado en sesión anterior)
+Durante la última fase técnica, sentamos las bases funcionales (MVP) de este módulo:
+- **Agregador de Datos:** Se creó `getUserExpedientData.ts` para orquestar la extracción de Perfil, Triaje, Menú y Progreso Académico.
+- **Endpoint Transversal:** Se implementó `/api/reporting/expedient/route.ts` con validación de sesión y generación de Stream PDF seguro.
+- **Template Base:** Se construyó `NutrityNativeReport.tsx` usando `@react-pdf/renderer` con fallbacks elegantes.
 
-### 1. Documentación del Patrón (El Estándar Curso 1)
-- Extraer el patrón de creación de Lecciones (Video URL, PDF URL, Textos).
-- Extraer el patrón de Quizzes y Assignments (Score >= 7, feedback, persistencia).
-- **Entregable:** Un mini-blueprint interno en `MEMORY.md` o en código que defina: *"Toda nueva lección debe tener esta estructura exacta de JSONB y esta secuencia de evaluaciones."*
+## 🚧 Lo que queda abierto para la próxima sesión (Refinamiento y Expansión)
 
-### 2. Preparación Editorial y Estructural (Cursos 2-6)
-- Definición de UUIDs consistentes para los 5 cursos restantes.
-- Mapeo de módulos y lecciones (Títulos, Descripciones, URLs de assets).
-- Redacción clínica prudente para las nuevas preguntas de opción múltiple y retos prácticos de los Cursos 2 al 6, manteniendo el tono sobrio (NMG y acompañamiento metabólico) validado en el Curso 1.
+Antes de iniciar la creación de un nuevo `implementation_plan.md` para la fase avanzada del PDF, se deben confirmar estas 4 variables estratégicas:
 
-### 3. Inyección Segura (Seeding Controlado)
-- Creación de un script de Seeding (similar a `scratch/seed-evaluations.ts` y `seed-courses.ts`) pero enfocado exclusivamente en la carga masiva y validada de los Cursos 2 al 6.
-- **Regla Estricta:** Ejecución local, validación visual en `localhost` y posterior volcado a producción mediante el script (sin tocar Supabase manualmente para evitar Schema Drift).
+1. **Entidades de DB disponibles para reporte:** Confirmar si sumaremos más entidades (ej. gráficas de peso, historial de métricas metabólicas, logs del coach) al expediente actual.
+2. **Actor y destinatario del PDF:** Definir si el diseño y los datos expuestos variarán dependiendo de si lo descarga el paciente (vista amigable/motivacional), el coach (vista clínica/analítica) o el superadmin (auditoría completa).
+3. **Stack técnico propuesto:** Reconfirmar la viabilidad a gran escala de `@react-pdf/renderer` en Next.js/Vercel (ya probado en el MVP) frente a los límites de ejecución *serverless*.
+4. **Componentes visuales reutilizables:** Identificar qué elementos de la UI actual de BioVital.360 deben portarse con mayor fidelidad al documento PDF (fuentes personalizadas, bloques de color institucionales, logos, etc.).
 
-### 4. Estabilización UX/UI y Tracking de Progreso
-- Asegurar que la barra de progreso general del alumno (`Progress%`) se calcule correctamente al tener 6 cursos en paralelo.
-- Verificar el bloqueo secuencial (¿El Curso 2 requiere aprobar el Curso 1? Si es así, implementar la lógica de "Prerequisite" en el frontend).
-- Pruebas cruzadas en el **Admin Panel**: Comprobar que el Coach pueda filtrar las tareas (`Assignments`) y los Quizzes por Curso (1 al 6) para no abrumar la tabla de `Submissions`.
+## 🔒 Regla Arquitectónica Vigente
+> **Backend decide. Frontend renderiza.**
 
-## 🔒 Reglas Inquebrantables para la Sesión
-1. **No Data Ghosting / Schema Drift:** Ningún curso se carga a mano. Todo va tipado desde TypeScript hacia Supabase.
-2. **SSOT (Single Source of Truth):** La base de datos es la única fuente de verdad. El Admin Panel leerá directamente de allí.
-3. **Mantenimiento del Tono BioVital:** Cero afirmaciones de "cura milagrosa". Todo el contenido evaluativo de los cursos 2-6 se basa en "mitigación", "educación", "estabilidad" y "acompañamiento metabólico".
-
----
-*Este plan establece la hoja de ruta inmediata apenas se retome el entorno de desarrollo.*
+Esta separación de responsabilidades, implementada con éxito en los módulos de Academia, Coaches y Recetas, se mantendrá como el estándar inquebrantable para el motor de PDFs y todo desarrollo futuro. Ninguna lógica de permisos, cálculo de métricas o generación de documentos debe recaer en el cliente.

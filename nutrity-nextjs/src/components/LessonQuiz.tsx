@@ -17,12 +17,22 @@ interface LessonQuizProps {
         questions: Question[];
     };
     userId?: string;
+    existingAttempts?: any[];
 }
 
-export function LessonQuiz({ lessonId, quiz, userId }: LessonQuizProps) {
+export function LessonQuiz({ lessonId, quiz, userId, existingAttempts = [] }: LessonQuizProps) {
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
+
+    const allAttempts = result ? [...existingAttempts, result] : existingAttempts;
+    const attemptsUsed = allAttempts.length;
+    const isApproved = allAttempts.some(a => a.passed);
+    const maxAttemptsReached = attemptsUsed >= 3;
+    const bestScore = allAttempts.length > 0 ? Math.max(...allAttempts.map(a => a.score)) : 0;
+    
+    // We only block if they already passed or exhausted attempts
+    const isBlocked = isApproved || maxAttemptsReached;
 
     const isComplete = Object.keys(answers || {})?.length === (quiz?.questions?.length || 0);
 
@@ -52,37 +62,48 @@ export function LessonQuiz({ lessonId, quiz, userId }: LessonQuizProps) {
         }
     };
 
-    if (result) {
+    if (isBlocked) {
         return (
-            <div className={`border rounded-3xl p-6 text-center space-y-4 mt-6 ${result.passed ? 'bg-nutrity-success/10 border-nutrity-success/20' : 'bg-red-50 border-red-100'}`}>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${result.passed ? 'bg-nutrity-success/20 text-nutrity-success' : 'bg-red-100 text-red-500'}`}>
-                    {result.passed ? <CheckCircle2 className="w-8 h-8" /> : <ShieldAlert className="w-8 h-8" />}
+            <div className={`border rounded-3xl p-6 md:p-8 text-center space-y-4 mt-6 ${isApproved ? 'bg-nutrity-success/10 border-nutrity-success/20' : 'bg-red-50 border-red-100'}`}>
+                <div className="flex justify-center gap-6 mb-4">
+                    <div className="text-center">
+                        <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-1">Mejor Nota</p>
+                        <p className={`text-2xl font-display font-bold ${isApproved ? 'text-nutrity-success' : 'text-red-500'}`}>{bestScore} / 10</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-1">Intentos</p>
+                        <p className="text-2xl font-display font-bold text-nutrity-primary">{attemptsUsed} / 3</p>
+                    </div>
+                </div>
+
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto ${isApproved ? 'bg-nutrity-success/20 text-nutrity-success' : 'bg-red-100 text-red-500'}`}>
+                    {isApproved ? <CheckCircle2 className="w-8 h-8" /> : <ShieldAlert className="w-8 h-8" />}
                 </div>
                 <div>
-                    <h4 className={`font-display font-bold text-2xl ${result.passed ? 'text-nutrity-success' : 'text-red-500'}`}>
-                        {result.passed ? '¡Cuestionario Aprobado!' : 'No Aprobado'}
+                    <h4 className={`font-display font-bold text-xl ${isApproved ? 'text-nutrity-success' : 'text-red-500'}`}>
+                        {isApproved ? '¡Cuestionario Aprobado!' : 'Intentos Agotados'}
                     </h4>
-                    <p className="text-sm font-bold uppercase tracking-widest opacity-80 mt-1">Puntuación: {result.score} / 10</p>
                 </div>
                 <p className="text-sm font-medium opacity-80 max-w-sm mx-auto">
-                    {result.passed 
+                    {isApproved 
                         ? 'Has superado el cuestionario con éxito. Puedes avanzar a la siguiente lección.' 
-                        : 'No has alcanzado la puntuación mínima de 7/10 para aprobar. Por favor, repasa el material e inténtalo de nuevo.'}
+                        : 'Has alcanzado el límite máximo de intentos (3) sin aprobar. Contacta a tu coach para soporte adicional.'}
                 </p>
-                {!result.passed && (
-                    <button onClick={() => { setResult(null); setAnswers({}); }} className="mt-4 px-6 py-2 bg-red-500 text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all">
-                        Reintentar
-                    </button>
-                )}
             </div>
         );
     }
 
     return (
         <div className="bg-white border border-nutrity-border rounded-3xl p-6 md:p-8 mt-6 shadow-sm">
-            <div className="mb-6">
-                <h3 className="font-display font-bold text-xl">{quiz.title}</h3>
-                {quiz.description && <p className="text-sm text-nutrity-gray-text mt-1">{quiz.description}</p>}
+            <div className="mb-6 flex justify-between items-start">
+                <div>
+                    <h3 className="font-display font-bold text-xl">{quiz.title}</h3>
+                    {quiz.description && <p className="text-sm text-nutrity-gray-text mt-1">{quiz.description}</p>}
+                </div>
+                <div className="text-right bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Intentos Usados</p>
+                    <p className="text-sm font-bold text-nutrity-primary">{attemptsUsed} de 3</p>
+                </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
