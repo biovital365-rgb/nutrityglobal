@@ -185,12 +185,28 @@ export function AdminFoodsTab({
                                                     </div>
                                                 </div>
                                                 <div className="bg-white p-3 rounded-lg border border-nutrity-border">
-                                                    <FieldInput label="Indicaciones Adicionales" multiline value={(Array.isArray(recipe.instructions) ? recipe.instructions : typeof recipe.instructions === 'string' ? [recipe.instructions] : []).join('\n')} onChange={(text) => {
+                                                    <FieldInput label="Perfil Metabólico (uno por línea)" multiline value={(Array.isArray(recipe.instructions) ? recipe.instructions : typeof recipe.instructions === 'string' ? [recipe.instructions] : []).join('\n')} onChange={(text) => {
                                                         const instructions = text.split('\n').filter(line => line.trim() !== '');
                                                         const updated = [...(editingFood.recipes || [])];
                                                         updated[rIdx] = { ...updated[rIdx], instructions };
                                                         setEditingFood(p => ({ ...p, recipes: updated }));
                                                     }} placeholder="Se puede guardar en el refrigerador...&#10;Ideal para el desayuno..." />
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="bg-white p-3 rounded-lg border border-nutrity-border">
+                                                        <FieldInput label="TIP BioVital 360" multiline value={recipe.tip || ""} onChange={(text) => {
+                                                            const updated = [...(editingFood.recipes || [])];
+                                                            updated[rIdx] = { ...updated[rIdx], tip: text };
+                                                            setEditingFood(p => ({ ...p, recipes: updated }));
+                                                        }} placeholder="Escribe aquí un tip nutricional..." />
+                                                    </div>
+                                                    <div className="bg-white p-3 rounded-lg border border-nutrity-border">
+                                                        <FieldInput label="Indicaciones Adicionales / Precauciones" multiline value={recipe.additionalNotes || ""} onChange={(text) => {
+                                                            const updated = [...(editingFood.recipes || [])];
+                                                            updated[rIdx] = { ...updated[rIdx], additionalNotes: text };
+                                                            setEditingFood(p => ({ ...p, recipes: updated }));
+                                                        }} placeholder="Ej. No consumir si tiene alergia a..." />
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>

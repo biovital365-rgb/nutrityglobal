@@ -365,7 +365,7 @@ model AssignmentSubmission {
   assignmentId   String
   content        String
   feedback       String?
-  status         String        @default("PENDING") // PENDING, REVIEWED
+  status         AssignmentStatus @default(PENDING)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -375,6 +375,13 @@ model AssignmentSubmission {
   @@index([userId])
   @@index([assignmentId])
   @@index([organizationId])
+}
+
+enum AssignmentStatus {
+  PENDING
+  REVIEWED
+  APPROVED
+  REJECTED
 }
 
 model OrganizationConfig {

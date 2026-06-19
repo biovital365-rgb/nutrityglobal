@@ -1424,46 +1424,6 @@ export async function saveAssignment(lessonId: string, title: string, descriptio
     return data;
 }
 
-export async function submitQuizAttempt(lessonId: string, score: number, answers: any[] = []) {
-    const user = await getServerUser();
-    if (!user) throw new Error("Unauthorized");
-
-    const quiz = await prisma.quiz.findUnique({ where: { lessonId } });
-    if (!quiz) throw new Error("Quiz not found");
-
-    const passed = score >= 7;
-
-    const attempt = await prisma.quizAttempt.create({
-        data: {
-            userId: user.id,
-            organizationId: user.organizationId,
-            quizId: quiz.id,
-            score,
-            passed,
-            answers,
-        }
-    });
-    return attempt;
-}
-
-export async function submitAssignment(lessonId: string, content: string) {
-    const user = await getServerUser();
-    if (!user) throw new Error("Unauthorized");
-
-    const assignment = await prisma.assignment.findUnique({ where: { lessonId } });
-    if (!assignment) throw new Error("Assignment not found");
-
-    const submission = await prisma.assignmentSubmission.create({
-        data: {
-            userId: user.id,
-            organizationId: user.organizationId,
-            assignmentId: assignment.id,
-            content,
-            status: 'PENDING'
-        }
-    });
-    return submission;
-}
 
 export async function getAssignmentSubmissions(organizationId?: string) {
     const whereClause: any = {};
@@ -1499,14 +1459,31 @@ export async function getQuizAttempts(organizationId?: string) {
     return attempts;
 }
 
-export async function reviewAssignmentSubmission(submissionId: string, feedback: string) {
+export async function getUserAssignmentSubmissions(userId: string) {
+    const internalId = await getInternalId(userId);
+    return await prisma.assignmentSubmission.findMany({
+        where: { userId: internalId },
+        include: { assignment: { select: { lessonId: true } } },
+        orderBy: { createdAt: 'desc' }
+    });
+}
+
+export async function getUserQuizAttempts(userId: string) {
+    const internalId = await getInternalId(userId);
+    return await prisma.quizAttempt.findMany({
+        where: { userId: internalId },
+        include: { quiz: { select: { lessonId: true } } },
+        orderBy: { createdAt: 'desc' }
+    });
+}
+
+export async function reviewAssignmentSubmission(submissionId: string, feedback: string, status: 'REVIEWED' | 'APPROVED' | 'REJECTED' = 'REVIEWED') {
     const updated = await prisma.assignmentSubmission.update({
         where: { id: submissionId },
-        data: { status: 'REVIEWED', feedback }
+        data: { status, feedback }
     });
     return updated;
 }
-
 
 
 
@@ -1555,4 +1532,168 @@ export async function registerClinic(userId: string, clinicName: string, userNam
         console.error('Error registering clinic:', e);
         return { success: false, error: e.message };
     }
+}
+
+// ─── ACADÉMICO: TAREAS Y CUESTIONARIOS ────────────────────────────────────────
+
+export async function verifyLessonAccess(internalUserId: string, lessonId: string) {
+    const user = await prisma.user.findUnique({ where: { id: internalUserId } });
+    if (!user) throw new Error("User not found");
+
+    const lesson = await prisma.lesson.findUnique({
+        where: { id: lessonId },
+        include: { course: true }
+    });
+    if (!lesson) throw new Error("Lesson not found");
+
+    if (user.plan === 'ELITE' || user.role === 'ADMIN') return true;
+
+    const t = lesson.course.title.toLowerCase();
+    let courseNum = 99;
+    if (t.includes('método 50') || t.includes('metodo 50') || t.includes('curso 1')) courseNum = 1;
+    else if (t.includes('código vitalidad') || t.includes('codigo vitalidad') || t.includes('curso 2')) courseNum = 2;
+    else if (t.includes('escudo de fibra') || t.includes('curso 3')) courseNum = 3;
+    else if (t.includes('microbiota') || t.includes('curso 4')) courseNum = 4;
+    else if (t.includes('ayuno') || t.includes('curso 5')) courseNum = 5;
+    else if (t.includes('mantenimiento') || t.includes('curso 6')) courseNum = 6;
+    else if (t.includes('bioquímica') || t.includes('bioquimica') || t.includes('curso 7')) courseNum = 7;
+    else if (t.includes('psico') || t.includes('curso 8')) courseNum = 8;
+
+    const plan = (user.plan || 'FREE').toUpperCase();
+    
+    if (lesson.course.category === 'Ebook' && lesson.course.price === 0) return true;
+
+    let isLocked = false;
+    if (courseNum === 1) {
+        if (plan === 'FREE' && lesson.order >= 2) isLocked = true;
+    } else if (courseNum === 2 || courseNum === 3) {
+        if (plan === 'FREE') isLocked = true;
+    } else if (courseNum >= 4) {
+        if (plan === 'FREE' || plan === 'BASIC' || plan === 'BÁSICO' || plan === 'BASICO') isLocked = true;
+    }
+
+    if (isLocked) throw new Error("Forbidden: Tu plan de suscripción no permite el acceso a esta lección.");
+    return true;
+}
+
+export async function submitQuizAttempt(lessonId: string, ignoredScore: number, answersArray: any[]) {
+    const currentUser = await getServerUser();
+    if (!currentUser) throw new Error("Unauthorized");
+    
+    const internalId = await getInternalId(currentUser.firebaseUid || currentUser.id);
+    await verifyLessonAccess(internalId, lessonId);
+
+    const quiz = await prisma.quiz.findUnique({
+        where: { lessonId }
+    });
+    if (!quiz) throw new Error("Quiz not found");
+
+    const attemptsCount = await prisma.quizAttempt.count({
+        where: { userId: internalId, quizId: quiz.id }
+    });
+    if (attemptsCount >= 3) {
+        throw new Error("Límite de intentos alcanzado. Has superado los 3 intentos permitidos.");
+    }
+
+    const questions = (quiz.questions as any[]) || [];
+    let correctCount = 0;
+    const validatedAnswers = answersArray.map((ans: any) => {
+        const q = questions[ans.questionIndex];
+        const isCorrect = q && q.correctIndex === ans.selectedIndex;
+        if (isCorrect) correctCount++;
+        return { ...ans, isCorrect };
+    });
+
+    const calculatedScore = Math.round((correctCount / Math.max(questions.length, 1)) * 10);
+    const passed = calculatedScore >= 7;
+
+    await prisma.quizAttempt.create({
+        data: {
+            userId: internalId,
+            organizationId: currentUser.organizationId || null,
+            quizId: quiz.id,
+            score: calculatedScore,
+            passed,
+            answers: validatedAnswers
+        }
+    });
+
+    if (passed) {
+        await prisma.lessonProgress.upsert({
+            where: { userId_lessonId: { userId: internalId, lessonId: lessonId } },
+            update: { completed: true },
+            create: { userId: internalId, lessonId: lessonId, completed: true }
+        });
+        revalidatePath('/', 'layout');
+    }
+
+    return { passed, score: calculatedScore, attemptsRemaining: 2 - attemptsCount };
+}
+
+export async function submitAssignment(lessonId: string, content: string) {
+    const currentUser = await getServerUser();
+    if (!currentUser) throw new Error("Unauthorized");
+
+    const internalId = await getInternalId(currentUser.firebaseUid || currentUser.id);
+    await verifyLessonAccess(internalId, lessonId);
+
+    const assignment = await prisma.assignment.findUnique({
+        where: { lessonId }
+    });
+    if (!assignment) throw new Error("Assignment not found");
+
+    // Check if there is an active submission
+    const existing = await prisma.assignmentSubmission.findFirst({
+        where: { userId: internalId, assignmentId: assignment.id },
+        orderBy: { createdAt: 'desc' }
+    });
+
+    if (existing && (existing.status === 'PENDING' || existing.status === 'REVIEWED' || existing.status === 'APPROVED')) {
+        throw new Error("No puedes enviar esta tarea. Ya se encuentra enviada o revisada.");
+    }
+
+    await prisma.assignmentSubmission.create({
+        data: {
+            userId: internalId,
+            organizationId: currentUser.organizationId || null,
+            assignmentId: assignment.id,
+            content,
+            status: "PENDING"
+        }
+    });
+
+    await prisma.lessonProgress.upsert({
+        where: { userId_lessonId: { userId: internalId, lessonId: lessonId } },
+        update: { completed: true },
+        create: { userId: internalId, lessonId: lessonId, completed: true }
+    });
+    revalidatePath('/', 'layout');
+
+    return { success: true };
+}
+
+export async function markLessonVideoWatched(lessonId: string) {
+    const currentUser = await getServerUser();
+    if (!currentUser) throw new Error("Unauthorized");
+    
+    const internalId = await getInternalId(currentUser.firebaseUid || currentUser.id);
+    await verifyLessonAccess(internalId, lessonId);
+
+    const lesson = await prisma.lesson.findUnique({
+        where: { id: lessonId },
+        include: { quiz: true, assignment: true }
+    });
+    
+    if (!lesson) throw new Error("Lesson not found");
+
+    if (!lesson.quiz && !lesson.assignment) {
+        await prisma.lessonProgress.upsert({
+            where: { userId_lessonId: { userId: internalId, lessonId: lessonId } },
+            update: { completed: true },
+            create: { userId: internalId, lessonId: lessonId, completed: true }
+        });
+        revalidatePath('/', 'layout');
+    }
+
+    return { success: true };
 }

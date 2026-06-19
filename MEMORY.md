@@ -26,14 +26,16 @@
 
 #### ⚠️ Active Issues & Blockers
 *   **Assets**: Las imágenes 404 en el catálogo (ej. zinc, pumpkin seeds) deben ser cargadas manualmente a `public/` o actualizadas en la DB con URLs externas válidas.
+*   **Esperando Resultados de Pruebas**: El flujo B2C completo (acceso por planes, visualización de cursos bloqueados/liberados y limitación de lecciones para plan FREE) fue desplegado en staging/producción. Se esperan resultados de pruebas reales en la próxima sesión antes de proceder con el resto de la carga masiva de contenido o features avanzados.
 
-#### 🚀 Next Steps
-1.  **Diagnóstico Nivel Pro (Triaje y NMG Avanzado)**: Elevar la complejidad del motor de diagnóstico. Integrar cuestionarios clínicos más profundos, correlación de síntomas con base científica, y mejoras en la asertividad de la Biodescodificación.
-2.  **Gestor de Imágenes y Contenido Landing desde Admin**: Permitir a los administradores cargar, modificar y actualizar las imágenes y textos de la Landing Page desde el Dashboard, sin tocar código (CMS básico).
-3.  **Notificaciones Push/Email**: Avisar al paciente cuando su menú sea aprobado.
-4.  **Feedback del Usuario**: Botón "Solicitar Cambios" si el menú aprobado no le convence.
-5.  **GEO Audit**: Preparar el contenido para ser indexable por motores de búsqueda generativos.
-6.  **Stripe Paywall & Admin**: Sistema de pagos implementado con lógica `Mock` de respaldo en `stripe-actions.ts` y control de Suscripciones (Freemium, Basic, Advanced, Elite) integrado desde el Admin Panel.
+#### 🚀 Next Steps (Pendientes)
+1.  **Validación de Flujo B2C (Testing)**: Confirmar en entorno real de Vercel que los bloqueos de Plan Freemium/Básico/Premium operan sin fricciones (los candados y estados grises funcionan) y que el dashboard se comporta como se espera.
+2.  **Diagnóstico Nivel Pro (Triaje y NMG Avanzado)**: Elevar la complejidad del motor de diagnóstico. Integrar cuestionarios clínicos más profundos, correlación de síntomas con base científica, y mejoras en la asertividad de la Biodescodificación.
+3.  **Gestor de Imágenes y Contenido Landing desde Admin**: Permitir a los administradores cargar, modificar y actualizar las imágenes y textos de la Landing Page desde el Dashboard, sin tocar código (CMS básico).
+4.  **Notificaciones Push/Email**: Avisar al paciente cuando su menú sea aprobado.
+5.  **Feedback del Usuario**: Botón "Solicitar Cambios" si el menú aprobado no le convence.
+6.  **GEO Audit**: Preparar el contenido para ser indexable por motores de búsqueda generativos.
+7.  **Stripe Paywall & Admin**: Finalizar pruebas del sistema de pagos y control de Suscripciones (Freemium, Basic, Advanced, Elite) integrado desde el Admin Panel.
 
 - **Base de Datos**: Supabase (PostgreSQL) con Prisma ORM.
 - **IA**: Google Gemini (Pro/Flash).
@@ -93,6 +95,12 @@
     *   **Feedback Loop Educativo**: Estados `PENDING` a `REVIEWED` con almacenamiento del objeto `answers` íntegro y cálculo automático de aprobación (`score >= 7`).
     *   **Visibilidad Administrativa**: Consolidación del Tab de `Submissions` en el Admin Panel para visualizar tanto intentos de Quizzes como tareas redactadas de los pacientes.
 
+- [x] **Fase 11: Consolidación LMS, Coaches y Recetas** (Completado)
+    *   **Backend as Single Source of Truth**: `verifyLessonAccess` protege server actions. El score de los quizzes se calcula zero-trust en el servidor. `LessonProgress` está dictado por el backend eliminando toggles falsos. Límite global de 3 intentos en Quizzes asegurado vía Prisma.
+    *   **Descargas Seguras**: Implementado proxy HTTP `/api/academic/download` que enmascara URLs premium (PDFs y PPTs).
+    *   **Panel de Coaches**: Implementación estricta de `AssignmentStatus` (PENDING, REVIEWED, APPROVED, REJECTED). Regla de negocio: Solo `REJECTED` permite reenvío. Color-coding de estados en la UI del alumno.
+    *   **Catálogo Editorial de Recetas**: Mapeo 1:1 entre Admin panel y UI Cliente (`instructions` -> Perfil Metabólico, `tip` -> TIP BioVital 360, `additionalNotes` -> Precauciones). Compatibilidad retroactiva garantizada y tipado estricto consolidado.
+
 ## Decisiones Arquitectónicas Recientes
 1.  **Modelo Gemini 3**: La transición a la serie 3 es obligatoria en 2026. Se utiliza el sufijo `-preview` para asegurar el acceso a los últimos avances en razonamiento clínico.
 2.  **Permisos Administrativos (RLS)**: Se optó por desactivar RLS en la tabla `DailyMenu` para el entorno administrativo, priorizando la velocidad de operación y evitando bloqueos de permisos en la generación de planes críticos.
@@ -120,6 +128,15 @@
 24. **Supabase Single Source of Truth (SSOT)**: Se erradicó la dependencia de catálogos estáticos (`food-data.ts`, `micronutrients-data.ts`) y la función destructiva `forceSyncCatalog`. Para evitar la superposición o pérdida de datos cargados vía SQL puro, las vistas de Alimentos y Micronutrientes dependen ahora única y estrictamente de la DB. Si la DB está vacía, la interfaz responde limpiamente sin "auto-sembrar" el modelo antiguo.
 25. **Prevención de Data Ghosting**: Se reemplazaron todos los *fallbacks* (valores por defecto) hardcodeados en `NutrityLanding` (como "De la Diabetes Tipo 2" y videos de TikTok residuales de una app anterior) por estados estrictamente anulables (`null`). Esto elimina el molesto parpadeo ("flash of old app data") en la carga inicial y asegura que la web proyecte la identidad de marca dinámica configurada desde el Admin Panel.
 26. **Prevención de Schema Drift (JSONB)**: Se definió una política estricta de carga de datos a través del Admin Panel para evitar inconsistencias de llaves JSON (e.g. `image` vs `imageUrl`) que ocurren al inyectar datos en crudo a las columnas JSONB de Supabase, garantizando que el Frontend renderice correctamente el "Perfil Metabólico" y los tips de las recetas sin requerir fallbacks agresivos. Carga manual en DB prohibida a menos que sea validada estrictamente.
+27. **Refactorización de Lógica de Acceso (Plan Premium vs Free)**: Se desvinculó la validación de acceso del índice de ordenación y se implementó un evaluador `getCourseNumber` que escanea las strings de los títulos (ej. "método 50"). Se implementó bloqueo explícito por lección (`index >= 2`) en el curso gratuito para incitar al up-sell en los usuarios `FREE`.
+28. **Prevención de Errores Vercel (Timeouts de Google Fonts)**: Se eliminaron dependencias dinámicas a `next/font/google` (`Geist`, `Geist Mono`) para evitar caídas severas de build (errores de timeout de red) en entornos como Vercel y locales, usando directamente la fuente `font-sans` del sistema definida por Tailwind.
+29. **Robustez del Mapa JSON**: Se inyectaron fallbacks como `(lesson.quiz.questions || []).map(...)` en interfaces administrativas para prevenir `TypeError: Cannot read properties of undefined` cuando el JSON de Supabase carece de estructuras vacías inicializadas.
+30. **Protección y Reglas de Negocio del Módulo Académico**:
+    - **verifyLessonAccess**: Toda acción backend (score, tareas, PDFs) pasa por una validación estricta que cruza el `User.plan` con el nivel/categoría del curso.
+    - **Zero Trust Score**: El frontend no decide si un Quiz está aprobado. El backend recalcula iterativamente las respuestas comparando con la DB y dicta el `passed: true/false`.
+    - **Límite de Intentos**: Prisma `.count()` en servidor rechaza intentos de quiz superiores a 3 por usuario/lección.
+    - **LessonProgress Backend-driven**: Solo el servidor muta el estado a `completed` (al pasar Quiz, enviar Tarea, o mediante Server Action explícito para lecciones sin evaluación).
+    - **Wrapper de Archivos Premium**: Se implementó `/api/academic/download` como un proxy de redirección HTTP 302 que enmascara las URLs (PDFs/Presentaciones) y rechaza accesos sin plan vigente.
 
 ---
 
