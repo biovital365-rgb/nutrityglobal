@@ -102,7 +102,7 @@ export function AdminUsersTab({
                                             </div>
                                         </td>
                                         <td className="py-4 px-6">
-                                            <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex gap-2 justify-end">
                                                 {(u as any).deletedAt ? (
                                                     <button onClick={() => onRestore(u.id)}
                                                         className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-bold hover:bg-emerald-600 hover:text-white transition-all">
@@ -115,11 +115,13 @@ export function AdminUsersTab({
                                                             <FileText className="w-4 h-4" />
                                                         </button>
                                                         <button onClick={() => onEditUser(u)}
-                                                            className="p-2 rounded-lg bg-nutrity-accent/10 text-nutrity-accent hover:bg-nutrity-accent hover:text-white transition-all">
+                                                            className="p-2 rounded-lg bg-nutrity-accent/10 text-nutrity-accent hover:bg-nutrity-accent hover:text-white transition-all" title="Editar">
                                                             <Pencil className="w-4 h-4" />
                                                         </button>
                                                         <button onClick={() => onDelete(u.id, u.name || u.email)}
-                                                            className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                                                            disabled={u.role === 'ADMIN'}
+                                                            title={u.role === 'ADMIN' ? 'Protegido' : 'Eliminar'}
+                                                            className={`p-2 rounded-lg transition-all ${u.role === 'ADMIN' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white'}`}>
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </>
