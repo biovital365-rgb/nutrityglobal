@@ -19,7 +19,8 @@ export async function GET(req: Request) {
         }
         
         const premiumPlans = ['BASIC', 'PREMIUM', 'ELITE'];
-        if (user.role !== 'ADMIN' && !premiumPlans.includes(user.plan.toUpperCase())) {
+        const isAdminOrCoach = user.role === 'ADMIN' || user.role === 'COACH' || user.role === 'SUPERADMIN';
+        if (!isAdminOrCoach && !premiumPlans.includes(user.plan.toUpperCase())) {
             return new NextResponse('Upgrade required to access Clinical Expedient', { status: 403 });
         }
 
