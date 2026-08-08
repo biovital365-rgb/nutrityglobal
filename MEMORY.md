@@ -36,6 +36,7 @@
 5.  **Feedback del Usuario**: Botón "Solicitar Cambios" si el menú aprobado no le convence.
 6.  **GEO Audit**: Preparar el contenido para ser indexable por motores de búsqueda generativos.
 7.  **Stripe Paywall & Admin**: Finalizar pruebas del sistema de pagos y control de Suscripciones (Freemium, Basic, Advanced, Elite) integrado desde el Admin Panel.
+8.  **Paginación PDF (Backlog)**: En el PDF Expediente, cuando el catálogo de mediciones crezca, añadir un parámetro de rango de fechas o paginación en el query de `Measurement` (actualmente limitado a las 10 últimas).
 
 - **Base de Datos**: Supabase (PostgreSQL) con Prisma ORM.
 - **IA**: Google Gemini (Pro/Flash).

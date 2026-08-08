@@ -13,6 +13,16 @@ export async function GET(req: Request) {
             return new NextResponse('Unauthorized', { status: 401 });
         }
 
+        // 1b. Verify Plan and Status (Guardia de sesión y plan activa)
+        if (user.status !== 'ACTIVE') {
+            return new NextResponse('User account is not active', { status: 403 });
+        }
+        
+        const premiumPlans = ['BASIC', 'PREMIUM', 'ELITE'];
+        if (user.role !== 'ADMIN' && !premiumPlans.includes(user.plan.toUpperCase())) {
+            return new NextResponse('Upgrade required to access Clinical Expedient', { status: 403 });
+        }
+
         // 2. Aggregate Data using the decoupled service
         const expedientData = await getUserExpedientData(user.id);
 

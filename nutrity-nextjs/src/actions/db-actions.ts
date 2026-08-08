@@ -109,6 +109,12 @@ const userIdCache: Record<string, string> = {};
     // Helper para obtener ID interno de Supabase desde Firebase UID o el propio ID interno
 export async function getInternalId(idOrUid: string): Promise<string> {
         if (!idOrUid) return idOrUid;
+        
+        // Optimización O(1): Si ya es un UUID interno de Prisma, no consultar DB
+        if (idOrUid.length === 36 && idOrUid.includes('-')) {
+            return idOrUid;
+        }
+
         if (userIdCache[idOrUid]) return userIdCache[idOrUid];
         
         const { data, error } = await supabase
@@ -120,10 +126,6 @@ export async function getInternalId(idOrUid: string): Promise<string> {
         if (data) {
             userIdCache[idOrUid] = data.id;
             return data.id;
-        }
-        
-        if (idOrUid.length === 36 && idOrUid.includes('-')) {
-            return idOrUid;
         }
         
         return idOrUid;
@@ -486,8 +488,13 @@ export async function saveEvaluation(userId: string, organizationId: string | un
         if (!currentUser) throw new Error("Unauthorized");
         
         const internalId = await getInternalId(userId);
+        
+        // Aislamiento Multi-tenant: Validar que el coach pertenezca a la misma organización que el paciente
         if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
-            throw new Error("Forbidden");
+            const patient = await prisma.user.findUnique({ where: { id: internalId }});
+            if (!['COACH', 'ELITE'].includes(currentUser.role) || patient?.organizationId !== currentUser.organizationId) {
+                throw new Error("Forbidden");
+            }
         }
         
         const targetOrgId = currentUser.role === 'ADMIN' ? (organizationId || null) : currentUser.organizationId;
@@ -537,8 +544,13 @@ export async function saveBiologicalDiagnosis(
     if (!currentUser) throw new Error("Unauthorized");
     
     const internalId = await getInternalId(userId);
+    
+    // Aislamiento Multi-tenant: Validar pertenencia
     if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
-        throw new Error("Forbidden");
+        const patient = await prisma.user.findUnique({ where: { id: internalId }});
+        if (!['COACH', 'ELITE'].includes(currentUser.role) || patient?.organizationId !== currentUser.organizationId) {
+            throw new Error("Forbidden");
+        }
     }
     
     const targetOrgId = currentUser.role === 'ADMIN' ? (organizationId || null) : currentUser.organizationId;
@@ -591,11 +603,22 @@ export async function saveBiologicalDiagnosis(
 }
 
 export async function getLatestBiologicalDiagnosis(userId: string) {
+    const currentUser = await getServerUser();
+    if (!currentUser) throw new Error("Unauthorized");
+
     const internalId = await getInternalId(userId);
-    const { data, error } = await supabase
+    
+    let query = supabase
         .from('BiologicalDiagnosis')
         .select('*')
-        .eq('userId', internalId)
+        .eq('userId', internalId);
+        
+    // Aislamiento Multi-tenant
+    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
+        query = query.eq('organizationId', currentUser.organizationId || null);
+    }
+
+    const { data, error } = await query
         .order('updatedAt', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -608,25 +631,42 @@ export async function getLatestBiologicalDiagnosis(userId: string) {
 }
 
 export async function getLatestEvaluation(userId: string, organizationId?: string) {
+    const currentUser = await getServerUser();
+    if (!currentUser) throw new Error("Unauthorized");
+
     const internalId = await getInternalId(userId);
-    const { data, error } = await supabase.from('Evaluation')
-        .select('*')
-        .eq('userId', internalId)
+    
+    let query = supabase.from('Evaluation').select('*').eq('userId', internalId);
+    
+    // Aislamiento Multi-tenant
+    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
+        query = query.eq('organizationId', currentUser.organizationId || null);
+    } else if (organizationId) {
+        query = query.eq('organizationId', organizationId);
+    }
+
+    const { data, error } = await query
         .order('timestamp', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-        if (error) throw error
-        return data
+    if (error) throw error
+    return data
 }
 
     // Mediciones
 export async function getMeasurements(userId: string, organizationId?: string) {
+        const currentUser = await getServerUser();
+        if (!currentUser) throw new Error("Unauthorized");
+
         const internalId = await getInternalId(userId);
 
         let query = supabase.from('Measurement').select('*').eq('userId', internalId)
         
-        if (organizationId) {
+        // Aislamiento Multi-tenant
+        if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
+            query = query.eq('organizationId', currentUser.organizationId || null);
+        } else if (organizationId) {
             query = query.eq('organizationId', organizationId)
         }
 
@@ -637,7 +677,19 @@ export async function getMeasurements(userId: string, organizationId?: string) {
 }
 
 export async function saveMeasurement(userId: string, organizationId: string | undefined, measurement: any) {
+        const currentUser = await getServerUser();
+        if (!currentUser) throw new Error("Unauthorized");
+
         const internalId = await getInternalId(userId);
+        
+        // Aislamiento Multi-tenant
+        if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
+            const patient = await prisma.user.findUnique({ where: { id: internalId }});
+            if (!['COACH', 'ELITE'].includes(currentUser.role) || patient?.organizationId !== currentUser.organizationId) {
+                throw new Error("Forbidden");
+            }
+            organizationId = currentUser.organizationId || undefined;
+        }
 
         const id = measurement.id && measurement.id.length > 20 ? measurement.id : crypto.randomUUID();
         const { data, error } = await supabase

@@ -237,6 +237,7 @@ model DailyMenu {
   weekStart      String?
   phase          String?
   status         String        @default("PENDING")
+  progress       Int           @default(0)
   menuData       Json
   metabolicGoal  String?
   adminNotes     String?
