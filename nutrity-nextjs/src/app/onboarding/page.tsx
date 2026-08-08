@@ -4,7 +4,7 @@ import { NutrityOnboarding } from "@/components/NutrityOnboarding";
 import { useRouter } from "next/navigation";
 import { generateAILifePlan } from "@/actions/ai-actions";
 import { saveEvaluation, saveBiologicalDiagnosis } from "@/actions/db-actions";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/client";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -17,6 +17,7 @@ export default function OnboardingPage() {
         return;
       }
       
+      const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id || 'guest';
       const organizationId = undefined; // No organization yet for onboarding
