@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { waitUntil } from '@vercel/functions';
 import { prisma } from "@/lib/prisma";
-import { getInternalId } from "@/actions/db-actions";
+import { getInternalId, getServerUser } from "@/actions/db-actions";
 import { generateSingleDayMenu } from "@/lib/ai-service";
 
 async function processMenuInBackground(internalId: string, phase: string, weekStartStr: string, promptContext: string, rows: any[]) {
@@ -64,7 +64,14 @@ export async function POST(request: Request) {
         });
 
         if (!user) return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 });
-        if (user.plan === 'FREE') return NextResponse.json({ error: "Requiere plan superior" }, { status: 403 });
+
+        // Bypass plan check if caller is an admin or coach
+        const currentUser = await getServerUser();
+        const isAdminOrCoach = currentUser?.role === 'ADMIN' || currentUser?.role === 'COACH';
+        
+        if (!isAdminOrCoach && user.plan === 'FREE') {
+            return NextResponse.json({ error: "Requiere plan superior" }, { status: 403 });
+        }
 
         // Identificador del lote
         const tomorrow = new Date();
