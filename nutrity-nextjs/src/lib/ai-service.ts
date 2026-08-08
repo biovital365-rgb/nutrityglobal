@@ -64,6 +64,62 @@ export async function generateAILifePlan(data: OnboardingData): Promise<Metaboli
     }
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Genera el menú para un día individual con Exponential Backoff para límites de API (429)
+ */
+export async function generateSingleDayMenu(patientProfile: string, dayName: string, nmgContext: string = ""): Promise<any> {
+    const prompt = `Eres un Chef Clínico de Nutrity Global.
+Tu tarea es generar un menú para el día: ${dayName}, alineado a las necesidades de remisión metabólica del paciente.
+
+INFORMACIÓN DEL PACIENTE:
+${patientProfile}
+
+${nmgContext ? `Diagnóstico Biológico (Triaje Holístico - NMG):\n${nmgContext}\n` : ""}
+
+DIRECTRICES DEL MENÚ:
+1. Usa superalimentos andinos obligatoriamente: Quinua, Kiwicha, Cañihua, Maca, Aguaymanto, Tarwi, Sacha Inchi, Cacao puro, Oca Morada.
+2. Si el paciente presenta síntomas digestivos, adapta los alimentos para que sean suaves para el intestino.
+3. El campo "metabolicGoal" debe ser ultra-específico y explicar por qué este menú apoya al paciente ese día.
+
+Genera un JSON con este formato exacto para el día ${dayName}:
+{
+  "breakfast": "...", 
+  "lunch": "...", 
+  "snack": "...", 
+  "dinner": "...", 
+  "metabolicGoal": "..." 
+}
+
+Responde estrictamente en JSON. Sin markdown, sin explicaciones adicionales.`;
+
+    let attempt = 0;
+    const maxAttempts = 4;
+    
+    while (attempt < maxAttempts) {
+        try {
+            const result = await menuModel.generateContent(prompt);
+            const text = result.response.text();
+            const cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
+            return JSON.parse(cleanText);
+        } catch (error: any) {
+            attempt++;
+            const isRateLimit = error.message?.includes('429') || error.status === 429;
+            if (isRateLimit && attempt < maxAttempts) {
+                const baseDelay = Math.pow(2, attempt) * 1000;
+                const jitter = Math.random() * 1000;
+                const delay = baseDelay + jitter;
+                console.warn(`[Gemini 429] Rate limit detectado. Reintentando en ${Math.round(delay)}ms (Intento ${attempt}/${maxAttempts})...`);
+                await sleep(delay);
+            } else {
+                console.error(`Error generando menú para ${dayName}:`, error);
+                throw error;
+            }
+        }
+    }
+}
+
 /**
  * Genera un menú semanal de 7 días basado en el plan metabólico
  */

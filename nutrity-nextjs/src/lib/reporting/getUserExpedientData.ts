@@ -40,7 +40,7 @@ export async function getUserExpedientData(userId: string) {
     }
 
     // 4. Get Academic Progress (Lessons, Quizzes, Assignments)
-    const [progress, quizAttempts, assignmentSubmissions] = await Promise.all([
+    const [progress, quizAttempts, assignmentSubmissions, measurements] = await Promise.all([
         prisma.lessonProgress.findMany({
             where: { userId, completed: true },
             select: { lessonId: true, completed: true, updatedAt: true }
@@ -52,6 +52,12 @@ export async function getUserExpedientData(userId: string) {
         prisma.assignmentSubmission.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' }
+        }),
+        // Get the latest 10 measurements for biometric evolution
+        prisma.measurement.findMany({
+            where: { userId },
+            orderBy: { timestamp: 'desc' },
+            take: 10
         })
     ]);
 
@@ -59,6 +65,7 @@ export async function getUserExpedientData(userId: string) {
     return {
         profile: user,
         diagnosis: diagnosis || null,
+        measurements: measurements || [],
         menu: menuData,
         academic: {
             completedLessonsCount: progress.length,

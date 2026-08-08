@@ -45,21 +45,53 @@ export function AdminMenuTab({ users, isSaving: _isSaving, adminEmail, notify }:
         }
     };
 
+    const [generationProgress, setGenerationProgress] = useState(0);
+
     const handleGenerateAI = async () => {
         if (!confirm(`¿Generar menú con IA para fase ${menuPhase}? Se reemplazará el menú actual pendiente.`)) return;
         setIsGeneratingAIMenu(true);
+        setGenerationProgress(0);
         try {
-            const res = await generateAIWeeklyMenuSecure(selectedMenuUser.id, menuPhase);
-            if (res.success) {
-                setMenuWeekDays(res.menuDays);
-                notify("success", "Menú semanal generado con IA de forma segura.");
+            const res = await fetch("/api/menu/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: selectedMenuUser.id, phase: menuPhase })
+            });
+            const data = await res.json();
+            
+            if (res.status === 202 && data.success) {
+                notify("success", "Generación iniciada. Esto tomará unos segundos...");
+                // Start polling
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const statusRes = await fetch(`/api/menu/status/${selectedMenuUser.id}/${data.weekStart}`);
+                        const statusData = await statusRes.json();
+                        
+                        if (statusData.status !== 'NOT_FOUND') {
+                            setGenerationProgress(statusData.progress || 0);
+                            
+                            if (statusData.status === 'COMPLETED' || statusData.status === 'ERROR_PARTIAL') {
+                                clearInterval(pollInterval);
+                                setIsGeneratingAIMenu(false);
+                                setGenerationProgress(0);
+                                if (statusData.status === 'COMPLETED') {
+                                    notify("success", "Menú semanal generado correctamente.");
+                                } else {
+                                    notify("error", "Generación finalizada con algunos errores parciales.");
+                                }
+                                loadUserMenu(selectedMenuUser); // Reload to show new menu
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Polling error", err);
+                    }
+                }, 3000);
             } else {
-                throw new Error(res.error || "Fallo en el servidor al generar menú");
+                throw new Error(data.error || "Fallo en el servidor al generar menú");
             }
         } catch (e: any) {
             const errMsg = e.message || "Error desconocido";
             notify("error", `Error al generar: ${errMsg.substring(0, 80)}...`);
-        } finally {
             setIsGeneratingAIMenu(false);
         }
     };
@@ -157,9 +189,14 @@ export function AdminMenuTab({ users, isSaving: _isSaving, adminEmail, notify }:
                                 </div>
                                 <div className="flex gap-2 flex-wrap">
                                     <button disabled={isGeneratingAIMenu} onClick={handleGenerateAI}
-                                        className="flex items-center gap-2 px-4 py-2.5 bg-nutrity-primary text-white rounded-xl text-[11px] font-bold hover:bg-nutrity-primary-light transition-all disabled:opacity-50">
-                                        {isGeneratingAIMenu ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                                        Generar con IA
+                                        className="flex items-center gap-2 px-4 py-2.5 bg-nutrity-primary text-white rounded-xl text-[11px] font-bold hover:bg-nutrity-primary-light transition-all disabled:opacity-50 relative overflow-hidden">
+                                        {isGeneratingAIMenu && (
+                                            <div className="absolute left-0 top-0 bottom-0 bg-white/20 transition-all duration-500 ease-out" style={{ width: `${generationProgress}%` }} />
+                                        )}
+                                        <span className="relative z-10 flex items-center gap-2">
+                                            {isGeneratingAIMenu ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                                            {isGeneratingAIMenu ? `Generando... ${generationProgress}%` : 'Generar con IA'}
+                                        </span>
                                     </button>
                                     {menuWeekDays.length > 0 && menuWeekDays[0]?.status === "PENDING" && (
                                         <>
