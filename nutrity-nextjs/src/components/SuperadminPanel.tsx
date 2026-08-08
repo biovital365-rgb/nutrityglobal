@@ -67,6 +67,42 @@ export function SuperadminPanel({ user }: SuperadminPanelProps) {
         (u.email || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Modal state for users
+    const [showUserModal, setShowUserModal] = useState(false);
+    const [editingUser, setEditingUser] = useState<any>(null);
+    const [showCardexModal, setShowCardexModal] = useState(false);
+    const [selectedCardexUser, setSelectedCardexUser] = useState<any>(null);
+
+    const handleSaveUser = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingUser) return;
+        setIsSaving(true);
+        try {
+            const { id, ...data } = editingUser;
+            await dbService.updateUserProfile(id, data);
+            await loadAll();
+            setShowUserModal(false);
+        } catch (err) {
+            console.error("Error saving user:", err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleDeleteUser = async (id: string) => {
+        if (!window.confirm("¿Seguro que deseas eliminar este usuario?")) return;
+        setIsSaving(true);
+        try {
+            await dbService.deleteUser(id);
+            await loadAll();
+            setShowCardexModal(false);
+        } catch (err) {
+            console.error("Error deleting user:", err);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         <motion.div key="superadmin-panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -116,19 +152,27 @@ export function SuperadminPanel({ user }: SuperadminPanelProps) {
                 <AdminUsersTab
                     users={filteredUsers}
                     isSaving={isSaving}
-                    showUserModal={false}
-                    editingUser={null}
-                    showCardexModal={false}
-                    selectedCardexUser={null}
-                    onOpenCardex={() => {}}
-                    onCloseCardex={() => {}}
-                    onEditUser={() => {}}
-                    onDelete={() => {}}
+                    showUserModal={showUserModal}
+                    editingUser={editingUser}
+                    showCardexModal={showCardexModal}
+                    selectedCardexUser={selectedCardexUser}
+                    onOpenCardex={(u) => { setSelectedCardexUser(u); setShowCardexModal(true); }}
+                    onCloseCardex={() => setShowCardexModal(false)}
+                    onEditUser={(u) => { setEditingUser(u); setShowUserModal(true); }}
+                    onDelete={(id, name) => handleDeleteUser(id)}
                     onRestore={() => {}}
-                    onCloseUserModal={() => {}}
-                    onSaveUser={async () => {}}
-                    setEditingUser={() => {}}
-                    onDeleteFromCardex={() => {}}
+                    onCloseUserModal={() => setShowUserModal(false)}
+                    onSaveUser={handleSaveUser}
+                    setEditingUser={setEditingUser}
+                    onDeleteFromCardex={(u) => handleDeleteUser(u.id)}
+                    onStatusChange={async (userId, status) => {
+                        try {
+                            await dbService.updateUserStatus(userId, status);
+                            await loadAll();
+                        } catch (err) {
+                            console.error("Error updating status:", err);
+                        }
+                    }}
                 />
             )}
 

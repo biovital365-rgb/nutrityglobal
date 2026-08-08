@@ -401,9 +401,8 @@ export async function deleteUser(userId: string) {
         const currentUser = await getServerUser();
         if (!currentUser || currentUser.role !== 'ADMIN') throw new Error("Forbidden");
 
-        await prisma.user.update({
-            where: { id: userId },
-            data: { deletedAt: new Date().toISOString() }
+        await prisma.user.delete({
+            where: { id: userId }
         });
         
         revalidatePath('/', 'layout');
