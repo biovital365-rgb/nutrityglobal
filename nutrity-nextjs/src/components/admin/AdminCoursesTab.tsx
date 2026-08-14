@@ -43,7 +43,7 @@ export function AdminCoursesTab({
                                     <tr key={course.id} className={`hover:bg-slate-50 transition-colors group ${(course as any).deletedAt ? "opacity-50" : ""}`}>
                                         <td className="py-4 px-6">
                                             <div className="w-16 h-10 rounded-xl overflow-hidden bg-nutrity-bg">
-                                                <img src={getDirectImageUrl(course.thumbnail)} className="w-full h-full object-cover" alt={course.title} />
+                                                <img src={getDirectImageUrl(course.thumbnail)} className="w-full h-full object-cover" alt={course.title} onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
                                             </div>
                                         </td>
                                         <td className="py-4 px-6 font-bold text-sm">{course.title}</td>
