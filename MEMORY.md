@@ -27,14 +27,14 @@
 #### ⚠️ Active Issues & Blockers
 *   **Assets**: Las imágenes 404 en el catálogo (ej. zinc, pumpkin seeds) deben ser cargadas manualmente a `public/` o actualizadas en la DB con URLs externas válidas.
 
-#### 🚀 Next Steps (Pendientes)
-1.  **Carga Masiva de Contenido y Testing Real**: Validar en Vercel el flujo completo de todos los planes con usuarios de prueba. Desplegar los cursos restantes.
-2.  **Diagnóstico Nivel Pro (Triaje y NMG Avanzado)**: Elevar la complejidad del motor de diagnóstico. Integrar cuestionarios clínicos más profundos, correlación de síntomas con base científica, y mejoras en la asertividad de la Biodescodificación.
-3.  **Gestor de Imágenes y Contenido Landing desde Admin**: Permitir a los administradores cargar, modificar y actualizar las imágenes y textos de la Landing Page desde el Dashboard, sin tocar código (CMS básico).
-4.  **Notificaciones Push/Email**: Avisar al paciente cuando su menú sea aprobado.
-5.  **Feedback del Usuario**: Botón "Solicitar Cambios" si el menú aprobado no le convence.
-6.  **GEO Audit**: Preparar el contenido para ser indexable por motores de búsqueda generativos.
-7.  **Paginación PDF (Backlog)**: En el PDF Expediente, cuando el catálogo de mediciones crezca, añadir un parámetro de rango de fechas o paginación en el query de `Measurement` (actualmente limitado a las 10 últimas).
+#### 🚀 Next Steps (Hoja de Ruta Post-Testing E2E)
+1. **Testing E2E Producción**: Ejecución del protocolo de pruebas en Vercel (validación de onboarding, descarga dual de expedientes y descarga segura de recursos LMS).
+2. **Monitoreo (Day 1)**: Observabilidad en Vercel Runtime Logs y consumo del Connection Pooler de Supabase (puerto 6543) durante las primeras 24-48h de tráfico masivo.
+3. **[Prioridad Media/Futura] Cuotas Duras IA**: Evaluación de un límite estricto de generación IA por plan (BASIC, PREMIUM, ELITE) a nivel de base de datos.
+4. **[Prioridad Media/Futura] Sanación de Base de Datos**: Script de limpieza directa en Supabase para depurar URLs antiguas de alimentos o micronutrientes rotos.
+5. **Carga Masiva de Contenido**: Desplegar los cursos restantes.
+6. **Diagnóstico Nivel Pro**: Triaje y NMG Avanzado, elevando la profundidad de los cuestionarios clínicos.
+7. **Gestor CMS**: Permitir a administradores cargar imágenes y textos de la Landing Page desde el Dashboard.
 
 - **Base de Datos**: Supabase (PostgreSQL) con Prisma ORM (Sincronizado vía `db push`).
 - **IA**: Google Gemini 1.5-Flash (Chunking asíncrono implementado).
@@ -171,3 +171,9 @@ Para garantizar cero "Schema Drift" y asegurar que el frontend procese correctam
 - **Asincronía SSR de Next.js 15**: Corrección masiva de propiedades asíncronas (`await params` / `await searchParams`) en layouts y Server Actions para compatibilidad con el App Router de Next.js.
 - **Guest Evaluation Fix (Instancias GoTrueClient)**: Al solucionar colisiones de clientes SSR vs. Navegador, se garantizó que los "guests" sean tratados correctamente en su transición a registro en el Onboarding (`page.tsx`).
 - **Limpieza Estructural Git/Local**: Depuración masiva de objetos residuales con `git gc` y exclusión efectiva del `.env`, reduciendo el footprint del repositorio drásticamente.
+
+- [x] **Fase 13: UI Premium, Testing E2E y Blindaje Zero-Trust (Agosto 2026)** (Completado)
+    * **Expediente PDF Adaptativo**: Renderizado server-side dinámico con vistas `patient` / `coach`, degradación automática de roles y protección de paginación con `wrap={false}` en componentes `@react-pdf/renderer`.
+    * **Resiliencia de Assets UI**: Integración de SVG `food-placeholder.svg` con manejadores `onError` en el renderizado de alimentos y cursos, garantizando catálogos visualmente limpios sin errores 404 en pantalla.
+    * **LMS Proxy Zero-Trust**: Reescritura del endpoint de descargas (`/api/academic/download/route.ts`) para realizar fetching proxy (streaming) en vez de un redirect 307 clásico. Inyección de `Content-Disposition` para enmascarar URLs reales del Storage en Vercel.
+    * **Vercel E2E Audit**: Verificación y despliegue exitoso (main) asegurando el requerimiento de Connection Pooling (Supabase pgbouncer port 6543) y el funcionamiento de barreras de planes para la generación de IA.
