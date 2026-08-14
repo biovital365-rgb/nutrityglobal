@@ -5,6 +5,19 @@ import { WeeklyMenuSchema, MetabolicPlanSchema, type OnboardingData, type Weekly
 import { supabase } from "@/lib/supabase";
 import { getInternalId, getPendingMenu } from "./db-actions";
 
+function safeJsonParse(text: string) {
+    let cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
+    try {
+        return JSON.parse(cleanText);
+    } catch (e) {
+        console.warn("safeJsonParse: Attempting JSON repair due to:", e);
+        cleanText = cleanText.replace(/[\u0000-\u001F]+/g, ' ');
+        cleanText = cleanText.replace(/,\s*([\]}])/g, '$1');
+        return JSON.parse(cleanText);
+    }
+}
+
+
 const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
 
@@ -106,8 +119,7 @@ export async function generateAILifePlan(data: OnboardingData): Promise<Metaboli
     try {
         const result = await planModel.generateContent(prompt);
         const text = result.response.text();
-        const cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
-        const json = JSON.parse(cleanText);
+        const json = safeJsonParse(text);
         return MetabolicPlanSchema.parse(json);
     } catch (error: any) {
         console.error("AI Life Plan generation failed:", error);
@@ -143,8 +155,7 @@ export async function generateAIWeeklyMenu(plan: MetabolicPlan, userName: string
     try {
         const result = await menuModel.generateContent(prompt);
         const text = result.response.text();
-        const cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
-        const json = JSON.parse(cleanText);
+        const json = safeJsonParse(text);
         return WeeklyMenuSchema.parse(json);
     } catch (error) {
         console.error("AI Weekly Menu generation failed:", error);
@@ -329,8 +340,7 @@ Responde estrictamente en JSON. Sin markdown, sin explicaciones adicionales.`;
         }
         
         const text = result.response.text();
-        const cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
-        const json = JSON.parse(cleanText);
+        const json = safeJsonParse(text);
         const parsedMenu = WeeklyMenuSchema.parse(json);
 
         // 6. Map and Save in DB
