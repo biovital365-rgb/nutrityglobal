@@ -32,9 +32,15 @@ export async function getUserExpedientData(userId: string) {
 
     // We only need the menuData if it exists
     let menuData = null;
+    let menuMeta = null;
     let recipes = null;
     if (latestMenu && latestMenu.menuData) {
         menuData = latestMenu.menuData;
+        menuMeta = {
+            adminNotes: latestMenu.adminNotes,
+            metabolicGoal: latestMenu.metabolicGoal,
+            status: latestMenu.status
+        };
         // Optimization: we could fetch the specific recipes (Foods) used in this menu, 
         // but for now we'll just return the menu structure.
     }
@@ -67,6 +73,7 @@ export async function getUserExpedientData(userId: string) {
         diagnosis: diagnosis || null,
         measurements: measurements || [],
         menu: menuData,
+        menuMeta: menuMeta,
         academic: {
             completedLessonsCount: progress.length,
             quizAttempts,

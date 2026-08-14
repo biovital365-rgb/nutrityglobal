@@ -1143,7 +1143,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                             <div className="flex items-center justify-between mb-6">
                                                 <div className="w-12 h-12 rounded-xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent group-hover:scale-110 transition-transform overflow-hidden">
                                                     {micro.image ? (
-                                                        <img src={getDirectImageUrl(micro.image)} alt={micro.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                                        <img src={getDirectImageUrl(micro.image)} alt={micro.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
                                                     ) : (
                                                         <Zap className="w-7 h-7" />
                                                     )}
@@ -1263,7 +1263,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                             return (
                                             <div key={course.id} className="nutrity-card overflow-hidden group hover:border-nutrity-accent transition-all flex flex-col">
                                                 <div className="h-48 overflow-hidden relative">
-                                                    <img src={getDirectImageUrl(course.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={course.title} referrerPolicy="no-referrer" />
+                                                    <img src={getDirectImageUrl(course.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={course.title} referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
                                                     <div className="absolute top-4 right-4 flex gap-2">
                                                         {course.price > 0 && !user?.profile?.plan?.includes('ELITE') && (
                                                             <div className="bg-amber-500 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-lg">
@@ -1365,7 +1365,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                                         />
                                                     ) : (
                                                         <>
-                                                            <img src={getDirectImageUrl(selectedCourse.thumbnail)} className="w-full h-full object-cover opacity-60" alt="Image" referrerPolicy="no-referrer" />
+                                                            <img src={getDirectImageUrl(selectedCourse.thumbnail)} className="w-full h-full object-cover opacity-60" alt="Image" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
                                                             <div className="absolute inset-0 flex items-center justify-center">
                                                                 <Play className="w-20 h-20 text-white/20" />
                                                                 <div className="absolute bottom-8 left-8 right-8 text-white">
@@ -1631,7 +1631,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                     {filteredFoods.map((food) => (
                                         <div key={food.id} onClick={() => setSelectedFood(food)} className="nutrity-card overflow-hidden group hover:border-nutrity-accent transition-all cursor-pointer">
                                             <div className="h-40 relative">
-                                                <img src={getDirectImageUrl(food.image)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Image" referrerPolicy="no-referrer" />
+                                                <img src={getDirectImageUrl(food.image)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Image" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
                                                 <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[8px] font-bold text-nutrity-accent uppercase tracking-widest">{food.category}</div>
                                             </div>
                                             <div className="p-6">
@@ -2119,7 +2119,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                             <button onClick={() => setSelectedFood(null)} className="absolute top-6 right-6 p-2 rounded-full bg-white/50 backdrop-blur-md text-nutrity-primary hover:bg-white z-10 transition-all shadow-sm"><X className="w-5 h-5" /></button>
 
                             <div className="h-64 md:h-80 relative shrink-0">
-                                <img src={getDirectImageUrl(selectedFood.image)} alt={selectedFood.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                <img src={getDirectImageUrl(selectedFood.image)} alt={selectedFood.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
                                 <div className="absolute inset-0 bg-gradient-to-t from-nutrity-primary/90 via-nutrity-primary/40 to-transparent flex flex-col justify-end p-8">
                                     <span className="px-3 py-1 bg-nutrity-accent text-white rounded-lg text-[10px] font-bold uppercase tracking-widest self-start mb-3">{selectedFood.category}</span>
                                     <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-1">{selectedFood.name}</h2>
@@ -2178,7 +2178,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                                 <div key={idx} className="bg-white rounded-2xl border border-nutrity-border shadow-sm overflow-hidden flex flex-col md:flex-row">
                                                     {(recipe.image || (recipe as any).imageUrl) && (
                                                         <div className="w-full md:w-48 h-48 md:h-auto shrink-0 relative">
-                                                            <img src={getDirectImageUrl(recipe.image || (recipe as any).imageUrl)} alt={recipe.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                                            <img src={getDirectImageUrl(recipe.image || (recipe as any).imageUrl)} alt={recipe.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
                                                         </div>
                                                     )}
                                                     <div className="p-5 flex-1">
@@ -2261,7 +2261,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
 
                             <div className="h-64 md:h-80 relative shrink-0 bg-nutrity-bg flex items-center justify-center">
                                 {selectedMicro.image ? (
-                                    <img src={getDirectImageUrl(selectedMicro.image)} alt={selectedMicro.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    <img src={getDirectImageUrl(selectedMicro.image)} alt={selectedMicro.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
                                 ) : (
                                     <Zap className="w-32 h-32 text-nutrity-accent opacity-20" />
                                 )}

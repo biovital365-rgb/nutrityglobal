@@ -19,16 +19,34 @@ const styles = StyleSheet.create({
         alignItems: 'flex-end',
         wrap: false
     },
-    title: {
-        fontSize: 22,
+    logoBox: {
+        flexDirection: 'column',
+    },
+    logoText1: {
+        fontSize: 24,
         fontWeight: 'bold',
-        color: '#1b3b36', // Forest Green
+        color: '#1b3b36',
+        textTransform: 'uppercase',
+    },
+    logoText2: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#c19b6c', // Gold
+        textTransform: 'uppercase',
+        letterSpacing: 2,
+    },
+    titleBox: {
+        alignItems: 'flex-end'
+    },
+    title: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#1b3b36',
         textTransform: 'uppercase',
     },
     subtitle: {
-        fontSize: 12,
-        color: '#c19b6c', // Gold
-        textTransform: 'uppercase',
+        fontSize: 10,
+        color: '#c19b6c',
         marginTop: 4,
     },
     section: {
@@ -80,6 +98,14 @@ const styles = StyleSheet.create({
         borderLeftColor: '#c19b6c',
         marginBottom: 8
     },
+    alertBox: {
+        backgroundColor: '#fef2f2',
+        padding: 10,
+        borderRadius: 4,
+        borderLeftWidth: 3,
+        borderLeftColor: '#ef4444',
+        marginBottom: 8
+    },
     fallbackBox: {
         padding: 20,
         backgroundColor: '#f8fafc',
@@ -129,6 +155,16 @@ const styles = StyleSheet.create({
         fontSize: 8,
         color: '#94a3b8',
         textTransform: 'uppercase'
+    },
+    dayCard: {
+        marginBottom: 8, 
+        backgroundColor: '#ffffff', 
+        padding: 10, 
+        borderRadius: 6, 
+        borderWidth: 1, 
+        borderColor: '#e2e8f0',
+        borderLeftWidth: 4,
+        borderLeftColor: '#1b3b36'
     }
 });
 
@@ -137,31 +173,74 @@ interface NativeReportProps {
         profile: any;
         diagnosis: any;
         menu: any;
+        menuMeta?: any;
         academic: any;
         measurements?: any[];
-    }
+    };
+    viewMode?: 'patient' | 'coach';
+    userStatus?: string;
 }
 
-export function NutrityNativeReport({ data }: NativeReportProps) {
-    const { profile, diagnosis, menu, academic, measurements } = data;
+export function NutrityNativeReport({ data, viewMode = 'patient', userStatus = 'ACTIVE' }: NativeReportProps) {
+    const { profile, diagnosis, menu, menuMeta, academic, measurements } = data;
     const dateStr = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
 
     const rawAnswers = diagnosis?.rawAnswers ? (typeof diagnosis.rawAnswers === 'string' ? JSON.parse(diagnosis.rawAnswers) : diagnosis.rawAnswers) : null;
+    const isCoach = viewMode === 'coach';
 
     return (
         <Document>
             <Page size="A4" style={styles.page} wrap={true}>
                 {/* CABECERA */}
                 <View style={styles.header} fixed>
-                    <View>
-                        <Text style={styles.title}>NUTRITY GLOBAL | BioVital.360</Text>
-                        <Text style={styles.subtitle}>Expediente Clínico</Text>
+                    <View style={styles.logoBox}>
+                        <Text style={styles.logoText1}>BIOVITAL 365</Text>
+                        <Text style={styles.logoText2}>Nutrity Global</Text>
                     </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={styles.label}>Fecha de Emisión</Text>
-                        <Text style={[styles.value, { textAlign: 'right' }]}>{dateStr}</Text>
+                    <View style={styles.titleBox}>
+                        <Text style={styles.title}>
+                            {isCoach ? 'Expediente Clínico' : 'Plan Integral de Remisión'}
+                        </Text>
+                        <Text style={styles.subtitle}>
+                            {isCoach ? `ID: ${profile.id.slice(0,8).toUpperCase()}` : `Emitido: ${dateStr}`}
+                        </Text>
                     </View>
                 </View>
+
+                {/* NOTAS CLÍNICAS (SOLO COACH) */}
+                {isCoach && (
+                    <View style={styles.section} wrap={false}>
+                        <Text style={styles.sectionTitle}>Panel de Control Clínico (Uso Interno)</Text>
+                        
+                        <View style={styles.row}>
+                            <Text style={styles.label}>Estado del Paciente</Text>
+                            <Text style={[styles.value, { color: userStatus === 'ACTIVE' ? '#059669' : userStatus === 'OBSERVED' ? '#d97706' : '#dc2626' }]}>
+                                {userStatus}
+                            </Text>
+                        </View>
+
+                        {menuMeta?.status && (
+                            <View style={styles.row}>
+                                <Text style={styles.label}>Estado del Menú</Text>
+                                <Text style={styles.value}>{menuMeta.status}</Text>
+                            </View>
+                        )}
+                        
+                        {menuMeta?.metabolicGoal && (
+                            <View style={styles.gridBox} wrap={false}>
+                                <Text style={styles.label}>Meta Metabólica (Coach)</Text>
+                                <Text style={styles.text}>{menuMeta.metabolicGoal}</Text>
+                            </View>
+                        )}
+
+                        {menuMeta?.adminNotes && (
+                            <View style={styles.alertBox} wrap={false}>
+                                <Text style={[styles.label, { color: '#ef4444' }]}>Notas y Banderas Clínicas</Text>
+                                <Text style={styles.text}>{menuMeta.adminNotes}</Text>
+                            </View>
+                        )}
+                    </View>
+                )}
 
                 {/* 1. PERFIL */}
                 <View style={styles.section} wrap={false}>
@@ -179,8 +258,8 @@ export function NutrityNativeReport({ data }: NativeReportProps) {
                         <Text style={styles.value}>{profile.plan || "Gratuito"}</Text>
                     </View>
                     <View style={styles.row}>
-                        <Text style={styles.label}>Fecha de Registro</Text>
-                        <Text style={styles.value}>{new Date(profile.createdAt).toLocaleDateString('es-ES')}</Text>
+                        <Text style={styles.label}>Suscripción</Text>
+                        <Text style={styles.value}>{profile.subscriptionStatus || "N/A"}</Text>
                     </View>
                 </View>
 
@@ -236,14 +315,16 @@ export function NutrityNativeReport({ data }: NativeReportProps) {
                             )}
 
                             {diagnosis.insight && (
-                                <Text style={[styles.text, { marginTop: 10, fontStyle: 'italic' }]}>
-                                    Evaluación IA: "{diagnosis.insight}"
-                                </Text>
+                                <View style={{ marginTop: 10, padding: 10, backgroundColor: '#f0fdf4', borderRadius: 4, borderLeftWidth: 3, borderLeftColor: '#22c55e' }} wrap={false}>
+                                    <Text style={[styles.label, { color: '#166534' }]}>Guía de Remisión (IA)</Text>
+                                    <Text style={[styles.text, { fontStyle: 'italic', marginTop: 4 }]}>"{diagnosis.insight}"</Text>
+                                </View>
                             )}
                             
-                            {rawAnswers && Object.keys(rawAnswers).length > 0 && (
+                            {/* SOLO COACH: Raw Answers del Triaje */}
+                            {isCoach && rawAnswers && Object.keys(rawAnswers).length > 0 && (
                                 <View style={{ marginTop: 15 }} wrap={false}>
-                                    <Text style={[styles.label, { marginBottom: 5 }]}>Datos del Triaje (Raw):</Text>
+                                    <Text style={[styles.label, { marginBottom: 5 }]}>Datos del Triaje Clínico (Raw):</Text>
                                     {Object.entries(rawAnswers).map(([k, v], i) => {
                                         if (typeof v === 'object' || !v) return null;
                                         return (
@@ -263,47 +344,67 @@ export function NutrityNativeReport({ data }: NativeReportProps) {
                     )}
                 </View>
 
-                {/* 3. EVOLUCIÓN BIOMÉTRICA */}
-                <View style={styles.section} wrap={true}>
-                    <Text style={styles.sectionTitle}>3. Evolución Biométrica</Text>
-                    {measurements && measurements.length > 0 ? (
-                        <View>
-                            <View style={styles.tableHeader}>
-                                <Text style={styles.col1}>FECHA / HORA</Text>
-                                <Text style={styles.col2}>MÉTRICA</Text>
-                                <Text style={styles.col3}>VALOR</Text>
-                            </View>
-                            {measurements.map((m: any, i: number) => (
-                                <View style={styles.tableRow} key={i} wrap={false}>
-                                    <Text style={styles.col1}>{m.date} {m.time ? `(${m.time})` : ''}</Text>
-                                    <Text style={styles.col2}>{m.label}</Text>
-                                    <Text style={[styles.col3, { fontWeight: 'bold' }]}>{m.value}</Text>
+                {/* 3. EVOLUCIÓN BIOMÉTRICA (SOLO COACH o si hay datos) */}
+                {(isCoach || (measurements && measurements.length > 0)) && (
+                    <View style={styles.section} wrap={true}>
+                        <Text style={styles.sectionTitle}>3. Evolución Biométrica</Text>
+                        {measurements && measurements.length > 0 ? (
+                            <View>
+                                <View style={styles.tableHeader} wrap={false}>
+                                    <Text style={styles.col1}>FECHA / HORA</Text>
+                                    <Text style={styles.col2}>MÉTRICA</Text>
+                                    <Text style={styles.col3}>VALOR</Text>
                                 </View>
-                            ))}
-                        </View>
-                    ) : (
-                        <View style={styles.fallbackBox} wrap={false}>
-                            <Text style={styles.fallbackText}>No hay mediciones registradas en el historial.</Text>
-                        </View>
-                    )}
-                </View>
+                                {measurements.map((m: any, i: number) => (
+                                    <View style={styles.tableRow} key={i} wrap={false}>
+                                        <Text style={styles.col1}>{m.date} {m.time ? `(${m.time})` : ''}</Text>
+                                        <Text style={styles.col2}>{m.label}</Text>
+                                        <Text style={[styles.col3, { fontWeight: 'bold' }]}>{m.value}</Text>
+                                    </View>
+                                ))}
+                            </View>
+                        ) : (
+                            <View style={styles.fallbackBox} wrap={false}>
+                                <Text style={styles.fallbackText}>No hay mediciones registradas en el historial.</Text>
+                            </View>
+                        )}
+                    </View>
+                )}
 
                 {/* 4. PLAN NUTRICIONAL */}
                 <View style={styles.section} wrap={true}>
                     <Text style={styles.sectionTitle}>4. Plan Nutricional Asignado</Text>
                     {menu ? (
                         <View>
-                            <Text style={[styles.text, { marginBottom: 10 }]}>
-                                Tu menú semanal ha sido generado y está activo. Para ver las recetas detalladas, por favor consulta la sección "Menú" en la plataforma.
+                            <Text style={[styles.text, { marginBottom: 15 }]}>
+                                {isCoach 
+                                    ? "Menú semanal activo para el paciente:"
+                                    : "Tu menú semanal ha sido generado y está activo. Sigue estas pautas o consúltalas en la app."}
                             </Text>
-                            {['lunes', 'martes', 'miercoles', 'jueves', 'viernes'].map((day) => {
+                            {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map((day) => {
                                 if (!menu[day]) return null;
                                 return (
-                                    <View key={day} style={{ marginBottom: 6, backgroundColor: '#f8fafc', padding: 8, borderRadius: 4, borderLeftWidth: 2, borderLeftColor: '#1b3b36' }} wrap={false}>
-                                        <Text style={[styles.label, { color: '#1b3b36', marginBottom: 4 }]}>{day.toUpperCase()}</Text>
-                                        <Text style={[styles.text, { fontSize: 10 }]}>• Desayuno: {menu[day].breakfast}</Text>
-                                        <Text style={[styles.text, { fontSize: 10 }]}>• Almuerzo: {menu[day].lunch}</Text>
-                                        <Text style={[styles.text, { fontSize: 10 }]}>• Cena: {menu[day].dinner}</Text>
+                                    <View key={day} style={styles.dayCard} wrap={false}>
+                                        <Text style={[styles.label, { color: '#1b3b36', marginBottom: 6 }]}>{day.toUpperCase()}</Text>
+                                        
+                                        <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                                            <Text style={[styles.label, { width: '20%' }]}>Desayuno:</Text>
+                                            <Text style={[styles.text, { width: '80%' }]}>{menu[day].breakfast}</Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                                            <Text style={[styles.label, { width: '20%' }]}>Almuerzo:</Text>
+                                            <Text style={[styles.text, { width: '80%' }]}>{menu[day].lunch}</Text>
+                                        </View>
+                                        <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                                            <Text style={[styles.label, { width: '20%' }]}>Cena:</Text>
+                                            <Text style={[styles.text, { width: '80%' }]}>{menu[day].dinner}</Text>
+                                        </View>
+                                        {menu[day].snacks && (
+                                            <View style={{ flexDirection: 'row' }}>
+                                                <Text style={[styles.label, { width: '20%' }]}>Snack:</Text>
+                                                <Text style={[styles.text, { width: '80%', fontStyle: 'italic' }]}>{menu[day].snacks}</Text>
+                                            </View>
+                                        )}
                                     </View>
                                 )
                             })}
@@ -319,7 +420,7 @@ export function NutrityNativeReport({ data }: NativeReportProps) {
                 <View style={styles.section} wrap={true}>
                     <Text style={styles.sectionTitle}>5. Progreso Académico</Text>
                     
-                    <View style={styles.row}>
+                    <View style={styles.row} wrap={false}>
                         <Text style={styles.label}>Lecciones Completadas</Text>
                         <Text style={styles.value}>{academic.completedLessonsCount || 0}</Text>
                     </View>
@@ -328,7 +429,7 @@ export function NutrityNativeReport({ data }: NativeReportProps) {
                         <View style={{ marginTop: 10 }} wrap={false}>
                             <Text style={[styles.label, { marginBottom: 5 }]}>Cuestionarios Recientes:</Text>
                             {academic.quizAttempts.slice(0,3).map((quiz: any, i: number) => (
-                                <View key={i} style={styles.row}>
+                                <View key={i} style={styles.row} wrap={false}>
                                     <Text style={styles.text}>Evaluación (ID: {quiz.quizId.slice(-4)})</Text>
                                     <Text style={styles.value}>{quiz.score}% ({quiz.passed ? 'Aprobado' : 'Reprobado'})</Text>
                                 </View>
@@ -340,13 +441,13 @@ export function NutrityNativeReport({ data }: NativeReportProps) {
                         <View style={{ marginTop: 15 }} wrap={false}>
                             <Text style={[styles.label, { marginBottom: 5 }]}>Últimas Tareas Evaluadas:</Text>
                             {academic.assignmentSubmissions.slice(0,3).map((sub: any, i: number) => (
-                                <View key={i} style={{ backgroundColor: '#f8fafc', padding: 8, borderRadius: 4, marginBottom: 5, borderWidth: 1, borderColor: '#e2e8f0' }}>
+                                <View key={i} style={{ backgroundColor: '#f8fafc', padding: 8, borderRadius: 4, marginBottom: 5, borderWidth: 1, borderColor: '#e2e8f0' }} wrap={false}>
                                     <Text style={[styles.label, { color: sub.status === 'APPROVED' ? '#10b981' : sub.status === 'REJECTED' ? '#ef4444' : '#c19b6c' }]}>
                                         ESTADO: {sub.status}
                                     </Text>
                                     {sub.coachFeedback ? (
                                         <Text style={[styles.text, { marginTop: 4, fontStyle: 'italic' }]}>
-                                            " {sub.coachFeedback} "
+                                            "{sub.coachFeedback}"
                                         </Text>
                                     ) : (
                                         <Text style={[styles.text, { marginTop: 4 }]}>En revisión...</Text>

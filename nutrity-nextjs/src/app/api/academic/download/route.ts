@@ -40,7 +40,22 @@ export async function GET(req: NextRequest) {
             return new NextResponse("Recurso no disponible", { status: 404 });
         }
 
-        return NextResponse.redirect(targetUrl);
+        const fetchRes = await fetch(targetUrl);
+        if (!fetchRes.ok) {
+            return new NextResponse("Error al recuperar el archivo del almacenamiento", { status: fetchRes.status });
+        }
+
+        const contentType = fetchRes.headers.get("Content-Type") || "application/octet-stream";
+        const safeFilename = lesson.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const extension = type === "pdf" ? "pdf" : "pptx";
+
+        return new NextResponse(fetchRes.body, {
+            status: 200,
+            headers: {
+                "Content-Type": contentType,
+                "Content-Disposition": `attachment; filename="${safeFilename}_${type}.${extension}"`
+            }
+        });
     } catch (e: any) {
         console.error("Error en download route:", e);
         return new NextResponse("Error interno del servidor", { status: 500 });

@@ -49,7 +49,7 @@ export function AdminMicronutrientsTab({
                                         <td className="py-4 px-6">
                                             <div className="w-10 h-10 rounded-xl bg-nutrity-bg overflow-hidden flex items-center justify-center border border-nutrity-border">
                                                 {micro.image ? (
-                                                    <img src={getDirectImageUrl(micro.image)} alt={micro.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                                    <img src={getDirectImageUrl(micro.image)} alt={micro.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
                                                 ) : (
                                                     <span className="text-[10px] text-nutrity-gray-text/50">N/A</span>
                                                 )}

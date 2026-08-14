@@ -24,13 +24,21 @@ export async function GET(req: Request) {
             return new NextResponse('Upgrade required to access Clinical Expedient', { status: 403 });
         }
 
+        // Determine View Mode
+        const url = new URL(req.url);
+        const requestedView = url.searchParams.get('view');
+        let viewMode: 'patient' | 'coach' = 'patient';
+        if (requestedView === 'coach' && isAdminOrCoach) {
+            viewMode = 'coach';
+        }
+
         // 2. Aggregate Data using the decoupled service
         const expedientData = await getUserExpedientData(user.id);
 
         // 3. Render PDF to stream
         // Note: renderToStream is async and returns a Node.js ReadableStream
         const pdfStream = await renderToStream(
-            React.createElement(NutrityNativeReport, { data: expedientData }) as any
+            React.createElement(NutrityNativeReport, { data: expedientData, viewMode, userStatus: user.status }) as any
         );
 
         // Convert Node.js ReadableStream to Web ReadableStream for Next.js App Router

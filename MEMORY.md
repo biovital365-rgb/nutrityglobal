@@ -26,21 +26,19 @@
 
 #### ⚠️ Active Issues & Blockers
 *   **Assets**: Las imágenes 404 en el catálogo (ej. zinc, pumpkin seeds) deben ser cargadas manualmente a `public/` o actualizadas en la DB con URLs externas válidas.
-*   **Esperando Resultados de Pruebas**: El flujo B2C completo (acceso por planes, visualización de cursos bloqueados/liberados y limitación de lecciones para plan FREE) fue desplegado en staging/producción. Se esperan resultados de pruebas reales en la próxima sesión antes de proceder con el resto de la carga masiva de contenido o features avanzados.
 
 #### 🚀 Next Steps (Pendientes)
-1.  **Validación de Flujo B2C (Testing)**: Confirmar en entorno real de Vercel que los bloqueos de Plan Freemium/Básico/Premium operan sin fricciones (los candados y estados grises funcionan) y que el dashboard se comporta como se espera.
+1.  **Carga Masiva de Contenido y Testing Real**: Validar en Vercel el flujo completo de todos los planes con usuarios de prueba. Desplegar los cursos restantes.
 2.  **Diagnóstico Nivel Pro (Triaje y NMG Avanzado)**: Elevar la complejidad del motor de diagnóstico. Integrar cuestionarios clínicos más profundos, correlación de síntomas con base científica, y mejoras en la asertividad de la Biodescodificación.
 3.  **Gestor de Imágenes y Contenido Landing desde Admin**: Permitir a los administradores cargar, modificar y actualizar las imágenes y textos de la Landing Page desde el Dashboard, sin tocar código (CMS básico).
 4.  **Notificaciones Push/Email**: Avisar al paciente cuando su menú sea aprobado.
 5.  **Feedback del Usuario**: Botón "Solicitar Cambios" si el menú aprobado no le convence.
 6.  **GEO Audit**: Preparar el contenido para ser indexable por motores de búsqueda generativos.
-7.  **Stripe Paywall & Admin**: Finalizar pruebas del sistema de pagos y control de Suscripciones (Freemium, Basic, Advanced, Elite) integrado desde el Admin Panel.
-8.  **Paginación PDF (Backlog)**: En el PDF Expediente, cuando el catálogo de mediciones crezca, añadir un parámetro de rango de fechas o paginación en el query de `Measurement` (actualmente limitado a las 10 últimas).
+7.  **Paginación PDF (Backlog)**: En el PDF Expediente, cuando el catálogo de mediciones crezca, añadir un parámetro de rango de fechas o paginación en el query de `Measurement` (actualmente limitado a las 10 últimas).
 
-- **Base de Datos**: Supabase (PostgreSQL) con Prisma ORM.
-- **IA**: Google Gemini (Pro/Flash).
-- **Estrategia de Persistencia**: Deterministic IDs + Logical Deletion.
+- **Base de Datos**: Supabase (PostgreSQL) con Prisma ORM (Sincronizado vía `db push`).
+- **IA**: Google Gemini 1.5-Flash (Chunking asíncrono implementado).
+- **Estrategia de Persistencia**: Deterministic IDs + Logical Deletion + RLS Policies.
 
 ---
 
@@ -163,3 +161,13 @@ Para garantizar cero "Schema Drift" y asegurar que el frontend procese correctam
 3. **Quiz (Evaluación Automática)**: Vinculado al `lessonId` si aplica. Debe contener el array `questions` en formato estricto JSON:
    `[{ text: "Pregunta", options: ["A", "B", "C"], correctIndex: 1 }]`
 4. **Assignment (Reto Práctico)**: Vinculado al `lessonId`. Debe contener `title` y una `description` detallada con la instrucción clínica. Las entregas (`AssignmentSubmission`) serán filtradas por el coach en el Admin Panel usando la relación `assignment -> lesson -> course`.
+
+---
+
+## 🛠️ Fase 12: Optimización Arquitectónica y Estabilización (Agosto 2026)
+- **Generación Asíncrona AI (Chunking)**: Se migró la generación de menús semanales de bloqueos secuenciales lentos a una arquitectura asíncrona de Background Tasks en Vercel, procesando cada día independientemente con su propio Retry/Backoff.
+- **Unificación Firebase -> Supabase ID**: Refactorizado de `getInternalId` a O(1) resolviendo el User ID nativo en Supabase.
+- **Aislamiento Multi-tenant Estricto (RLS)**: Activación de Row Level Security y filtros de `organizationId` obligatorios a nivel ORM para aislar los pacientes (B2B2C).
+- **Asincronía SSR de Next.js 15**: Corrección masiva de propiedades asíncronas (`await params` / `await searchParams`) en layouts y Server Actions para compatibilidad con el App Router de Next.js.
+- **Guest Evaluation Fix (Instancias GoTrueClient)**: Al solucionar colisiones de clientes SSR vs. Navegador, se garantizó que los "guests" sean tratados correctamente en su transición a registro en el Onboarding (`page.tsx`).
+- **Limpieza Estructural Git/Local**: Depuración masiva de objetos residuales con `git gc` y exclusión efectiva del `.env`, reduciendo el footprint del repositorio drásticamente.
