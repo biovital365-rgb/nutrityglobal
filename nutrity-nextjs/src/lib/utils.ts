@@ -10,9 +10,20 @@ export function getDirectImageUrl(url: string) {
   if (url.includes('drive.google.com')) {
     const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
     if (match && match[1]) {
-      // Using the thumbnail endpoint is documented as a more reliable bypass for <img> tags
       return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
     }
   }
   return url;
+}
+
+export function safeJsonParse(text: string) {
+    let cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
+    try {
+        return JSON.parse(cleanText);
+    } catch (e) {
+        console.warn("safeJsonParse: Attempting JSON repair due to:", e);
+        cleanText = cleanText.replace(/[\u0000-\u001F]+/g, ' ');
+        cleanText = cleanText.replace(/,\s*([\]}])/g, '$1');
+        return JSON.parse(cleanText);
+    }
 }

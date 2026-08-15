@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { waitUntil } from '@vercel/functions';
 import { prisma } from "@/lib/prisma";
 import { getInternalId, getServerUser } from "@/actions/db-actions";
-import { generateSingleDayMenu } from "@/lib/ai-service";
+import { generateSingleDayMenu } from "@/actions/ai-actions";
 
 async function processMenuInBackground(internalId: string, phase: string, weekStartStr: string, promptContext: string, rows: any[]) {
     try {

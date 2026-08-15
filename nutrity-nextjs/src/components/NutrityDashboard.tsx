@@ -1,8 +1,27 @@
+"use client";
 import { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "motion/react";
+
+const DashboardTabSkeleton = () => (
+    <div className="animate-pulse bg-slate-50/50 h-[600px] w-full rounded-[32px] border border-slate-100 p-8 flex items-center justify-center">
+        <span className="text-slate-400 font-bold">Cargando módulo...</span>
+    </div>
+);
+
+const DashboardMenuTab = dynamic(() => import("./dashboard/tabs/DashboardMenuTab").then(mod => mod.DashboardMenuTab), { loading: () => <DashboardTabSkeleton /> });
+const DashboardAcademyTab = dynamic(() => import("./dashboard/tabs/DashboardAcademyTab").then(mod => mod.DashboardAcademyTab), { loading: () => <DashboardTabSkeleton /> });
+const DashboardProfileTab = dynamic(() => import("./dashboard/tabs/DashboardProfileTab").then(mod => mod.DashboardProfileTab), { loading: () => <DashboardTabSkeleton /> });
+const DashboardCoachTab = dynamic(() => import("./dashboard/tabs/DashboardCoachTab").then(mod => mod.DashboardCoachTab), { loading: () => <DashboardTabSkeleton /> });
+const DashboardClinicalTab = dynamic(() => import("./dashboard/tabs/DashboardClinicalTab").then(mod => mod.DashboardClinicalTab), { loading: () => <DashboardTabSkeleton /> });
+const DashboardCatalogTab = dynamic(() => import("./dashboard/tabs/DashboardCatalogTab").then(mod => mod.DashboardCatalogTab), { loading: () => <DashboardTabSkeleton /> });
+const DashboardMicronutrientsTab = dynamic(() => import("./dashboard/tabs/DashboardMicronutrientsTab").then(mod => mod.DashboardMicronutrientsTab), { loading: () => <DashboardTabSkeleton /> });
+const DashboardGoalsTab = dynamic(() => import("./dashboard/tabs/DashboardGoalsTab").then(mod => mod.DashboardGoalsTab), { loading: () => <DashboardTabSkeleton /> });
+const DashboardAgendaTab = dynamic(() => import("./dashboard/tabs/DashboardAgendaTab").then(mod => mod.DashboardAgendaTab), { loading: () => <DashboardTabSkeleton /> });
+
 import { z } from "zod";
 import { WeeklyMenuSchema } from "../lib/schemas";
-import * as aiService from "../lib/ai-service";
+import * as aiService from "@/actions/ai-actions";
 import {
     Activity,
     Calendar,
@@ -335,10 +354,10 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                     sortedApproved.forEach((record, index) => {
                         const dayName = dayNames[index] || dayNames[0];
                         formattedMenu[dayName] = {
-                            breakfast: record.menuData?.breakfast || '',
-                            lunch: record.menuData?.lunch || '',
-                            dinner: record.menuData?.dinner || '',
-                            snack: record.menuData?.snack || '',
+                            breakfast: (record.menuData as any)?.breakfast || '',
+                            lunch: (record.menuData as any)?.lunch || '',
+                            dinner: (record.menuData as any)?.dinner || '',
+                            snack: (record.menuData as any)?.snack || '',
                             metabolicGoal: record.metabolicGoal || ''
                         };
                     });
@@ -1039,807 +1058,72 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                         )}
 
                         {activeTab === "coach" && (
-                            <motion.div key="coach" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col" style={{ height: 'calc(100vh - 10rem)' }}>
-                                <div className="nutrity-card flex flex-col overflow-hidden bg-white shadow-xl shadow-slate-200/50" style={{ height: '100%' }}>
-                                    <div className="p-4 md:p-8 border-b border-nutrity-border flex flex-wrap items-center justify-between bg-white/50 backdrop-blur-md gap-4">
-                                        <div className="flex items-center gap-3 md:gap-4">
-                                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-nutrity-accent flex items-center justify-center text-white shadow-lg shadow-nutrity-accent/20">
-                                                <Brain className="w-6 h-6 md:w-7 md:h-7" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-display font-bold text-lg md:text-xl leading-none">Nutrity Coach IA</h3>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="w-2 h-2 bg-nutrity-success rounded-full animate-pulse"></span>
-                                                    <p className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-[0.2em]">Sincronía Biológica Activa</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => setChatMessages([])}
-                                            className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-100"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                            Limpiar Chat
-                                        </button>
-                                    </div>
-
-                                    <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 scrollbar-hide bg-slate-50/30">
-                                        {chatMessages.map((msg, i) => (
-                                            <motion.div
-                                                key={i}
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                                            >
-                                                <div className={`max-w-[85%] md:max-w-[75%] p-4 md:p-5 rounded-2xl shadow-sm ${msg.role === 'user'
-                                                    ? 'bg-nutrity-accent text-white rounded-br-none shadow-nutrity-accent/10'
-                                                    : 'bg-white text-nutrity-primary border border-nutrity-border rounded-bl-none'
-                                                    }`}>
-                                                    <p className="text-xs md:text-[13px] font-medium leading-relaxed whitespace-pre-line">{msg.text}</p>
-                                                    {msg.role === 'ai' && (
-                                                        <div className="mt-4 pt-4 border-t border-nutrity-border flex items-center gap-2 text-[8px] font-bold text-nutrity-accent uppercase tracking-[0.2em]">
-                                                            <Zap className="w-3 h-3" /> Bio-Feedback Activo v4.0
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </motion.div>
-                                        ))}
-                                        {isTyping && (
-                                            <div className="flex justify-start">
-                                                <div className="bg-white border border-nutrity-border p-5 rounded-2xl rounded-bl-none flex gap-1.5 items-center">
-                                                    <span className="w-1.5 h-1.5 bg-nutrity-accent rounded-full animate-bounce"></span>
-                                                    <span className="w-1.5 h-1.5 bg-nutrity-accent rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                                                    <span className="w-1.5 h-1.5 bg-nutrity-accent rounded-full animate-bounce [animation-delay:0.4s]"></span>
-                                                </div>
-                                            </div>
-                                        )}
-                                        <div ref={chatEndRef} />
-                                    </div>
-
-                                    <div className="p-6 bg-white border-t border-nutrity-border">
-                                        <div className="flex gap-4">
-                                            <input
-                                                type="text"
-                                                value={inputMessage}
-                                                onChange={(e) => setInputMessage(e.target.value)}
-                                                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                                                placeholder="Ej: ¿Qué puedo cenar para estabilizar mi glucosa?"
-                                                className="flex-1 bg-nutrity-bg border border-nutrity-border rounded-xl px-5 py-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all"
-                                            />
-                                            <button
-                                                onClick={handleSendMessage}
-                                                disabled={!inputMessage.trim() || isTyping}
-                                                className="bg-nutrity-accent text-white p-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all disabled:opacity-50"
-                                            >
-                                                <Send className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
+                            <DashboardCoachTab
+                                chatMessages={chatMessages}
+                                setChatMessages={setChatMessages}
+                                isTyping={isTyping}
+                                chatEndRef={chatEndRef}
+                                inputMessage={inputMessage}
+                                setInputMessage={setInputMessage}
+                                handleSendMessage={handleSendMessage}
+                            />
                         )}
 
                         {activeTab === "micronutrients" && (
-                            <motion.div key="micronutrients" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}>
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                                    <div className="space-y-1">
-                                        <h2 className="text-3xl font-display font-bold">Micronutrientes Críticos</h2>
-                                        <p className="text-nutrity-gray-text text-sm">Cofactores esenciales para tu regeneración celular de precisión.</p>
-                                    </div>
-                                    <div className="relative w-full md:w-80">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-nutrity-gray-text opacity-40" />
-                                        <input
-                                            type="text"
-                                            placeholder="Buscar micronutriente..."
-                                            value={microSearch}
-                                            onChange={(e) => setMicroSearch(e.target.value)}
-                                            className="w-full bg-white border border-nutrity-border rounded-xl pl-11 pr-5 py-3.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all shadow-sm"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {filteredMicros.map((micro) => (
-                                        <div key={micro.id} onClick={() => setSelectedMicro(micro)} className="nutrity-card p-8 hover:border-nutrity-accent transition-all group relative overflow-hidden cursor-pointer">
-                                            <div className="flex items-center justify-between mb-6">
-                                                <div className="w-12 h-12 rounded-xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent group-hover:scale-110 transition-transform overflow-hidden">
-                                                    {micro.image ? (
-                                                        <img src={getDirectImageUrl(micro.image)} alt={micro.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
-                                                    ) : (
-                                                        <Zap className="w-7 h-7" />
-                                                    )}
-                                                </div>
-                                                <span className="px-3 py-1 bg-nutrity-bg border border-nutrity-border rounded-full text-[9px] font-bold text-nutrity-primary uppercase tracking-widest">{micro.category}</span>
-                                            </div>
-                                            <h3 className="text-2xl font-bold mb-2">{micro.name}</h3>
-                                            <p className="text-xs text-nutrity-gray-text font-medium leading-relaxed mb-6">{micro.function}</p>
-                                            <div className="space-y-4">
-                                                <div className="flex flex-col gap-1.5">
-                                                    <span className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest opacity-50">Fuentes Bioavales</span>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {(micro.sources || []).map((s: any, i: number) => (
-                                                            <span key={i} className="px-2 py-0.5 bg-nutrity-bg text-[10px] font-bold text-nutrity-primary rounded-md">{s}</span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col gap-1.5">
-                                                    <span className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest opacity-50">Señal de Deficiencia</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <Info className="w-3 h-3 text-rose-500" />
-                                                        <span className="text-xs font-bold text-rose-500">{micro.deficiencySigns[0]}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </motion.div>
+                            <DashboardMicronutrientsTab
+                                microSearch={microSearch}
+                                setMicroSearch={setMicroSearch}
+                                filteredMicros={filteredMicros}
+                                setSelectedMicro={setSelectedMicro}
+                            />
                         )}
 
                         {activeTab === "academy" && (
-                            <motion.div key="academy" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <h2 className="text-3xl font-display font-bold">Academia Nutrity Global</h2>
-                                        <p className="text-nutrity-gray-text text-sm">Medicina de Restauración y Bio-señalización para la remisión de DM2.</p>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-2">
-                                        <div className="bg-nutrity-accent/10 px-4 py-2 rounded-xl flex items-center gap-3 border border-nutrity-accent/20">
-                                            <GraduationCap className="w-5 h-5 text-nutrity-accent" />
-                                            <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">Acompañamiento Educativo</span>
-                                        </div>
-                                        {(() => {
-                                            const totalLessons = courses.reduce((acc, course) => acc + (course.lessons?.length || 0), 0);
-                                            const completedLessons = Object.values(lessonProgress).filter(Boolean).length;
-                                            const globalProgress = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-                                            return (
-                                                <div className="flex items-center gap-3 bg-white border border-nutrity-border px-4 py-2 rounded-xl shadow-sm w-full md:w-auto">
-                                                    <div className="flex-1 w-full md:w-32 bg-slate-100 rounded-full h-2 overflow-hidden">
-                                                        <div className="bg-nutrity-success h-full transition-all duration-1000" style={{ width: `${globalProgress}%` }}></div>
-                                                    </div>
-                                                    <span className="text-[10px] font-bold text-nutrity-primary uppercase tracking-widest">{globalProgress}% Global</span>
-                                                </div>
-                                            );
-                                        })()}
-                                    </div>
-                                </div>
-
-                                {!selectedCourse ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                        {[...courses].sort((a, b) => {
-                                            const getCourseNumber = (title: string): number => {
-                                                const t = title.toLowerCase();
-                                                if (t.includes('método 50') || t.includes('metodo 50') || t.includes('curso 1')) return 1;
-                                                if (t.includes('código vitalidad') || t.includes('codigo vitalidad') || t.includes('curso 2')) return 2;
-                                                if (t.includes('escudo de fibra') || t.includes('curso 3')) return 3;
-                                                if (t.includes('microbiota') || t.includes('curso 4')) return 4;
-                                                if (t.includes('ayuno') || t.includes('curso 5')) return 5;
-                                                if (t.includes('mantenimiento') || t.includes('curso 6')) return 6;
-                                                if (t.includes('bioquímica') || t.includes('bioquimica') || t.includes('curso 7')) return 7;
-                                                if (t.includes('psico') || t.includes('curso 8')) return 8;
-                                                return 99;
-                                            };
-                                            return getCourseNumber(a.title) - getCourseNumber(b.title);
-                                        }).map((course, index) => {
-                                            const isEbook = course.category?.toLowerCase().includes('ebook') || course.category?.toLowerCase().includes('guía');
-                                            
-                                            // Lógica de Acceso por Plan
-                                            let isLocked = false;
-                                            let lockMessage = 'Bloqueado';
-                                            
-                                            const getCourseNumberLocal = (title: string): number => {
-                                                const t = title.toLowerCase();
-                                                if (t.includes('método 50') || t.includes('metodo 50') || t.includes('curso 1')) return 1;
-                                                if (t.includes('código vitalidad') || t.includes('codigo vitalidad') || t.includes('curso 2')) return 2;
-                                                if (t.includes('escudo de fibra') || t.includes('curso 3')) return 3;
-                                                if (t.includes('microbiota') || t.includes('curso 4')) return 4;
-                                                if (t.includes('ayuno') || t.includes('curso 5')) return 5;
-                                                if (t.includes('mantenimiento') || t.includes('curso 6')) return 6;
-                                                if (t.includes('bioquímica') || t.includes('bioquimica') || t.includes('curso 7')) return 7;
-                                                if (t.includes('psico') || t.includes('curso 8')) return 8;
-                                                return 99;
-                                            };
-                                            
-                                            if (!isEbook) {
-                                                const plan = (user?.profile?.plan || 'FREE').toUpperCase();
-                                                const courseNum = getCourseNumberLocal(course.title);
-                                                
-                                                if (courseNum === 1) {
-                                                    // Curso 1 always open, lesson restrictions inside
-                                                    isLocked = false;
-                                                } else if (courseNum === 2 || courseNum === 3) {
-                                                    // Cursos 2 y 3: Requieren Básico, Premium o Elite
-                                                    if (plan === 'FREE') {
-                                                        isLocked = true;
-                                                        lockMessage = 'Requiere Plan Básico';
-                                                    }
-                                                } else if (courseNum >= 4) {
-                                                    // Cursos 4, 5 y 6: Requieren Premium o Elite
-                                                    if (plan === 'FREE' || plan === 'BASIC' || plan === 'BÁSICO' || plan === 'BASICO') {
-                                                        isLocked = true;
-                                                        lockMessage = 'Requiere Plan Premium';
-                                                    }
-                                                }
-                                            }
-                                            return (
-                                            <div key={course.id} className="nutrity-card overflow-hidden group hover:border-nutrity-accent transition-all flex flex-col">
-                                                <div className="h-48 overflow-hidden relative">
-                                                    <img src={getDirectImageUrl(course.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={course.title} referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
-                                                    <div className="absolute top-4 right-4 flex gap-2">
-                                                        {course.price > 0 && !user?.profile?.plan?.includes('ELITE') && (
-                                                            <div className="bg-amber-500 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-lg">
-                                                                <Shield className="w-3 h-3" /> Premium
-                                                            </div>
-                                                        )}
-                                                        <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold text-nutrity-accent uppercase tracking-widest flex items-center gap-1.5">
-                                                            {isEbook ? <BookOpen className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                                                            {course.category}
-                                                        </div>
-                                                    </div>
-                                                    {course.price > 0 && !user?.profile?.plan?.includes('ELITE') && (
-                                                        <div className="absolute inset-0 bg-nutrity-primary/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <Shield className="w-12 h-12 text-white opacity-50" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="p-8 flex-1 flex flex-col">
-                                                    <h3 className="text-2xl font-bold mb-3">{course.title}</h3>
-                                                    <p className="text-sm text-nutrity-gray-text mb-8 leading-relaxed font-medium line-clamp-2">{course.description}</p>
-                                                    <div className="mt-auto pt-6 border-t border-nutrity-border flex items-center justify-between">
-                                                        <div className="flex flex-col">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                {isEbook ? (
-                                                                    <BookOpen className="w-3 h-3 text-nutrity-accent" />
-                                                                ) : (
-                                                                    <Play className="w-3 h-3 text-nutrity-accent" />
-                                                                )}
-                                                                <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">
-                                                                    {isEbook ? 'Guía Descargable' : `${course.lessons?.length || 6} Lecciones`}
-                                                                </span>
-                                                            </div>
-                                                            <span className="text-lg font-bold text-nutrity-primary">${course.price} <span className="text-[10px] text-nutrity-gray-text">USD</span></span>
-                                                        </div>
-                                                        <div className="flex gap-2">
-                                                            {isLocked ? (
-                                                                <button
-                                                                    disabled
-                                                                    title={lockMessage}
-                                                                    className="px-4 py-2.5 bg-slate-100 text-slate-400 text-[9px] font-bold uppercase tracking-widest rounded-xl shadow-sm flex-1 text-center flex items-center justify-center gap-2 cursor-not-allowed border border-slate-200"
-                                                                >
-                                                                    <Lock className="w-3 h-3" /> {lockMessage}
-                                                                </button>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        if (isEbook && (course.price === 0 || user?.profile?.plan?.includes('ELITE'))) {
-                                                                            window.open(course.paypalUrl || '#', "_blank");
-                                                                            return;
-                                                                        }
-                                                                        const detailed = await dbService.getCourseWithLessons(course.id);
-                                                                        setSelectedCourse(detailed);
-                                                                        if (detailed?.lessons && detailed.lessons?.length > 0) {
-                                                                            setActiveLesson(detailed.lessons.sort((a: any, b: any) => a.order - b.order)[0]);
-                                                                        }
-                                                                    }}
-                                                                    className="px-4 py-2.5 bg-nutrity-primary text-white text-[9px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-nutrity-primary/10 hover:bg-nutrity-accent transition-all flex-1 text-center"
-                                                                >
-                                                                    {isEbook ? 'Descargar' : 'Iniciar'}
-                                                                </button>
-                                                            )}
-                                                            {course.price > 0 && course.paypalUrl && !isLocked && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        const checkoutUrl = course.paypalUrl || "https://www.paypal.com/ncp/payment/CMG445X32EL2S";
-                                                                        window.open(checkoutUrl, "_blank");
-                                                                    }}
-                                                                    className="px-4 py-2.5 bg-amber-500 text-white text-[9px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all flex-1 text-center"
-                                                                >
-                                                                    Comprar
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )})}
-                                    </div>
-                                ) : (
-                                    <div className="space-y-8">
-                                        <button onClick={() => { setSelectedCourse(null); setActiveLesson(null); }} className="flex items-center gap-2 text-nutrity-accent font-bold text-xs uppercase tracking-widest hover:underline mb-4">
-                                            <ArrowLeft className="w-4 h-4" /> Volver al Catálogo
-                                        </button>
-                                        <div className="grid lg:grid-cols-3 gap-8">
-                                            <div className="lg:col-span-2 space-y-6">
-                                                <div className="aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl relative group">
-                                                    {activeLesson?.videoUrl ? (
-                                                        <iframe 
-                                                            src={activeLesson.videoUrl.includes('youtube.com/watch') 
-                                                                ? activeLesson.videoUrl.replace('watch?v=', 'embed/') 
-                                                                : activeLesson.videoUrl.includes('youtu.be') 
-                                                                    ? activeLesson.videoUrl.replace('youtu.be/', 'youtube.com/embed/') 
-                                                                    : activeLesson.videoUrl}
-                                                            title={activeLesson?.title || "Video Player"}
-                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                            allowFullScreen
-                                                            className="w-full h-full border-0"
-                                                        />
-                                                    ) : (
-                                                        <>
-                                                            <img src={getDirectImageUrl(selectedCourse.thumbnail)} className="w-full h-full object-cover opacity-60" alt="Image" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
-                                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                                <Play className="w-20 h-20 text-white/20" />
-                                                                <div className="absolute bottom-8 left-8 right-8 text-white">
-                                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent mb-2">Selecciona una lección</p>
-                                                                    <h3 className="text-2xl font-bold">{selectedCourse.title}</h3>
-                                                                </div>
-                                                            </div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <div className="space-y-4">
-                                                    <h3 className="text-xl font-bold">{activeLesson ? activeLesson.title : "Acerca de esta lección"}</h3>
-                                                    <p className="text-sm text-nutrity-gray-text leading-relaxed font-medium">
-                                                        {activeLesson?.description ? activeLesson.description : selectedCourse.description}
-                                                    </p>
-                                                    {activeLesson?.videoInstructions && (
-                                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mt-4">
-                                                            <h4 className="text-xs font-bold uppercase tracking-widest text-nutrity-accent mb-2 flex items-center gap-2"><Play className="w-3 h-3" /> Instrucciones del Video</h4>
-                                                            <p className="text-sm text-nutrity-gray-text">{activeLesson.videoInstructions}</p>
-                                                        </div>
-                                                    )}
-                                                    {(activeLesson && !activeLesson.quiz && !activeLesson.assignment && !lessonProgress[activeLesson.id]) && (
-                                                        <button 
-                                                            onClick={async () => {
-                                                                await dbService.markLessonVideoWatched(activeLesson.id);
-                                                                setLessonProgress(prev => ({ ...prev, [activeLesson.id]: true }));
-                                                            }}
-                                                            className="mt-4 bg-nutrity-success text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-nutrity-success/20 hover:bg-green-600 transition-all flex items-center gap-2"
-                                                        >
-                                                            <CheckCircle2 className="w-4 h-4" /> Marcar como Completada
-                                                        </button>
-                                                    )}
-                                                </div>
-
-                                                {(activeLesson?.presentationUrl || activeLesson?.pdfUrl) && (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                                                        {activeLesson?.presentationUrl && (
-                                                            <div className="bg-white border border-nutrity-border p-5 rounded-2xl flex flex-col items-start gap-3 shadow-sm hover:border-blue-200 transition-colors">
-                                                                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
-                                                                    <BookOpen className="w-5 h-5" />
-                                                                </div>
-                                                                <div className="flex-1">
-                                                                    <h4 className="font-bold text-sm text-nutrity-primary">Presentación de la Lección</h4>
-                                                                    {activeLesson.presentationInstructions && <p className="text-xs text-nutrity-gray-text mt-1.5 leading-relaxed">{activeLesson.presentationInstructions}</p>}
-                                                                </div>
-                                                                <a href={`/api/academic/download?lessonId=${activeLesson.id}&type=presentation`} target="_blank" rel="noopener noreferrer" className="mt-2 px-4 py-2.5 text-xs font-bold bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors w-full text-center flex items-center justify-center gap-2 uppercase tracking-widest">
-                                                                    <ArrowUpRight className="w-3.5 h-3.5" /> Ver Presentación
-                                                                </a>
-                                                            </div>
-                                                        )}
-                                                        {activeLesson?.pdfUrl && (
-                                                            <div className="bg-white border border-nutrity-border p-5 rounded-2xl flex flex-col items-start gap-3 shadow-sm hover:border-rose-200 transition-colors">
-                                                                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
-                                                                    <FileText className="w-5 h-5" />
-                                                                </div>
-                                                                <div className="flex-1">
-                                                                    <h4 className="font-bold text-sm text-nutrity-primary">Recurso PDF Adicional</h4>
-                                                                    {activeLesson.pdfInstructions && <p className="text-xs text-nutrity-gray-text mt-1.5 leading-relaxed">{activeLesson.pdfInstructions}</p>}
-                                                                </div>
-                                                                <a href={`/api/academic/download?lessonId=${activeLesson.id}&type=pdf`} target="_blank" rel="noopener noreferrer" className="mt-2 px-4 py-2.5 text-xs font-bold bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors w-full text-center flex items-center justify-center gap-2 uppercase tracking-widest">
-                                                                    <Download className="w-3.5 h-3.5" /> Descargar PDF
-                                                                </a>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                
-                                                {activeLesson?.assignment && (
-                                                    <LessonAssignment lessonId={activeLesson.id} assignment={activeLesson.assignment} userId={user?.id || user?.uid} existingSubmission={userSubmissions.find(s => s.assignmentId === activeLesson.assignment.id)} />
-                                                )}
-                                                
-                                                {activeLesson?.quiz && (
-                                                    <LessonQuiz lessonId={activeLesson.id} quiz={activeLesson.quiz} userId={user?.id || user?.uid} existingAttempts={userQuizAttempts.filter(a => a.quizId === activeLesson.quiz.id)} />
-                                                )}
-                                            </div>
-                                            <div className="space-y-6">
-                                                <h3 className="font-display font-bold text-lg">Currículo del Curso</h3>
-                                                <div className="space-y-3">
-                                                    {(() => {
-                                                        const sortedLessons = (selectedCourse.lessons || []).sort((a: any, b: any) => a.order - b.order);
-                                                        return sortedLessons.map((lesson: any, idx: number) => {
-                                                            const getCourseNumberLocal = (title: string): number => {
-                                                                const t = title.toLowerCase();
-                                                                if (t.includes('método 50') || t.includes('metodo 50') || t.includes('curso 1')) return 1;
-                                                                if (t.includes('código vitalidad') || t.includes('codigo vitalidad') || t.includes('curso 2')) return 2;
-                                                                if (t.includes('escudo de fibra') || t.includes('curso 3')) return 3;
-                                                                if (t.includes('microbiota') || t.includes('curso 4')) return 4;
-                                                                if (t.includes('ayuno') || t.includes('curso 5')) return 5;
-                                                                if (t.includes('mantenimiento') || t.includes('curso 6')) return 6;
-                                                                if (t.includes('bioquímica') || t.includes('bioquimica') || t.includes('curso 7')) return 7;
-                                                                if (t.includes('psico') || t.includes('curso 8')) return 8;
-                                                                return 99;
-                                                            };
-                                                            const plan = (user?.profile?.plan || 'FREE').toUpperCase();
-                                                            const courseNum = getCourseNumberLocal(selectedCourse.title);
-                                                            
-                                                            // Lógica de plan
-                                                            const isPlanLocked = (courseNum === 1 && plan === 'FREE' && idx >= 2) || 
-                                                                               ((courseNum === 2 || courseNum === 3) && plan === 'FREE') || 
-                                                                               (courseNum >= 4 && (plan === 'FREE' || plan === 'BASIC' || plan === 'BÁSICO' || plan === 'BASICO'));
-                                                            
-                                                            // Bloqueo secuencial
-                                                            const isSequentialLocked = idx > 0 && !lessonProgress[sortedLessons[idx - 1].id];
-                                                            
-                                                            const isLessonLocked = isPlanLocked || isSequentialLocked;
-                                                            const lockMessage = isPlanLocked ? "Requiere actualizar plan" : "Completa la lección anterior";
-
-                                                            return (
-                                                            <div key={lesson.id}
-                                                                onClick={async () => {
-                                                                    if (isLessonLocked) {
-                                                                        alert(`Esta lección está bloqueada: ${lockMessage}`);
-                                                                        return;
-                                                                    }
-                                                                    setActiveLesson(lesson);
-                                                                }}
-                                                                className={`p-4 rounded-2xl border transition-all ${isLessonLocked ? 'opacity-60 bg-slate-50 cursor-not-allowed border-slate-200 hover:border-slate-300' : 'cursor-pointer ' + (activeLesson?.id === lesson.id ? 'ring-2 ring-nutrity-accent shadow-md' : '')} ${lessonProgress[lesson.id] && !isLessonLocked ? 'bg-nutrity-success/5 border-nutrity-success/30 opacity-70' : (!isLessonLocked ? 'bg-white border-nutrity-border hover:border-nutrity-accent/30' : '')}`}>
-                                                            <div className="flex gap-4">
-                                                                <div className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center font-bold text-xs ${lessonProgress[lesson.id] && !isLessonLocked ? 'bg-nutrity-success text-white' : (activeLesson?.id === lesson.id && !isLessonLocked ? 'bg-nutrity-accent text-white' : 'bg-nutrity-bg text-nutrity-gray-text')}`}>
-                                                                    {isLessonLocked ? <Lock className="w-4 h-4 opacity-50" /> : (lessonProgress[lesson.id] ? <CheckCircle2 className="w-4 h-4" /> : lesson.order)}
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className={`text-sm font-bold leading-snug ${lessonProgress[lesson.id] && !isLessonLocked ? 'text-nutrity-gray-text line-through' : (activeLesson?.id === lesson.id && !isLessonLocked ? 'text-nutrity-primary' : 'text-nutrity-gray-text')}`}>{lesson.title}</h4>
-                                                                    <div className="flex items-center gap-3 mt-2">
-                                                                        <span className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest">{lesson.duration || '15:00 min'}</span>
-                                                                        {isLessonLocked ? (
-                                                                            <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded-full flex items-center gap-1"><Lock className="w-2 h-2"/> PRO</span>
-                                                                        ) : lesson.isFree ? (
-                                                                            <span className="text-[9px] font-bold text-nutrity-success uppercase tracking-widest bg-nutrity-success/10 px-2 py-0.5 rounded-full">Gratis</span>
-                                                                        ) : (
-                                                                            <Shield className="w-3 h-3 text-nutrity-accent opacity-30" />
-                                                                        )}
-                                                                        {lessonProgress[lesson.id] && !isLessonLocked && <span className="text-[9px] font-bold text-nutrity-success uppercase tracking-widest">Completado</span>}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                    });
-                                                    })()}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </motion.div>
+                            <DashboardAcademyTab
+                                courses={courses}
+                                lessonProgress={lessonProgress}
+                                selectedCourse={selectedCourse}
+                                user={user}
+                                setActiveLesson={setActiveLesson}
+                                activeLesson={activeLesson}
+                                setSelectedCourse={setSelectedCourse}
+                                setLessonProgress={setLessonProgress}
+                                userSubmissions={userSubmissions}
+                                userQuizAttempts={userQuizAttempts}
+                            />
                         )}
 
 
                         {activeTab === "measurements" && (
-                            <motion.div key="measures" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-1">
-                                        <h2 className="text-3xl font-display font-bold">Bio-Seguimiento</h2>
-                                        <p className="text-nutrity-gray-text text-sm">Historial de marcadores críticos sincronizados en tiempo real.</p>
-                                    </div>
-                                    <button onClick={() => setShowMeasureModal(true)} className="bg-nutrity-accent text-white px-6 py-4 rounded-xl font-bold text-xs shadow-lg shadow-nutrity-accent/20 flex items-center gap-3 active:scale-95 transition-all">
-                                        <PlusCircle className="w-5 h-5" /> Nueva Medición
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {measurements.slice(0, 3).map((m, i) => (
-                                        <div key={m.id} className="nutrity-card p-8 group hover:border-nutrity-accent transition-all relative overflow-hidden">
-                                            <div className="relative z-10 flex items-center justify-between mb-4">
-                                                <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-transform group-hover:scale-110 ${
-                                                    m.label === 'Vitalidad' ? 'bg-amber-50 text-amber-500' :
-                                                    m.label === 'Metabolismo' ? 'bg-nutrity-accent/10 text-nutrity-accent' :
-                                                    m.label === 'Regeneración' ? 'bg-indigo-50 text-indigo-500' :
-                                                    'bg-blue-50 text-blue-500'
-                                                }`}>
-                                                    {m.label === 'Vitalidad' ? <Zap className="w-6 h-6" /> :
-                                                     m.label === 'Metabolismo' ? <Droplets className="w-6 h-6" /> :
-                                                     m.label === 'Regeneración' ? <Clock className="w-6 h-6" /> :
-                                                     <Brain className="w-6 h-6" />}
-                                                </div>
-                                                <h4 className="text-2xl font-black text-nutrity-primary">{m.value}%</h4>
-                                                <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mt-1">{m.label}</p>
-                                                <div className="w-full h-1 bg-nutrity-bg rounded-full mt-4 overflow-hidden">
-                                                    <motion.div 
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${m.value}%` }}
-                                                        transition={{ duration: 1.5, delay: i * 0.1 }}
-                                                        className={`h-full ${
-                                                            m.label === 'Vitalidad' ? 'bg-amber-500' :
-                                                            m.label === 'Metabolismo' ? 'bg-nutrity-accent' :
-                                                            m.label === 'Regeneración' ? 'bg-indigo-500' :
-                                                            'bg-blue-500'
-                                                        }`}
-                                                    />
-                                                </div>
-                                                <span className="text-[10px] font-bold text-nutrity-gray-text opacity-40 uppercase tracking-widest">{m.date}</span>
-                                            </div>
-                                            <div className="relative z-10">
-                                                <h3 className="text-3xl font-display font-bold text-nutrity-primary">{m.value}</h3>
-                                                <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mt-2">{m.label}</p>
-                                            </div>
-                                            <div className="mt-6 flex items-center gap-2 relative z-10">
-                                                <span className="px-3 py-1 bg-nutrity-success/10 text-nutrity-success rounded-full text-[9px] font-bold uppercase tracking-widest">{m.status}</span>
-                                                <Clock className="w-3.5 h-3.5 opacity-20 ml-auto" />
-                                                <span className="text-[9px] font-bold opacity-30">{m.time}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div className="nutrity-card bg-white overflow-hidden flex flex-col shadow-xl shadow-slate-200/50">
-                                    <div className="p-8 border-b border-nutrity-border flex items-center justify-between">
-                                        <h3 className="font-display font-bold text-xl">Bitácora Médica</h3>
-                                        <TrendingDown className="w-6 h-6 text-nutrity-accent opacity-40" />
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left">
-                                            <thead>
-                                                <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">
-                                                    <th className="py-5 px-8">Fecha & Hora</th>
-                                                    <th className="py-5 px-8">Marcador</th>
-                                                    <th className="py-5 px-8">Valor Obtenido</th>
-                                                    <th className="py-5 px-8">Evaluación IA</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-nutrity-border">
-                                                {measurements.map((m) => (
-                                                    <tr key={m.id} className="hover:bg-slate-50 transition-colors group">
-                                                        <td className="py-6 px-8 flex flex-col">
-                                                            <span className="font-bold text-sm leading-none mb-1 group-hover:text-nutrity-accent transition-colors">{m.date}</span>
-                                                            <span className="text-[10px] font-bold text-nutrity-gray-text opacity-40 uppercase">{m.time}</span>
-                                                        </td>
-                                                        <td className="py-6 px-8 text-sm font-bold text-nutrity-primary">{m.label}</td>
-                                                        <td className="py-6 px-8 text-lg font-display font-bold text-nutrity-accent">{m.value}</td>
-                                                        <td className="py-6 px-8">
-                                                            <span className="px-4 py-1.5 rounded-xl bg-nutrity-bg border border-nutrity-border text-nutrity-primary text-[10px] font-bold uppercase tracking-widest">{m.status}</span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </motion.div>
+                            <DashboardClinicalTab
+                                measurements={measurements}
+                                setShowMeasureModal={setShowMeasureModal}
+                            />
                         )}
 
 
                         {activeTab === "catalog" && (
-                            <motion.div key="catalog" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                                    <div className="space-y-1">
-                                        <h2 className="text-3xl font-display font-bold">Catálogo Metabólico</h2>
-                                        <p className="text-nutrity-gray-text text-sm">Alimentos con grado terapéutico para tu fase de {results.phase}.</p>
-                                    </div>
-                                    <div className="relative w-full md:w-80">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-nutrity-gray-text opacity-40" />
-                                        <input
-                                            type="text"
-                                            placeholder="Buscar superalimento..."
-                                            value={foodSearch}
-                                            onChange={(e) => setFoodSearch(e.target.value)}
-                                            className="w-full bg-white border border-nutrity-border rounded-xl pl-11 pr-5 py-3.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all shadow-sm"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                    {filteredFoods.map((food) => (
-                                        <div key={food.id} onClick={() => setSelectedFood(food)} className="nutrity-card overflow-hidden group hover:border-nutrity-accent transition-all cursor-pointer">
-                                            <div className="h-40 relative">
-                                                <img src={getDirectImageUrl(food.image)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Image" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
-                                                <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur-md rounded-lg text-[8px] font-bold text-nutrity-accent uppercase tracking-widest">{food.category}</div>
-                                            </div>
-                                            <div className="p-6">
-                                                <h3 className="font-bold text-lg mb-1">{food.name}</h3>
-                                                <p className="text-[10px] text-nutrity-gray-text font-medium mb-4 line-clamp-2">{food.description}</p>
-                                                <div className="flex flex-wrap gap-1.5 mb-4">
-                                                    {food.metabolicBenefits.slice(0, 2).map((b, i) => (
-                                                        <span key={i} className="px-2 py-0.5 bg-nutrity-accent/5 text-nutrity-accent text-[8px] font-bold rounded-md">{b}</span>
-                                                    ))}
-                                                </div>
-                                                <div className="pt-4 border-t border-nutrity-border flex justify-between items-center">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[8px] font-bold text-nutrity-gray-text uppercase opacity-40">Proteína</span>
-                                                        <span className="text-xs font-bold">{food.nutrients.protein}</span>
-                                                    </div>
-                                                    <div className="flex flex-col text-right">
-                                                        <span className="text-[8px] font-bold text-nutrity-gray-text uppercase opacity-40">Fibra</span>
-                                                        <span className="text-xs font-bold">{food.nutrients.fiber}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </motion.div>
+                            <DashboardCatalogTab
+                                results={results}
+                                foodSearch={foodSearch}
+                                setFoodSearch={setFoodSearch}
+                                filteredFoods={filteredFoods}
+                                setSelectedFood={setSelectedFood}
+                            />
                         )}
 
                         {activeTab === "menu" && (
-                            <motion.div key="menu" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                                {/* Header */}
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <h2 className="text-3xl font-display font-bold">Menú Semanal de Precisión</h2>
-                                        <p className="text-nutrity-gray-text text-sm">Cronograma nutricional personalizado para tu fase de remisión metabólica.</p>
-                                    </div>
-                                    {menuStatus === 'APPROVED' && (
-                                        <div className="flex items-center gap-3">
-                                            <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-xl text-[10px] font-bold uppercase tracking-widest">
-                                                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                                                Plan Aprobado por Coach
-                                            </span>
-                                            <button 
-                                                onClick={() => setShowChangeRequestModal(true)}
-                                                className="px-4 py-2 bg-white border border-nutrity-border text-nutrity-gray-text hover:text-nutrity-primary hover:border-nutrity-accent rounded-xl text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
-                                            >
-                                                <MessageCircle className="w-3.5 h-3.5" />
-                                                Solicitar Cambios
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Loading state */}
-                                {isLoadingApprovedMenu && (
-                                    <div className="py-20 flex flex-col items-center gap-4">
-                                        <div className="w-10 h-10 border-4 border-nutrity-accent border-t-transparent rounded-full animate-spin" />
-                                        <p className="text-sm font-bold text-nutrity-gray-text">Cargando tu plan nutricional...</p>
-                                    </div>
-                                )}
-
-                                {/* ESTADO: APROBADO — mostrar los 7 días */}
-                                {!isLoadingApprovedMenu && menuStatus === 'APPROVED' && (
-                                    <div className="space-y-4">
-                                        {approvedMenuDays.map((record) => {
-                                            const dateLabel = new Date(record.date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-                                            return (
-                                                <div key={record.id} className="nutrity-card p-6 space-y-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <h3 className="font-bold text-base capitalize">{dateLabel}</h3>
-                                                        <span className="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-lg">APROBADO</span>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                        {[
-                                                            { l: 'Desayuno', k: 'breakfast', icon: Coffee, color: 'text-amber-500 bg-amber-50' },
-                                                            { l: 'Almuerzo', k: 'lunch', icon: Utensils, color: 'text-nutrity-accent bg-nutrity-accent/5' },
-                                                            { l: 'Cena', k: 'dinner', icon: Heart, color: 'text-indigo-500 bg-indigo-50' },
-                                                            { l: 'Snack', k: 'snack', icon: Apple, color: 'text-rose-500 bg-rose-50' },
-                                                        ].map(({ l, k, icon: Icon, color }) => (
-                                                            <div key={k} className="bg-nutrity-bg rounded-xl p-3 space-y-2">
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${color}`}>
-                                                                        <Icon className="w-3.5 h-3.5" />
-                                                                    </div>
-                                                                    <span className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest">{l}</span>
-                                                                </div>
-                                                                <p className="text-xs font-medium text-nutrity-primary leading-snug">{record.menuData?.[k] || '—'}</p>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                    {record.metabolicGoal && (
-                                                        <div className="flex items-center gap-2 pt-1">
-                                                            <Target className="w-3.5 h-3.5 text-nutrity-accent" />
-                                                            <span className="text-[10px] font-bold text-nutrity-accent">Meta del día: {record.metabolicGoal}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-
-                                {/* ESTADO: PENDIENTE — en revisión por coach */}
-                                {!isLoadingApprovedMenu && menuStatus === 'PENDING' && (
-                                    <div className="nutrity-card p-16 flex flex-col items-center justify-center text-center space-y-6">
-                                        <div className="w-20 h-20 rounded-3xl bg-amber-50 flex items-center justify-center">
-                                            <ClipboardCheck className="w-10 h-10 text-amber-500" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <h3 className="text-xl font-bold text-nutrity-primary">Tu plan está siendo revisado</h3>
-                                            <p className="text-sm text-nutrity-gray-text max-w-sm">Tu Coach Nutrity está revisando y personalizando tu menú semanal. Recibirás acceso en cuanto sea aprobado.</p>
-                                        </div>
-                                        <span className="px-6 py-3 bg-amber-50 text-amber-600 border border-amber-200 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-                                            Pendiente de Aprobación
-                                        </span>
-                                    </div>
-                                )}
-
-                                {/* ESTADO: CHANGES_REQUESTED — solicitó cambios */}
-                                {!isLoadingApprovedMenu && menuStatus === 'CHANGES_REQUESTED' && (
-                                    <div className="nutrity-card p-16 flex flex-col items-center justify-center text-center space-y-6">
-                                        <div className="w-20 h-20 rounded-3xl bg-blue-50 flex items-center justify-center">
-                                            <MessageCircle className="w-10 h-10 text-blue-500" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <h3 className="text-xl font-bold text-nutrity-primary">Solicitud de cambios enviada</h3>
-                                            <p className="text-sm text-nutrity-gray-text max-w-sm">Hemos notificado a tu Coach sobre tus observaciones. Pronto recibirás un nuevo plan ajustado a tus necesidades.</p>
-                                        </div>
-                                        <span className="px-6 py-3 bg-blue-50 text-blue-600 border border-blue-200 rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
-                                            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                                            En Revisión por el Coach
-                                        </span>
-                                    </div>
-                                )}
-
-                                {/* ESTADO: SIN MENÚ — aún no generado */}
-                                {!isLoadingApprovedMenu && menuStatus === 'NONE' && (
-                                    <div className="nutrity-card p-16 flex flex-col items-center justify-center text-center space-y-6">
-                                        <div className="w-20 h-20 rounded-3xl bg-nutrity-bg flex items-center justify-center">
-                                            <Utensils className="w-10 h-10 text-nutrity-gray-text opacity-40" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <h3 className="text-xl font-bold text-nutrity-primary">Sin plan nutricional aún</h3>
-                                            <p className="text-sm text-nutrity-gray-text max-w-sm">Completa tu diagnóstico metabólico para que tu Coach pueda generar y aprobar tu menú personalizado de Remisión Metabólica.</p>
-                                        </div>
-                                        <button
-                                            onClick={() => setActiveTab('main')}
-                                            className="px-8 py-3.5 bg-nutrity-accent text-white rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg shadow-nutrity-accent/20 hover:scale-105 transition-all"
-                                        >
-                                            Ir al Dashboard Principal
-                                        </button>
-                                    </div>
-                                )}
-                            </motion.div>
+                            <DashboardMenuTab
+                                menuStatus={menuStatus as any}
+                                isLoadingApprovedMenu={isLoadingApprovedMenu}
+                                approvedMenuDays={approvedMenuDays}
+                                setShowChangeRequestModal={setShowChangeRequestModal}
+                                setActiveTab={setActiveTab}
+                            />
                         )}
 
                         {activeTab === "goals" && (
-                            <motion.div key="goals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                                <div className="space-y-1">
-                                    <h2 className="text-3xl font-display font-bold">Metas Metabólicas</h2>
-                                    <p className="text-nutrity-gray-text text-sm">Objetivos clínicos personalizados para tu remisión celular.</p>
-                                </div>
-
-                                <div className="grid md:grid-cols-2 gap-8">
-                                    <div className="nutrity-card p-10 space-y-10">
-                                        <h3 className="text-xl font-bold border-b border-nutrity-border pb-6 flex items-center gap-3">
-                                            <Target className="w-6 h-6 text-nutrity-accent" /> Meta Principal
-                                        </h3>
-                                        <div className="flex items-center gap-10">
-                                            <div className="w-32 h-32 rounded-full border-[10px] border-nutrity-accent border-t-nutrity-bg flex items-center justify-center relative shadow-lg shadow-nutrity-accent/10">
-                                                <span className="text-3xl font-black">{results.remissionScore}%</span>
-                                            </div>
-                                            <div className="flex-1 space-y-2">
-                                                <h4 className="text-2xl font-black text-nutrity-primary leading-tight uppercase tracking-tight">{results.meta}</h4>
-                                                <p className="text-sm text-nutrity-gray-text font-medium leading-relaxed">Progreso actual basado en tus últimos bio-marcadores y cumplimiento del protocolo.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="nutrity-card p-10 space-y-8">
-                                        <h3 className="text-xl font-bold border-b border-nutrity-border pb-6">Checklist de Remisión</h3>
-                                        <div className="space-y-5">
-                                            {[
-                                                { label: "Estabilización de Glucosa basal < 100", done: true },
-                                                { label: "Inducción de flexibilidad metabólica", done: results.remissionScore > 60 },
-                                                { label: "Reducción de inflamación sistémica", done: results.remissionScore > 40 },
-                                                { label: "Optimización de salud mitocondrial", done: false }
-                                            ].map((goal, i) => (
-                                                <div key={i} className="flex items-center gap-4">
-                                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${goal.done ? 'bg-nutrity-success text-white' : 'bg-nutrity-bg border border-nutrity-border'}`}>
-                                                        {goal.done && <CheckCircle2 className="w-4 h-4" />}
-                                                    </div>
-                                                    <span className={`text-sm font-bold ${goal.done ? 'text-nutrity-primary' : 'text-nutrity-gray-text opacity-50'}`}>{goal.label}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="nutrity-card p-10 bg-slate-50/50 border-dashed border-2 flex flex-col items-center justify-center text-center py-20">
-                                    <div className="w-20 h-20 rounded-3xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent mb-6">
-                                        <PlusCircle className="w-10 h-10" />
-                                    </div>
-                                    <h3 className="text-2xl font-bold mb-2">Añadir Meta Personalizada</h3>
-                                    <p className="text-sm text-nutrity-gray-text max-w-sm mb-8">Define objetivos específicos como peso, circunferencia abdominal o niveles de vitalidad.</p>
-                                    <button className="px-8 py-4 bg-nutrity-primary text-white text-xs font-bold uppercase tracking-widest rounded-xl shadow-xl shadow-nutrity-primary/10 hover:bg-nutrity-accent transition-all">Configurar Nueva Meta</button>
-                                </div>
-                            </motion.div>
+                            <DashboardGoalsTab results={results} />
                         )}
 
 
@@ -1852,123 +1136,22 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                         )}
 
                         {activeTab === "agenda" && (
-                            <motion.div key="agenda" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                                    <div className="space-y-1">
-                                        <h2 className="text-3xl font-display font-bold">Agenda de Control Médico</h2>
-                                        <p className="text-nutrity-gray-text text-sm">Gestiona tus citas de seguimiento y evaluaciones metabólicas.</p>
-                                    </div>
-                                    <button
-                                        onClick={() => setShowApptModal(true)}
-                                        className="bg-nutrity-accent text-white px-6 py-4 rounded-xl font-bold text-xs shadow-lg shadow-nutrity-accent/20 flex items-center gap-3 active:scale-95 transition-all"
-                                    >
-                                        <Calendar className="w-5 h-5" /> Agendar Nueva Cita
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {appointments.map((appt) => (
-                                        <div key={appt.id} className="nutrity-card p-8 group hover:border-nutrity-accent transition-all relative overflow-hidden">
-                                            <div className="flex items-start justify-between mb-6">
-                                                <div className="w-12 h-12 rounded-xl bg-nutrity-accent/10 flex items-center justify-center text-nutrity-accent group-hover:scale-110 transition-transform">
-                                                    <Calendar className="w-7 h-7" />
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => startEditAppointment(appt)} className="p-2 hover:bg-slate-100 rounded-lg text-nutrity-primary transition-colors" title="Editar">
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
-                                                    <button onClick={() => handleDeleteAppointment(appt.id)} className="p-2 hover:bg-red-50 rounded-lg text-rose-500 transition-colors" title="Eliminar">
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                                <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${appt.type === 'Virtual' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'
-                                                    }`}>
-                                                    {appt.type || 'Presencial'}
-                                                </span>
-                                            </div>
-                                            <h3 className="text-xl font-bold mb-2">{appt.title}</h3>
-                                            <div className="space-y-3">
-                                                <div className="flex items-center gap-3 text-nutrity-gray-text font-medium">
-                                                    <Clock className="w-4 h-4 opacity-40" />
-                                                    <span className="text-xs">{appt.date} {appt.time ? ` - ${appt.time}` : ''}</span>
-                                                </div>
-                                                <p className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest bg-nutrity-accent/5 inline-block px-3 py-1 rounded-lg">Confirmada por IA</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {appointments.length === 0 && (
-                                    <div className="nutrity-card p-20 flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                                        <Calendar className="w-16 h-16 text-nutrity-gray-text" />
-                                        <p className="font-bold text-nutrity-primary uppercase tracking-widest">No hay citas registradas</p>
-                                        <p className="text-xs max-w-xs">Agenda tu primera evaluación para iniciar el seguimiento de tu remisión.</p>
-                                    </div>
-                                )}
-                            </motion.div>
+                            <DashboardAgendaTab
+                                appointments={appointments}
+                                setShowApptModal={setShowApptModal}
+                                startEditAppointment={startEditAppointment}
+                                handleDeleteAppointment={handleDeleteAppointment}
+                            />
                         )}
 
                         {activeTab === "profile" && (
-                            <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                                <div className="space-y-1 mb-8">
-                                    <h2 className="text-3xl font-display font-bold">Perfil del Paciente</h2>
-                                    <p className="text-nutrity-gray-text text-sm">
-                                        {!isProfileComplete
-                                            ? "Por favor, completa todos tus datos personales obligatorios para continuar utilizando Nutrity Global."
-                                            : "Actualiza tus datos personales y de contacto aquí."}
-                                    </p>
-                                </div>
-                                <div className="nutrity-card p-6 md:p-8">
-                                    <form onSubmit={handleSaveProfile} className="space-y-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Nombre Completo *</label>
-                                                <input type="text" required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.name} onChange={e => setProfileForm({ ...profileForm, name: e.target.value })} />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Correo Electrónico *</label>
-                                                <input type="email" required disabled className="w-full bg-gray-100 border border-nutrity-border rounded-xl px-4 py-3 font-medium opacity-70 cursor-not-allowed" value={profileForm.email} />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Celular de Contacto *</label>
-                                                <input type="tel" required placeholder="+591 70000000" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.phone} onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })} />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Edad *</label>
-                                                <input type="number" required placeholder="Ej. 45" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.age} onChange={e => setProfileForm({ ...profileForm, age: e.target.value })} />
-                                            </div>
-                                            <div className="space-y-2 md:col-span-2">
-                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Dirección Completa *</label>
-                                                <input type="text" required placeholder="Calle, Nro, Zona, Ciudad" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.address} onChange={e => setProfileForm({ ...profileForm, address: e.target.value })} />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Ocupación / Profesión *</label>
-                                                <input type="text" required placeholder="Ingeniera, Docente, etc." className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.occupation} onChange={e => setProfileForm({ ...profileForm, occupation: e.target.value })} />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Estado Civil *</label>
-                                                <select required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.maritalStatus} onChange={e => setProfileForm({ ...profileForm, maritalStatus: e.target.value })}>
-                                                    <option value="" disabled>Seleccionar estado</option>
-                                                    <option value="soltero">Soltero/a</option>
-                                                    <option value="casado">Casado/a</option>
-                                                    <option value="divorciado">Divorciado/a</option>
-                                                    <option value="viudo">Viudo/a</option>
-                                                    <option value="otro">Otro</option>
-                                                </select>
-                                            </div>
-                                            <div className="space-y-2 md:col-span-2">
-                                                <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Redes Sociales / IG o Facebook (Opcional)</label>
-                                                <input type="text" placeholder="@usuario o link de perfil" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 font-medium focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent outline-none" value={profileForm.socialMedia} onChange={e => setProfileForm({ ...profileForm, socialMedia: e.target.value })} />
-                                            </div>
-                                        </div>
-                                        <div className="pt-6 border-t border-nutrity-border flex justify-end">
-                                            <button disabled={isSavingProfile} type="submit" className="bg-nutrity-primary text-white px-10 py-4 rounded-xl font-bold uppercase tracking-widest shadow-lg shadow-nutrity-primary/20 hover:bg-nutrity-accent transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
-                                                {isSavingProfile ? "Guardando..." : "Guardar Perfil"}
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </motion.div>
+                            <DashboardProfileTab
+                                isProfileComplete={isProfileComplete}
+                                handleSaveProfile={handleSaveProfile}
+                                isSavingProfile={isSavingProfile}
+                                profileForm={profileForm}
+                                setProfileForm={setProfileForm}
+                            />
                         )}
 
                         {!["main", "coach", "micronutrients", "measurements", "academy", "subscription", "organization", "catalog", "admin_catalog", "menu", "goals", "agenda", "profile"].includes(activeTab) && (

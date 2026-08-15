@@ -163,6 +163,7 @@ model Course {
   thumbnail      String
   category       String        @default("Bienestar")
   price          Float         @default(0)
+  level          Int           @default(1)
   paypalUrl      String?
   currency       String        @default("USD")
   isPublished    Boolean       @default(true)

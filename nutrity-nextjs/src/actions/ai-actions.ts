@@ -4,46 +4,39 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { WeeklyMenuSchema, MetabolicPlanSchema, type OnboardingData, type WeeklyMenu, type MetabolicPlan } from "../lib/schemas";
 import { supabase } from "@/lib/supabase";
 import { getInternalId, getPendingMenu } from "./db-actions";
+import { safeJsonParse } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/server";
 
-function safeJsonParse(text: string) {
-    let cleanText = text.replace(/^\s*```(?:json)?\n?|\n?```\s*$/g, '');
-    try {
-        return JSON.parse(cleanText);
-    } catch (e) {
-        console.warn("safeJsonParse: Attempting JSON repair due to:", e);
-        cleanText = cleanText.replace(/[\u0000-\u001F]+/g, ' ');
-        cleanText = cleanText.replace(/,\s*([\]}])/g, '$1');
-        return JSON.parse(cleanText);
-    }
-}
-
+const DEFAULT_AI_MODEL = "gemini-2.5-flash";
+const FALLBACK_AI_MODEL = "gemini-1.5-flash";
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 const menuModel = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: DEFAULT_AI_MODEL,
     generationConfig: {
         responseMimeType: "application/json",
     }
 });
 
 const menuModelFallback = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: FALLBACK_AI_MODEL,
     generationConfig: {
         responseMimeType: "application/json",
     }
 });
 
 const planModel = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
+    model: DEFAULT_AI_MODEL,
     generationConfig: {
         responseMimeType: "application/json",
     }
 });
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export async function generateAILifePlan(data: OnboardingData): Promise<MetabolicPlan> {
-    // ── Contexto NMG del síntoma declarado (Triaje Holístico) ──────────────────
     const nmgTriajeContext = data.mainSymptom ? `
     TRIAJE HOLÍSTICO (Nueva Medicina Germánica + Medicina Integrativa):
     - Síntoma Principal: ${data.mainSymptom}
@@ -127,6 +120,56 @@ export async function generateAILifePlan(data: OnboardingData): Promise<Metaboli
     }
 }
 
+export async function generateSingleDayMenu(patientProfile: string, dayName: string, nmgContext: string = ""): Promise<any> {
+    const prompt = `Eres un Chef Clínico de Nutrity Global.
+Tu tarea es generar un menú para el día: ${dayName}, alineado a las necesidades de remisión metabólica del paciente.
+
+INFORMACIÓN DEL PACIENTE:
+${patientProfile}
+
+${nmgContext ? `Diagnóstico Biológico (Triaje Holístico - NMG):\n${nmgContext}\n` : ""}
+
+DIRECTRICES DEL MENÚ:
+1. Usa superalimentos andinos obligatoriamente: Quinua, Kiwicha, Cañihua, Maca, Aguaymanto, Tarwi, Sacha Inchi, Cacao puro, Oca Morada.
+2. Si el paciente presenta síntomas digestivos, adapta los alimentos para que sean suaves para el intestino.
+3. El campo "metabolicGoal" debe ser ultra-específico y explicar por qué este menú apoya al paciente ese día.
+
+Genera un JSON con este formato exacto para el día ${dayName}:
+{
+  "breakfast": "...", 
+  "lunch": "...", 
+  "snack": "...", 
+  "dinner": "...", 
+  "metabolicGoal": "..." 
+}
+
+Responde estrictamente en JSON. Sin markdown, sin explicaciones adicionales.`;
+
+    let attempt = 0;
+    const maxAttempts = 4;
+    
+    while (attempt < maxAttempts) {
+        try {
+            const result = await menuModel.generateContent(prompt);
+            const text = result.response.text();
+            return safeJsonParse(text);
+        } catch (error: any) {
+            attempt++;
+            const isRateLimit = error.message?.includes('429') || error.status === 429;
+            if (isRateLimit && attempt < maxAttempts) {
+                const baseDelay = Math.pow(2, attempt) * 1000;
+                const jitter = Math.random() * 1000;
+                const delay = baseDelay + jitter;
+                console.warn(`[Gemini 429] Rate limit detectado. Reintentando en ${Math.round(delay)}ms (Intento ${attempt}/${maxAttempts})...`);
+                await sleep(delay);
+            } else {
+                console.error(`Error generando menú para ${dayName}:`, error);
+                throw error;
+            }
+        }
+    }
+}
+
 export async function generateAIWeeklyMenu(plan: MetabolicPlan, userName: string): Promise<WeeklyMenu> {
     const prompt = `Eres un Chef Clínico de Nutrity Global.
     Genera un menú de 7 días (lunes a domingo) para ${userName}.
@@ -180,7 +223,7 @@ export async function regenerateMeal(plan: MetabolicPlan, day: string, slot: str
     Respuesta:`;
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: DEFAULT_AI_MODEL });
         const result = await model.generateContent(prompt);
         return result.response.text().trim().replace(/^"|"$/g, '');
     } catch (error) {
@@ -190,35 +233,40 @@ export async function regenerateMeal(plan: MetabolicPlan, day: string, slot: str
 }
 
 export async function getAICoachResponse(messages: any[], context: any) {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: DEFAULT_AI_MODEL });
     
     const systemPrompt = `Eres Nutrity Coach IA V8, experto en Medicina de Restauración y NMG.
     Contexto del usuario:
     - Nombre: ${context.name}
-    - Fase: ${context.phase}
-    - Meta: ${context.meta}
+    - Fase: ${context.phase || "Activación"}
+    - Meta: ${context.meta || "Remisión metabólica"}
     
     Directrices:
     1. Usa rigor científico andino.
     2. Transforma el miedo en acción (PNL).
-    3. Responde en máximo 200 palabras.`;
+    3. Responde en máximo 200 palabras.
+    
+    PROTOCOLO DE RESPUESTA (obligatorio):
+    1. DECODIFICACIÓN BIOLÓGICA: Si el usuario menciona un síntoma físico (dolor, glucosa alta, fatiga, ansiedad, insomnio, etc.), SIEMPRE decodifica el conflicto biológico subyacente según NMG/Biodescodificación. Ejemplo: "Glucosa alta → Conflicto de resistencia al futuro, necesidad de control. El páncreas (insulina) es el órgano del 'dulzor de la vida'."
+    2. ACCIÓN METABÓLICA CONCRETA: Incluye 1-2 acciones nutricionales específicas con superfoods andinos (Tarwi, Yacón, Quinua, Maca, Sacha Inchi).
+    3. EMPODERAMIENTO PNL: Cierra con una pregunta o reflexión que active la agencia del usuario.`;
 
     const chat = model.startChat({
         history: [
             { role: "user", parts: [{ text: systemPrompt }] },
             { role: "model", parts: [{ text: "Entendido. Estoy listo para asistir." }] },
-            ...messages.slice(-6).map(m => ({
+            ...messages.slice(-8).map(m => ({
                 role: m.role === 'user' ? 'user' : 'model',
                 parts: [{ text: m.text }]
             }))
         ]
     });
 
-    const result = await chat.sendMessage(messages[messages.length - 1].text);
+    const lastUserMessage = messages[messages.length - 1]?.text;
+    if (!lastUserMessage) throw new Error("No user message to send");
+    const result = await chat.sendMessage(lastUserMessage);
     return result.response.text();
 }
-
-import { createClient } from "@/utils/supabase/server";
 
 export async function generateAIWeeklyMenuSecure(userId: string, phase: string): Promise<any> {
     try {
