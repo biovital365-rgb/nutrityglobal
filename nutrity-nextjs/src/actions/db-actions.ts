@@ -110,9 +110,8 @@ const userIdCache: Record<string, string> = {};
 export async function getInternalId(idOrUid: string): Promise<string> {
         if (!idOrUid) return idOrUid;
         
-        // Optimización O(1): Si ya es un UUID interno de Prisma, no consultar DB
-        if (idOrUid.length === 36 && idOrUid.includes('-')) {
-            return idOrUid;
+        if (idOrUid.startsWith('c') && idOrUid.length > 20 && !idOrUid.includes('-')) {
+            return idOrUid; // CUID de Prisma
         }
 
         if (userIdCache[idOrUid]) return userIdCache[idOrUid];
