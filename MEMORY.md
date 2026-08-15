@@ -40,6 +40,11 @@
 - **IA**: Google Gemini 1.5-Flash (Chunking asíncrono implementado).
 - **Estrategia de Persistencia**: Deterministic IDs + Logical Deletion + RLS Policies.
 
+### 🛡️ Decisiones de Arquitectura Recientes (Auditoría Técnica - Bloque A)
+- **Seguridad**: Se eliminó completamente la exposición de la API Key de Gemini en el bundle de cliente (`NEXT_PUBLIC_GEMINI_API_KEY`). Ahora se usa exclusivamente `GEMINI_API_KEY` en entorno servidor.
+- **SSOT IA**: Se eliminó el archivo duplicado `ai-service.ts`. Toda la lógica de inteligencia artificial (modelos, prompts y rate-limiting) se ha consolidado en `src/actions/ai-actions.ts` usando "use server".
+- **Unificación de Modelos**: Se definió `gemini-2.5-flash` como modelo principal por defecto, con fallback a `gemini-1.5-flash` para estabilidad.
+
 ---
 
 ## Roadmap de Desarrollo 2026

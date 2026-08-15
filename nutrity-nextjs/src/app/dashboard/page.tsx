@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
         if (!actualPlan && evalData && evalData.results) {
           actualPlan = {
-            ...evalData.results,
+            ...(evalData.results as object),
             rawAnswers: evalData.data,
             nmg: nmgData
           };
