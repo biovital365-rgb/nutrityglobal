@@ -83,10 +83,10 @@ export async function createPatientByCoach(data: { name: string; email: string; 
 export async function getAdminDashboardData(organizationId?: string | null, showDeleted = false) {
     const orgIdStr = organizationId || undefined;
     
-    const { getFoods, getMicronutrients, getCourses, getPosts, getLandingConfig } = await import("./cms-actions");
+    const { getFoods, getMicronutrients, getPosts, getLandingConfig } = await import("./cms-actions");
     const { getAllUsers } = await import("./user-actions");
     const { getAllAppointments, getPDFReports } = await import("./clinical-actions");
-    const { getAssignmentSubmissions, getQuizAttempts } = await import("./academic-actions");
+    const { getCourses, getAssignmentSubmissions, getQuizAttempts } = await import("./academic-actions");
 
     const [
         foods, micros, courses, users, appointments,
