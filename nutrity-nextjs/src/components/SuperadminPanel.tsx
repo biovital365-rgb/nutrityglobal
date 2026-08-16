@@ -32,24 +32,35 @@ export function SuperadminPanel({ user }: SuperadminPanelProps) {
     const [micros, setMicros] = useState<Micronutrient[]>([]);
     const [courses, setCourses] = useState<Course[]>([]);
     const [users, setUsers] = useState<any[]>([]);
+    const [showDeleted, setShowDeleted] = useState(false);
+    const [, setAppointments] = useState([]);
+    const [, setPdfReports] = useState([]);
+    const [, setLandingConfig] = useState({});
+    const [, setPosts] = useState([]);
+    const [, setSubmissions] = useState([]);
+    const [, setQuizAttempts] = useState([]);
+    const [, setClinics] = useState([]);
 
     const loadAll = useCallback(async () => {
         try {
-            // Superadmin loads ALL data (null organizationId)
-            const [foodData, microData, courseData, userData] = await Promise.all([
-                dbService.getFoods(),
-                dbService.getMicronutrients(),
-                dbService.getCourses(undefined, false),
-                dbService.getAllUsers(undefined, false), // undefined means all organizations
-            ]);
-            setFoods(foodData || []);
-            setMicros(microData || []);
-            setCourses(courseData || []);
-            setUsers(userData || []);
+            const { getAdminDashboardData } = await import("@/actions/admin-actions");
+            const data = await getAdminDashboardData(undefined, showDeleted);
+
+            setFoods(data.foods);
+            setMicros(data.micros);
+            setCourses(data.courses);
+            setUsers(data.users);
+            setAppointments(data.appointments);
+            setPdfReports(data.reports);
+            setLandingConfig(data.landing || {});
+            setPosts(data.posts);
+            setSubmissions(data.submissions);
+            setQuizAttempts(data.quizAttempts);
+            setClinics(data.users.filter((u: any) => u.role === "COACH" || u.role === "ADMIN"));
         } catch (err) {
             console.error("Superadmin data load error:", err);
         }
-    }, []);
+    }, [showDeleted]);
 
     useEffect(() => { loadAll(); }, [loadAll]);
 
