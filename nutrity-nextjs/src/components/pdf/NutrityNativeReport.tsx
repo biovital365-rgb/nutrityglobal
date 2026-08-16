@@ -177,7 +177,7 @@ interface NativeReportProps {
         academic: any;
         measurements?: any[];
     };
-    viewMode?: 'patient' | 'coach';
+    viewMode?: 'patient' | 'coach' | 'partial';
     userStatus?: string;
 }
 
@@ -187,6 +187,7 @@ export function NutrityNativeReport({ data, viewMode = 'patient', userStatus = '
 
     const rawAnswers = diagnosis?.rawAnswers ? (typeof diagnosis.rawAnswers === 'string' ? JSON.parse(diagnosis.rawAnswers) : diagnosis.rawAnswers) : null;
     const isCoach = viewMode === 'coach';
+    const isPartial = viewMode === 'partial';
 
     return (
         <Document>
@@ -344,119 +345,136 @@ export function NutrityNativeReport({ data, viewMode = 'patient', userStatus = '
                     )}
                 </View>
 
-                {/* 3. EVOLUCIÓN BIOMÉTRICA (SOLO COACH o si hay datos) */}
-                {(isCoach || (measurements && measurements.length > 0)) && (
-                    <View style={styles.section} wrap={true}>
-                        <Text style={styles.sectionTitle}>3. Evolución Biométrica</Text>
-                        {measurements && measurements.length > 0 ? (
-                            <View>
-                                <View style={styles.tableHeader} wrap={false}>
-                                    <Text style={styles.col1}>FECHA / HORA</Text>
-                                    <Text style={styles.col2}>MÉTRICA</Text>
-                                    <Text style={styles.col3}>VALOR</Text>
-                                </View>
-                                {measurements.map((m: any, i: number) => (
-                                    <View style={styles.tableRow} key={i} wrap={false}>
-                                        <Text style={styles.col1}>{m.date} {m.time ? `(${m.time})` : ''}</Text>
-                                        <Text style={styles.col2}>{m.label}</Text>
-                                        <Text style={[styles.col3, { fontWeight: 'bold' }]}>{m.value}</Text>
+                {/* SECCIONES PREMIUM (BLOQUEADAS EN MODO PARCIAL) */}
+                {isPartial ? (
+                    <View style={styles.section} wrap={false}>
+                        <Text style={[styles.sectionTitle, { color: '#ef4444' }]}>Contenido Exclusivo (Premium)</Text>
+                        <View style={styles.fallbackBox}>
+                            <Text style={styles.fallbackText}>
+                                El Menú Metabólico, la Evolución Biométrica y el Progreso Académico detallado están disponibles a partir del Plan Básico o Premium.
+                            </Text>
+                            <Text style={[styles.fallbackText, { marginTop: 10, fontWeight: 'bold' }]}>
+                                Actualiza tu plan en el Dashboard para desbloquear tu Expediente Clínico Completo y Menú Semanal.
+                            </Text>
+                        </View>
+                    </View>
+                ) : (
+                    <>
+                        {/* 3. EVOLUCIÓN BIOMÉTRICA (SOLO COACH o si hay datos) */}
+                        {(isCoach || (measurements && measurements.length > 0)) && (
+                            <View style={styles.section} wrap={true}>
+                                <Text style={styles.sectionTitle}>3. Evolución Biométrica</Text>
+                                {measurements && measurements.length > 0 ? (
+                                    <View>
+                                        <View style={styles.tableHeader} wrap={false}>
+                                            <Text style={styles.col1}>FECHA / HORA</Text>
+                                            <Text style={styles.col2}>MÉTRICA</Text>
+                                            <Text style={styles.col3}>VALOR</Text>
+                                        </View>
+                                        {measurements.map((m: any, i: number) => (
+                                            <View style={styles.tableRow} key={i} wrap={false}>
+                                                <Text style={styles.col1}>{m.date} {m.time ? `(${m.time})` : ''}</Text>
+                                                <Text style={styles.col2}>{m.label}</Text>
+                                                <Text style={[styles.col3, { fontWeight: 'bold' }]}>{m.value}</Text>
+                                            </View>
+                                        ))}
                                     </View>
-                                ))}
-                            </View>
-                        ) : (
-                            <View style={styles.fallbackBox} wrap={false}>
-                                <Text style={styles.fallbackText}>No hay mediciones registradas en el historial.</Text>
+                                ) : (
+                                    <View style={styles.fallbackBox} wrap={false}>
+                                        <Text style={styles.fallbackText}>No hay mediciones registradas en el historial.</Text>
+                                    </View>
+                                )}
                             </View>
                         )}
-                    </View>
-                )}
 
-                {/* 4. PLAN NUTRICIONAL */}
-                <View style={styles.section} wrap={true}>
-                    <Text style={styles.sectionTitle}>4. Plan Nutricional Asignado</Text>
-                    {menu ? (
-                        <View>
-                            <Text style={[styles.text, { marginBottom: 15 }]}>
-                                {isCoach 
-                                    ? "Menú semanal activo para el paciente:"
-                                    : "Tu menú semanal ha sido generado y está activo. Sigue estas pautas o consúltalas en la app."}
-                            </Text>
-                            {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map((day) => {
-                                if (!menu[day]) return null;
-                                return (
-                                    <View key={day} style={styles.dayCard} wrap={false}>
-                                        <Text style={[styles.label, { color: '#1b3b36', marginBottom: 6 }]}>{day.toUpperCase()}</Text>
-                                        
-                                        <View style={{ flexDirection: 'row', marginBottom: 4 }}>
-                                            <Text style={[styles.label, { width: '20%' }]}>Desayuno:</Text>
-                                            <Text style={[styles.text, { width: '80%' }]}>{menu[day].breakfast}</Text>
-                                        </View>
-                                        <View style={{ flexDirection: 'row', marginBottom: 4 }}>
-                                            <Text style={[styles.label, { width: '20%' }]}>Almuerzo:</Text>
-                                            <Text style={[styles.text, { width: '80%' }]}>{menu[day].lunch}</Text>
-                                        </View>
-                                        <View style={{ flexDirection: 'row', marginBottom: 4 }}>
-                                            <Text style={[styles.label, { width: '20%' }]}>Cena:</Text>
-                                            <Text style={[styles.text, { width: '80%' }]}>{menu[day].dinner}</Text>
-                                        </View>
-                                        {menu[day].snacks && (
-                                            <View style={{ flexDirection: 'row' }}>
-                                                <Text style={[styles.label, { width: '20%' }]}>Snack:</Text>
-                                                <Text style={[styles.text, { width: '80%', fontStyle: 'italic' }]}>{menu[day].snacks}</Text>
-                                            </View>
-                                        )}
-                                    </View>
-                                )
-                            })}
-                        </View>
-                    ) : (
-                        <View style={styles.fallbackBox} wrap={false}>
-                            <Text style={styles.fallbackText}>No tienes un menú asignado actualmente. Consulta a tu coach.</Text>
-                        </View>
-                    )}
-                </View>
-
-                {/* 5. ACADEMIA Y FEEDBACK */}
-                <View style={styles.section} wrap={true}>
-                    <Text style={styles.sectionTitle}>5. Progreso Académico</Text>
-                    
-                    <View style={styles.row} wrap={false}>
-                        <Text style={styles.label}>Lecciones Completadas</Text>
-                        <Text style={styles.value}>{academic.completedLessonsCount || 0}</Text>
-                    </View>
-
-                    {academic.quizAttempts && academic.quizAttempts.length > 0 && (
-                        <View style={{ marginTop: 10 }} wrap={false}>
-                            <Text style={[styles.label, { marginBottom: 5 }]}>Cuestionarios Recientes:</Text>
-                            {academic.quizAttempts.slice(0,3).map((quiz: any, i: number) => (
-                                <View key={i} style={styles.row} wrap={false}>
-                                    <Text style={styles.text}>Evaluación (ID: {quiz.quizId.slice(-4)})</Text>
-                                    <Text style={styles.value}>{quiz.score}% ({quiz.passed ? 'Aprobado' : 'Reprobado'})</Text>
-                                </View>
-                            ))}
-                        </View>
-                    )}
-
-                    {academic.assignmentSubmissions && academic.assignmentSubmissions.length > 0 && (
-                        <View style={{ marginTop: 15 }} wrap={false}>
-                            <Text style={[styles.label, { marginBottom: 5 }]}>Últimas Tareas Evaluadas:</Text>
-                            {academic.assignmentSubmissions.slice(0,3).map((sub: any, i: number) => (
-                                <View key={i} style={{ backgroundColor: '#f8fafc', padding: 8, borderRadius: 4, marginBottom: 5, borderWidth: 1, borderColor: '#e2e8f0' }} wrap={false}>
-                                    <Text style={[styles.label, { color: sub.status === 'APPROVED' ? '#10b981' : sub.status === 'REJECTED' ? '#ef4444' : '#c19b6c' }]}>
-                                        ESTADO: {sub.status}
+                        {/* 4. PLAN NUTRICIONAL */}
+                        <View style={styles.section} wrap={true}>
+                            <Text style={styles.sectionTitle}>4. Plan Nutricional Asignado</Text>
+                            {menu ? (
+                                <View>
+                                    <Text style={[styles.text, { marginBottom: 15 }]}>
+                                        {isCoach 
+                                            ? "Menú semanal activo para el paciente:"
+                                            : "Tu menú semanal ha sido generado y está activo. Sigue estas pautas o consúltalas en la app."}
                                     </Text>
-                                    {sub.coachFeedback ? (
-                                        <Text style={[styles.text, { marginTop: 4, fontStyle: 'italic' }]}>
-                                            "{sub.coachFeedback}"
-                                        </Text>
-                                    ) : (
-                                        <Text style={[styles.text, { marginTop: 4 }]}>En revisión...</Text>
-                                    )}
+                                    {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map((day) => {
+                                        if (!menu[day]) return null;
+                                        return (
+                                            <View key={day} style={styles.dayCard} wrap={false}>
+                                                <Text style={[styles.label, { color: '#1b3b36', marginBottom: 6 }]}>{day.toUpperCase()}</Text>
+                                                
+                                                <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                                                    <Text style={[styles.label, { width: '20%' }]}>Desayuno:</Text>
+                                                    <Text style={[styles.text, { width: '80%' }]}>{menu[day].breakfast}</Text>
+                                                </View>
+                                                <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                                                    <Text style={[styles.label, { width: '20%' }]}>Almuerzo:</Text>
+                                                    <Text style={[styles.text, { width: '80%' }]}>{menu[day].lunch}</Text>
+                                                </View>
+                                                <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+                                                    <Text style={[styles.label, { width: '20%' }]}>Cena:</Text>
+                                                    <Text style={[styles.text, { width: '80%' }]}>{menu[day].dinner}</Text>
+                                                </View>
+                                                {menu[day].snacks && (
+                                                    <View style={{ flexDirection: 'row' }}>
+                                                        <Text style={[styles.label, { width: '20%' }]}>Snack:</Text>
+                                                        <Text style={[styles.text, { width: '80%', fontStyle: 'italic' }]}>{menu[day].snacks}</Text>
+                                                    </View>
+                                                )}
+                                            </View>
+                                        )
+                                    })}
                                 </View>
-                            ))}
+                            ) : (
+                                <View style={styles.fallbackBox} wrap={false}>
+                                    <Text style={styles.fallbackText}>No tienes un menú asignado actualmente. Consulta a tu coach.</Text>
+                                </View>
+                            )}
                         </View>
-                    )}
-                </View>
+
+                        {/* 5. ACADEMIA Y FEEDBACK */}
+                        <View style={styles.section} wrap={true}>
+                            <Text style={styles.sectionTitle}>5. Progreso Académico</Text>
+                            
+                            <View style={styles.row} wrap={false}>
+                                <Text style={styles.label}>Lecciones Completadas</Text>
+                                <Text style={styles.value}>{academic.completedLessonsCount || 0}</Text>
+                            </View>
+
+                            {academic.quizAttempts && academic.quizAttempts.length > 0 && (
+                                <View style={{ marginTop: 10 }} wrap={false}>
+                                    <Text style={[styles.label, { marginBottom: 5 }]}>Cuestionarios Recientes:</Text>
+                                    {academic.quizAttempts.slice(0,3).map((quiz: any, i: number) => (
+                                        <View key={i} style={styles.row} wrap={false}>
+                                            <Text style={styles.text}>Evaluación (ID: {quiz.quizId.slice(-4)})</Text>
+                                            <Text style={styles.value}>{quiz.score}% ({quiz.passed ? 'Aprobado' : 'Reprobado'})</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+
+                            {academic.assignmentSubmissions && academic.assignmentSubmissions.length > 0 && (
+                                <View style={{ marginTop: 15 }} wrap={false}>
+                                    <Text style={[styles.label, { marginBottom: 5 }]}>Últimas Tareas Evaluadas:</Text>
+                                    {academic.assignmentSubmissions.slice(0,3).map((sub: any, i: number) => (
+                                        <View key={i} style={{ backgroundColor: '#f8fafc', padding: 8, borderRadius: 4, marginBottom: 5, borderWidth: 1, borderColor: '#e2e8f0' }} wrap={false}>
+                                            <Text style={[styles.label, { color: sub.status === 'APPROVED' ? '#10b981' : sub.status === 'REJECTED' ? '#ef4444' : '#c19b6c' }]}>
+                                                ESTADO: {sub.status}
+                                            </Text>
+                                            {sub.coachFeedback ? (
+                                                <Text style={[styles.text, { marginTop: 4, fontStyle: 'italic' }]}>
+                                                    "{sub.coachFeedback}"
+                                                </Text>
+                                            ) : (
+                                                <Text style={[styles.text, { marginTop: 4 }]}>En revisión...</Text>
+                                            )}
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+                        </View>
+                    </>
+                )}
 
                 {/* FOOTER AUTOMÁTICO EN TODAS LAS PÁGINAS */}
                 <View style={styles.footer} fixed>
