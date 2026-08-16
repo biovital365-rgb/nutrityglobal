@@ -79,3 +79,33 @@ export async function createPatientByCoach(data: { name: string; email: string; 
         throw new Error("Failed to create user profile in database.");
     }
 }
+
+export async function getAdminDashboardData(organizationId?: string | null, showDeleted = false) {
+    const orgIdStr = organizationId || undefined;
+    
+    const { getFoods, getMicronutrients, getCourses, getPosts, getLandingConfig } = await import("./cms-actions");
+    const { getAllUsers } = await import("./user-actions");
+    const { getAllAppointments, getPDFReports } = await import("./clinical-actions");
+    const { getAssignmentSubmissions, getQuizAttempts } = await import("./academic-actions");
+
+    const [
+        foods, micros, courses, users, appointments,
+        reports, landing, posts, submissions, quizAttempts
+    ] = await Promise.all([
+        getFoods().catch(() => []),
+        getMicronutrients().catch(() => []),
+        getCourses(orgIdStr, showDeleted).catch(() => []),
+        getAllUsers(orgIdStr, showDeleted).catch(() => []),
+        getAllAppointments(orgIdStr, showDeleted).catch(() => []),
+        getPDFReports(orgIdStr).catch(() => []),
+        getLandingConfig(orgIdStr).catch(() => ({})),
+        getPosts(orgIdStr, false).catch(() => []),
+        getAssignmentSubmissions(orgIdStr).catch(() => []),
+        getQuizAttempts(orgIdStr).catch(() => []),
+    ]);
+
+    return {
+        foods, micros, courses, users, appointments,
+        reports, landing, posts, submissions, quizAttempts
+    };
+}

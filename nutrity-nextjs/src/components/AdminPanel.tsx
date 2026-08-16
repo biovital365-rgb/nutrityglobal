@@ -118,28 +118,19 @@ export function AdminPanel({ user }: AdminPanelProps) {
     const loadAll = useCallback(async () => {
         const orgId = user?.profile?.organization?.id;
         try {
-            const [foodData, microData, courseData, userData, appointmentData, reportData, landingData, postData, submissionsData, quizAttemptsData] = await Promise.all([
-                dbService.getFoods().catch(() => []),
-                dbService.getMicronutrients().catch(() => []),
-                dbService.getCourses(orgId, showDeleted).catch(() => []),
-                dbService.getAllUsers(orgId, showDeleted).catch(() => []),
-                dbService.getAllAppointments(orgId, showDeleted).catch(() => []),
-                dbService.getPDFReports(orgId).catch(() => []),
-                dbService.getLandingConfig(orgId).catch(() => ({})),
-                dbService.getPosts(orgId, false).catch(() => []),
-                dbService.getAssignmentSubmissions(orgId).catch(() => []),
-                dbService.getQuizAttempts(orgId).catch(() => []),
-            ]);
-            setFoods(foodData);
-            setMicros(microData);
-            setCourses(courseData);
-            setUsers(userData);
-            setAppointments(appointmentData);
-            setPdfReports(reportData);
-            setLandingConfig(landingData || {});
-            setPosts(postData);
-            setSubmissions(submissionsData);
-            setQuizAttempts(quizAttemptsData);
+            const { getAdminDashboardData } = await import("@/actions/admin-actions");
+            const data = await getAdminDashboardData(orgId, showDeleted);
+            
+            setFoods(data.foods);
+            setMicros(data.micros);
+            setCourses(data.courses);
+            setUsers(data.users);
+            setAppointments(data.appointments);
+            setPdfReports(data.reports);
+            setLandingConfig(data.landing || {});
+            setPosts(data.posts);
+            setSubmissions(data.submissions);
+            setQuizAttempts(data.quizAttempts);
         } catch (err) {
             console.error("Admin data load error:", err);
             notify("error", "Error al cargar datos");
