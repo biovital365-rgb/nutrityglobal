@@ -33,13 +33,13 @@ export function SuperadminPanel({ user }: SuperadminPanelProps) {
     const [courses, setCourses] = useState<Course[]>([]);
     const [users, setUsers] = useState<any[]>([]);
     const [showDeleted, setShowDeleted] = useState(false);
-    const [, setAppointments] = useState([]);
-    const [, setPdfReports] = useState([]);
-    const [, setLandingConfig] = useState({});
-    const [, setPosts] = useState([]);
-    const [, setSubmissions] = useState([]);
-    const [, setQuizAttempts] = useState([]);
-    const [, setClinics] = useState([]);
+    const [, setAppointments] = useState<any[]>([]);
+    const [, setPdfReports] = useState<any[]>([]);
+    const [, setLandingConfig] = useState<any>({});
+    const [, setPosts] = useState<any[]>([]);
+    const [, setSubmissions] = useState<any[]>([]);
+    const [, setQuizAttempts] = useState<any[]>([]);
+    const [, setClinics] = useState<any[]>([]);
 
     const loadAll = useCallback(async () => {
         try {
