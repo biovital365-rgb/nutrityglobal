@@ -1,12 +1,8 @@
-"use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Crown, Lock, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { Crown, Lock } from "lucide-react";
 import { renderMarkdown } from "@/lib/markdown";
 
 interface PremiumGateProps {
-    fullContent: string;
     teaserContent: string;
 }
 
@@ -16,43 +12,7 @@ interface PremiumGateProps {
  * 2. Si SÍ → renderiza el contenido completo
  * 3. Si NO → renderiza el teaser + paywall overlay
  */
-export function PremiumGate({ fullContent, teaserContent }: PremiumGateProps) {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-    useEffect(() => {
-        // Check current session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setIsAuthenticated(!!session);
-        });
-
-        // Listen for auth state changes (e.g. user logs in in another tab)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setIsAuthenticated(!!session);
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
-
-    // Loading state
-    if (isAuthenticated === null) {
-        return (
-            <div className="flex items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 text-nutrity-accent animate-spin" />
-            </div>
-        );
-    }
-
-    // Authenticated → full content
-    if (isAuthenticated) {
-        return (
-            <div
-                className="text-nutrity-primary/85 leading-relaxed text-[15px]"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(fullContent) }}
-            />
-        );
-    }
-
-    // Guest → teaser + paywall
+export function PremiumGate({ teaserContent }: PremiumGateProps) {
     return (
         <div className="relative">
             {/* Teaser (visible content) */}
@@ -78,17 +38,17 @@ export function PremiumGate({ fullContent, teaserContent }: PremiumGateProps) {
 
                 {/* Headline */}
                 <h3 className="text-2xl font-display font-bold text-nutrity-primary mt-5 mb-3">
-                    Regístrate para continuar leyendo
+                        Activa un plan para continuar leyendo
                 </h3>
                 <p className="text-nutrity-gray-text max-w-md mx-auto text-sm leading-relaxed">
-                    Este artículo es un recurso de alto valor reservado para nuestra comunidad. Crea tu cuenta gratuita y accede a este y a todos los demás artículos premium.
+                    Este artículo es un recurso reservado para miembros con un plan activo de Nutrity Global.
                 </p>
 
                 {/* CTAs */}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
                     <Link href="/auth"
                         className="px-8 py-4 bg-nutrity-primary text-white font-bold rounded-2xl hover:bg-nutrity-accent transition-all shadow-xl shadow-nutrity-primary/20 text-sm">
-                        Crear cuenta gratuita
+                        Ver planes
                     </Link>
                     <Link href="/auth"
                         className="px-8 py-4 border border-nutrity-border text-nutrity-primary font-bold rounded-2xl hover:bg-nutrity-bg transition-all text-sm">
@@ -99,7 +59,7 @@ export function PremiumGate({ fullContent, teaserContent }: PremiumGateProps) {
                 {/* Benefits grid */}
                 <div className="mt-10 pt-8 border-t border-nutrity-border grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
                     {[
-                        { emoji: "🧬", title: "Protocolos clínicos", desc: "Guías validadas por nutricionistas especializados en remisión metabólica" },
+                        { emoji: "🧭", title: "Rutas prácticas", desc: "Guías educativas para convertir información en hábitos semanales" },
                         { emoji: "🌿", title: "Superalimentos andinos", desc: "Fichas completas con dosis terapéuticas, fuentes y formas de preparación" },
                         { emoji: "📊", title: "Seguimiento personalizado", desc: "Accede a tu Bio-Cardex, plan nutricional y menú semanal aprobado" },
                     ].map(({ emoji, title, desc }) => (

@@ -3,15 +3,51 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getInternalId, getServerUser } from "./user-actions";
-import { Course, Lesson } from "./db-actions";
+import {
+    getAuthenticatedUser,
+    organizationScope,
+    requireOrganizationResource,
+    requireRole,
+    requireUserAccess,
+} from "@/lib/authz";
+
+function hasLessonAccess(user: { plan?: string | null; role?: string } | null, course: any, lesson: any) {
+    if (lesson.isFree) return true;
+    if (!user) return false;
+    if (user.role === 'ADMIN' || user.plan === 'ELITE') return true;
+    if (course.category === 'Ebook' && course.price === 0) return true;
+    const plan = (user.plan || 'FREE').toUpperCase();
+    const level = course.level || 1;
+    if (level === 1) return plan !== 'FREE' || lesson.order < 2;
+    if (level === 2 || level === 3) return plan !== 'FREE';
+    return !['FREE', 'BASIC', 'BÁSICO', 'BASICO'].includes(plan);
+}
+
+function redactLockedLessons(course: any, user: { plan?: string | null; role?: string } | null) {
+    return {
+        ...course,
+        lessons: course.lessons.map((lesson: any) => hasLessonAccess(user, course, lesson) ? lesson : {
+            ...lesson,
+            videoUrl: null,
+            presentationUrl: null,
+            pdfUrl: null,
+            quiz: null,
+            assignment: null,
+        }),
+    };
+}
 
 export async function getCourses(organizationId?: string, includeDeleted = false) {
-    const whereClause: any = {};
-    if (!includeDeleted) {
-        whereClause.deletedAt = null;
-    }
-    
-    if (organizationId) {
+    const authenticatedUser = await getAuthenticatedUser();
+    const whereClause: any = { deletedAt: null, isPublished: true };
+
+    if (includeDeleted) {
+        const actor = await requireRole('ADMIN', 'COACH');
+        const scopedOrganizationId = organizationScope(actor, organizationId);
+        delete whereClause.deletedAt;
+        delete whereClause.isPublished;
+        if (scopedOrganizationId) whereClause.organizationId = scopedOrganizationId;
+    } else if (organizationId) {
         whereClause.OR = [
             { organizationId: null },
             { organizationId }
@@ -32,10 +68,13 @@ export async function getCourses(organizationId?: string, includeDeleted = false
         orderBy: { createdAt: 'desc' }
     });
     
-    return courses as any;
+    const canManage = authenticatedUser?.role === 'ADMIN'
+        || (authenticatedUser?.role === 'COACH' && authenticatedUser.organizationId === organizationId);
+    return (canManage ? courses : courses.map(course => redactLockedLessons(course, authenticatedUser))) as any;
 }
 
 export async function getCourseWithLessons(courseId: string) {
+    const authenticatedUser = await getAuthenticatedUser();
     const data = await prisma.course.findUnique({
         where: { id: courseId },
         include: {
@@ -52,16 +91,30 @@ export async function getCourseWithLessons(courseId: string) {
     });
 
     if (!data) throw new Error('Course not found');
-    return data as any;
+    if (data.deletedAt || !data.isPublished) {
+        await requireOrganizationResource(data.organizationId);
+    }
+    const canManage = authenticatedUser?.role === 'ADMIN'
+        || (authenticatedUser?.role === 'COACH' && authenticatedUser.organizationId === data.organizationId);
+    return (canManage ? data : redactLockedLessons(data, authenticatedUser)) as any;
 }
 
 export async function saveCourse(course: any, organizationId?: string) {
+    const actor = await requireRole('ADMIN', 'COACH');
     const { lessons, ...courseData } = course;
-    
     const id = courseData.id && courseData.id.length > 20 ? courseData.id : crypto.randomUUID();
+    const existing = courseData.id
+        ? await prisma.course.findUnique({ where: { id }, select: { organizationId: true } })
+        : null;
+
+    if (existing) await requireOrganizationResource(existing.organizationId);
+    const requestedOrganizationId = courseData.organizationId || organizationId || null;
+    const scopedOrganizationId = actor.role === 'ADMIN'
+        ? requestedOrganizationId
+        : organizationScope(actor, requestedOrganizationId);
     
     const payload = {
-        organizationId: courseData.organizationId || organizationId || null,
+        organizationId: scopedOrganizationId || null,
         title: courseData.title || '',
         description: courseData.description || '',
         thumbnail: courseData.thumbnail || '',
@@ -85,6 +138,10 @@ export async function saveCourse(course: any, organizationId?: string) {
         for (let i = 0; i < lessons.length; i++) {
             const lessonData = lessons[i];
             const savedLessonId = lessonData.id && lessonData.id.length > 20 ? lessonData.id : crypto.randomUUID();
+            if (lessonData.id) {
+                const existingLesson = await prisma.lesson.findUnique({ where: { id: savedLessonId }, select: { courseId: true } });
+                if (!existingLesson || existingLesson.courseId !== id) throw new Error('Forbidden');
+            }
             
             const lessonPayload = {
                 title: lessonData.title || `Lección ${i + 1}`,
@@ -133,6 +190,9 @@ export async function saveCourse(course: any, organizationId?: string) {
 }
 
 export async function deleteCourse(id: string) {
+    const course = await prisma.course.findUnique({ where: { id }, select: { organizationId: true } });
+    if (!course) throw new Error('Course not found');
+    await requireOrganizationResource(course.organizationId);
     await prisma.course.update({
         where: { id },
         data: { deletedAt: new Date() }
@@ -142,6 +202,9 @@ export async function deleteCourse(id: string) {
 }
 
 export async function restoreCourse(id: string) {
+    const course = await prisma.course.findUnique({ where: { id }, select: { organizationId: true } });
+    if (!course) throw new Error('Course not found');
+    await requireOrganizationResource(course.organizationId);
     const data = await prisma.course.update({
         where: { id },
         data: { deletedAt: null }
@@ -189,8 +252,13 @@ export async function getLessonsProgress(userId: string) {
 // ─── LMS FASE 2: EVALUACIONES Y TAREAS ───────────────────────────────────────
 
 export async function saveQuiz(lessonId: string, title: string, description: string, questions: any[]) {
-    const user = await getServerUser();
-    if (!user || user.role !== 'ADMIN') throw new Error("Unauthorized");
+    const actor = await requireRole('ADMIN', 'COACH');
+    const lesson = await prisma.lesson.findUnique({
+        where: { id: lessonId },
+        include: { course: { select: { organizationId: true } } },
+    });
+    if (!lesson) throw new Error('Lesson not found');
+    if (actor.role !== 'ADMIN' && actor.organizationId !== lesson.course.organizationId) throw new Error('Forbidden');
 
     const payload = {
         lessonId,
@@ -208,8 +276,13 @@ export async function saveQuiz(lessonId: string, title: string, description: str
 }
 
 export async function saveAssignment(lessonId: string, title: string, description: string) {
-    const user = await getServerUser();
-    if (!user || user.role !== 'ADMIN') throw new Error("Unauthorized");
+    const actor = await requireRole('ADMIN', 'COACH');
+    const lesson = await prisma.lesson.findUnique({
+        where: { id: lessonId },
+        include: { course: { select: { organizationId: true } } },
+    });
+    if (!lesson) throw new Error('Lesson not found');
+    if (actor.role !== 'ADMIN' && actor.organizationId !== lesson.course.organizationId) throw new Error('Forbidden');
 
     const payload = {
         lessonId,
@@ -227,10 +300,9 @@ export async function saveAssignment(lessonId: string, title: string, descriptio
 
 
 export async function getAssignmentSubmissions(organizationId?: string) {
-    const whereClause: any = {};
-    if (organizationId) {
-        whereClause.organizationId = organizationId;
-    }
+    const actor = await requireRole('ADMIN', 'COACH');
+    const scopedOrganizationId = organizationScope(actor, organizationId);
+    const whereClause: any = scopedOrganizationId ? { organizationId: scopedOrganizationId } : {};
 
     const submissions = await prisma.assignmentSubmission.findMany({
         where: whereClause,
@@ -244,10 +316,9 @@ export async function getAssignmentSubmissions(organizationId?: string) {
 }
 
 export async function getQuizAttempts(organizationId?: string) {
-    const whereClause: any = {};
-    if (organizationId) {
-        whereClause.organizationId = organizationId;
-    }
+    const actor = await requireRole('ADMIN', 'COACH');
+    const scopedOrganizationId = organizationScope(actor, organizationId);
+    const whereClause: any = scopedOrganizationId ? { organizationId: scopedOrganizationId } : {};
 
     const attempts = await prisma.quizAttempt.findMany({
         where: whereClause,
@@ -279,6 +350,12 @@ export async function getUserQuizAttempts(userId: string) {
 }
 
 export async function reviewAssignmentSubmission(submissionId: string, feedback: string, status: 'REVIEWED' | 'APPROVED' | 'REJECTED' = 'REVIEWED') {
+    const submission = await prisma.assignmentSubmission.findUnique({
+        where: { id: submissionId },
+        select: { organizationId: true },
+    });
+    if (!submission) throw new Error('Submission not found');
+    await requireOrganizationResource(submission.organizationId);
     const updated = await prisma.assignmentSubmission.update({
         where: { id: submissionId },
         data: { status, feedback }
@@ -290,8 +367,7 @@ export async function reviewAssignmentSubmission(submissionId: string, feedback:
 // ─── ACADÉMICO: TAREAS Y CUESTIONARIOS ────────────────────────────────────────
 
 export async function verifyLessonAccess(internalUserId: string, lessonId: string) {
-    const user = await prisma.user.findUnique({ where: { id: internalUserId } });
-    if (!user) throw new Error("User not found");
+    const { target: user } = await requireUserAccess(internalUserId, { coachAllowed: true });
 
     const lesson = await prisma.lesson.findUnique({
         where: { id: lessonId },
@@ -321,6 +397,7 @@ export async function verifyLessonAccess(internalUserId: string, lessonId: strin
 }
 
 export async function submitQuizAttempt(lessonId: string, ignoredScore: number, answersArray: any[]) {
+    void ignoredScore;
     const currentUser = await getServerUser();
     if (!currentUser) throw new Error("Unauthorized");
     

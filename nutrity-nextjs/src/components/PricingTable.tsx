@@ -17,7 +17,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
     setLoading(planType);
     const { url, error } = await createCheckoutSession(userId, planType);
     if (url) {
-      window.location.href = url;
+      window.location.assign(url);
     } else {
       console.error(error);
       alert('Hubo un error al procesar la solicitud.');
@@ -29,7 +29,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
     setLoading('PORTAL');
     const { url, error } = await createCustomerPortal(userId);
     if (url) {
-      window.location.href = url;
+      window.location.assign(url);
     } else {
       console.error(error);
       alert('Hubo un error abriendo el portal de facturación.');
@@ -42,7 +42,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
       type: 'BASIC',
       name: 'Básico',
       price: '9.99',
-      description: 'Inicia tu remisión con generación de menú asistida.',
+      description: 'Convierte tu Ruta Nutrity en una rutina semanal.',
       icon: Zap,
       color: 'bg-nutrity-success/10 text-nutrity-success',
       borderColor: 'border-nutrity-success/20',
@@ -63,7 +63,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
       borderColor: 'border-nutrity-accent',
       features: [
         'Menús semanales IA Ilimitados',
-        'Reporte PDF Premium (Biodescodificación)',
+        'Reporte educativo de progreso',
         'Feedback loop (Solicitar Cambios)',
         'Acceso completo a Cursos y Recetario'
       ],
@@ -88,7 +88,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
   return (
     <div className="w-full py-10">
       <div className="text-center mb-10">
-        <h2 className="text-3xl font-bold text-nutrity-primary mb-3">Sube de Nivel tu Remisión</h2>
+        <h2 className="text-3xl font-bold text-nutrity-primary mb-3">Elige el apoyo que necesitas</h2>
         <p className="text-nutrity-gray-text max-w-xl mx-auto">Desbloquea el poder completo de la IA y nuestra metodología clínica para acelerar tus resultados.</p>
       </div>
 

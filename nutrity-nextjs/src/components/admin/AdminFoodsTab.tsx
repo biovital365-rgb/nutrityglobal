@@ -193,11 +193,11 @@ export function AdminFoodsTab({
                                                         }} placeholder="Ej. El cacao puro es el alimento mas rico en magnesio..." />
                                                     </div>
                                                     <div className="bg-white p-3 rounded-lg border border-nutrity-border">
-                                                        <FieldInput label="TIP BioVital 360" multiline value={recipe.additionalNotes || ""} onChange={(text) => {
+                                                        <FieldInput label="TIP Nutrity" multiline value={recipe.additionalNotes || ""} onChange={(text) => {
                                                             const updated = [...(editingFood.recipes || [])];
                                                             updated[rIdx] = { ...updated[rIdx], additionalNotes: text };
                                                             setEditingFood(p => ({ ...p, recipes: updated }));
-                                                        }} placeholder="Ej. TIP BioVital 360: La teobromina..." />
+                                                        }} placeholder="Ej. TIP Nutrity: información práctica sobre el alimento..." />
                                                     </div>
                                                 </div>
                                             </div>

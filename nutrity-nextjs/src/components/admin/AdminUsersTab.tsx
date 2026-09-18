@@ -3,6 +3,11 @@ import { motion, AnimatePresence } from "motion/react";
 import { Loader2, Pencil, Trash2, Save, X, FileText, Zap, CheckCircle2, Shield, Activity, Users } from "lucide-react";
 import { FieldInput } from "./shared";
 
+function routeProgress(results: any) {
+    const actions = Array.isArray(results?.weeklyActions) ? results.weeklyActions : [];
+    return { completed: actions.filter((action: any) => action?.completed).length, total: actions.length };
+}
+
 interface AdminUsersTabProps {
     users: any[];
     isSaving: boolean;
@@ -50,7 +55,7 @@ export function AdminUsersTab({
                                 <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">
                                     <th className="py-4 px-6">Usuario</th>
                                     <th className="py-4 px-6">Contacto / Ubicación</th>
-                                    <th className="py-4 px-6">Metabolismo / NMG</th>
+                                    <th className="py-4 px-6">Ruta Nutrity</th>
                                     <th className="py-4 px-6">Estado</th>
                                     <th className="py-4 px-6 text-right">Acciones</th>
                                 </tr>
@@ -79,13 +84,13 @@ export function AdminUsersTab({
                                             {u.metabolicResults ? (
                                                 <div className="space-y-1">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-xs font-bold text-nutrity-primary">{u.metabolicResults.remissionScore}% Remisión</span>
+                                                        <span className="text-xs font-bold text-nutrity-primary">{routeProgress(u.metabolicResults).completed}/{routeProgress(u.metabolicResults).total} acciones</span>
                                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                                     </div>
                                                     <p className="text-[10px] text-nutrity-gray-text italic">Fase: {u.metabolicResults.phase}</p>
                                                 </div>
                                             ) : (
-                                                <span className="text-[10px] text-nutrity-gray-text opacity-40">Sin diagnóstico</span>
+                                                <span className="text-[10px] text-nutrity-gray-text opacity-40">Sin Ruta Nutrity</span>
                                             )}
                                         </td>
                                         <td className="py-4 px-6">
@@ -189,26 +194,26 @@ export function AdminUsersTab({
                                 <div className="grid md:grid-cols-2 gap-10">
                                     <div className="space-y-6">
                                         <h4 className="text-xl font-display font-bold flex items-center gap-3">
-                                            <Activity className="w-6 h-6 text-nutrity-accent" /> Expediente Metabólico
+                                            <Activity className="w-6 h-6 text-nutrity-accent" /> Seguimiento de hábitos
                                         </h4>
                                         <div className="bg-white rounded-3xl p-6 shadow-sm border border-nutrity-border space-y-6">
                                             {selectedCardexUser.metabolicResults ? (
                                                 <>
                                                     <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
                                                         <div className="space-y-1">
-                                                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Score de Remisión</span>
-                                                            <p className="text-2xl font-black text-emerald-700">{selectedCardexUser.metabolicResults.remissionScore}%</p>
+                                                            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Acciones semanales</span>
+                                                            <p className="text-2xl font-black text-emerald-700">{routeProgress(selectedCardexUser.metabolicResults).completed}/{routeProgress(selectedCardexUser.metabolicResults).total}</p>
                                                         </div>
                                                         <Zap className="w-8 h-8 text-emerald-500" />
                                                     </div>
                                                     <div className="space-y-2">
-                                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Insight IA</span>
+                                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Orientación educativa</span>
                                                         <p className="text-sm font-medium text-nutrity-primary italic leading-relaxed">
                                                             &quot;{selectedCardexUser.metabolicResults.insight || "Sin insight generado"}&quot;
                                                         </p>
                                                     </div>
                                                     <div className="pt-4 border-t border-nutrity-border">
-                                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-3 block">Pilares de Tratamiento</span>
+                                                        <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mb-3 block">Áreas de trabajo</span>
                                                         <div className="flex flex-wrap gap-2">
                                                             {selectedCardexUser.metabolicResults.pillars?.map((p: any, i: number) => (
                                                                 <span key={i} className="px-3 py-1 bg-nutrity-bg text-nutrity-primary text-[10px] font-bold rounded-lg border border-nutrity-border">{p.title}</span>
@@ -218,7 +223,7 @@ export function AdminUsersTab({
                                                 </>
                                             ) : (
                                                 <div className="py-10 text-center space-y-3 opacity-40">
-                                                    <p className="text-sm font-bold uppercase tracking-widest">Sin Diagnóstico Realizado</p>
+                                                    <p className="text-sm font-bold uppercase tracking-widest">Sin Ruta Nutrity</p>
                                                 </div>
                                             )}
                                         </div>
@@ -367,9 +372,9 @@ export function AdminUsersTab({
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 <Zap className="w-5 h-5 text-emerald-500" />
-                                                <h4 className="text-sm font-bold text-emerald-900">Estado Metabólico Actual</h4>
+                                                <h4 className="text-sm font-bold text-emerald-900">Ruta Nutrity actual</h4>
                                             </div>
-                                            <span className="px-3 py-1 bg-emerald-600 text-white text-[10px] font-black rounded-lg">SCORE: {editingUser.metabolicResults.remissionScore}%</span>
+                                            <span className="px-3 py-1 bg-emerald-600 text-white text-[10px] font-black rounded-lg">ACCIONES: {routeProgress(editingUser.metabolicResults).completed}/{routeProgress(editingUser.metabolicResults).total}</span>
                                         </div>
                                         <p className="text-xs text-emerald-800 italic leading-relaxed">
                                             &quot;{editingUser.metabolicResults.insight || "Sin observaciones registradas."}&quot;

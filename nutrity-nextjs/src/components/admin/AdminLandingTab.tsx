@@ -13,7 +13,7 @@ interface AdminLandingTabProps {
 
 export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: AdminLandingTabProps) {
   const [formData, setFormData] = useState({
-    heroTitle: "REMISIÓN METABÓLICA",
+    heroTitle: "TU RUTA DE HÁBITOS METABÓLICOS",
     heroSubtitle: "De la Diabetes Tipo 2",
     heroDescription: "Recuperando tu salud metabólica con ciencia, no con dietas restrictivas.",
     ctaText: "Comenzar mi Transformación",
@@ -90,7 +90,7 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
                 value={formData.heroTitle}
                 onChange={handleChange}
                 className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent outline-none transition-all"
-                placeholder="Ej. REMISIÓN METABÓLICA"
+                placeholder="Ej. TU RUTA DE HÁBITOS METABÓLICOS"
               />
             </div>
             

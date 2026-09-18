@@ -5,28 +5,28 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nutrity.global';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
-  title: "BioVital.360 | Remisión Metabólica",
+  title: "Nutrity Global | Hábitos y salud metabólica",
   description: "Recuperando tu salud metabólica con ciencia, hábitos y esperanza. Programa integral de nutrición y bienestar.",
-  keywords: ["remisión metabólica", "salud metabólica", "nutrición", "bienestar", "BioVital 360", "dieta antiinflamatoria", "salud integral"],
+  keywords: ["salud metabólica", "hábitos", "nutrición", "bienestar", "BioVital.360", "seguimiento"],
   openGraph: {
     type: "website",
     locale: "es_ES",
     url: baseUrl,
-    title: "BioVital.360 | Remisión Metabólica",
+    title: "Nutrity Global | Hábitos y salud metabólica",
     description: "Recuperando tu salud metabólica con ciencia, hábitos y esperanza.",
-    siteName: "BioVital 360",
+    siteName: "Nutrity Global",
     images: [
       {
         url: `/og-image.jpg`,
         width: 1200,
         height: 630,
-        alt: "BioVital 360 Logo",
+        alt: "Nutrity Global",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BioVital.360 | Remisión Metabólica",
+    title: "Nutrity Global | Hábitos y salud metabólica",
     description: "Recuperando tu salud metabólica con ciencia, hábitos y esperanza.",
     images: [`/og-image.jpg`],
   },
@@ -39,7 +39,7 @@ const jsonLd = {
       '@type': 'WebSite',
       '@id': `${baseUrl}/#website`,
       url: baseUrl,
-      name: 'BioVital 360',
+      name: 'Nutrity Global',
       description: 'Recuperando tu salud metabólica con ciencia, hábitos y esperanza.',
       publisher: {
         '@id': `${baseUrl}/#organization`
@@ -49,7 +49,7 @@ const jsonLd = {
     {
       '@type': 'Organization',
       '@id': `${baseUrl}/#organization`,
-      name: 'BioVital 360',
+      name: 'Nutrity Global',
       url: baseUrl,
       logo: {
         '@type': 'ImageObject',

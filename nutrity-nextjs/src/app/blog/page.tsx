@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
     title: "Blog de Salud Metabólica | BioVital.360",
-    description: "Artículos de nutrición clínica, superalimentos andinos y protocolos de remisión metabólica. Contenido creado por expertos.",
+    description: "Artículos educativos sobre alimentación, hábitos y seguimiento de la salud metabólica.",
     openGraph: {
         title: "Blog | BioVital.360",
         description: "Artículos de salud metabólica, nutrición clínica y bienestar.",
@@ -243,7 +243,7 @@ export default async function BlogPage() {
                         </div>
                         <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">Tu Compromiso Transforma</h2>
                         <p className="text-[#e6d3a8] max-w-lg mx-auto text-lg font-medium leading-relaxed">
-                            Accede a la Guía Práctica Basada en Evidencia Científica y descubre cómo revertir el doble ciclo.
+                            Accede a la guía práctica y aprende a comprender el doble ciclo mientras organizas hábitos sostenibles.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
                             <Link href="/auth"
@@ -258,7 +258,7 @@ export default async function BlogPage() {
             {/* ── Footer ── */}
             <footer className="border-t border-[#c19b6c]/20 mt-20 py-12 px-6 bg-white">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-[#2d3748] font-bold uppercase tracking-widest">
-                    <span>© {new Date().getFullYear()} BioVital.360 · MRGA</span>
+                    <span>© {new Date().getFullYear()} Nutrity Global · Contenido de BioVital.360</span>
                     <div className="flex gap-8">
                         <Link href="/" className="hover:text-[#c19b6c] transition-colors">Inicio</Link>
                         <Link href="/blog" className="hover:text-[#c19b6c] transition-colors">Blog</Link>

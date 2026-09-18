@@ -18,10 +18,11 @@ export async function getUserExpedientData(userId: string) {
         throw new Error("User not found");
     }
 
-    // 2. Get latest Biological Diagnosis
-    const diagnosis = await prisma.biologicalDiagnosis.findFirst({
+    // 2. Get latest educational route
+    const evaluation = await prisma.evaluation.findFirst({
         where: { userId },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        select: { results: true, data: true, createdAt: true },
     });
 
     // 3. Get latest Daily Menu
@@ -33,7 +34,6 @@ export async function getUserExpedientData(userId: string) {
     // We only need the menuData if it exists
     let menuData = null;
     let menuMeta = null;
-    let recipes = null;
     if (latestMenu && latestMenu.menuData) {
         menuData = latestMenu.menuData;
         menuMeta = {
@@ -70,7 +70,8 @@ export async function getUserExpedientData(userId: string) {
     // Aggregate into a structured object
     return {
         profile: user,
-        diagnosis: diagnosis || null,
+        route: evaluation?.results || null,
+        routeCreatedAt: evaluation?.createdAt || null,
         measurements: measurements || [],
         menu: menuData,
         menuMeta: menuMeta,

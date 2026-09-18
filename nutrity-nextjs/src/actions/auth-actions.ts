@@ -21,11 +21,10 @@ export async function login(formData: FormData) {
   }
 
   if (authData?.user) {
-      const orgId = formData.get("organizationId") as string | undefined;
       await syncUserProfile({
           uid: authData.user.id,
           email: authData.user.email,
-      }, undefined, orgId);
+      });
   }
 
   revalidatePath("/", "layout");
@@ -33,11 +32,20 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
+  if (formData.get("privacyAccepted") !== "yes") {
+    redirect("/auth?mode=register&error=" + encodeURIComponent("Debes aceptar el Aviso de Privacidad y los Términos de Uso."));
+  }
   const supabase = await createClient();
 
   const data = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
+    options: {
+      data: {
+        privacy_consent_version: "1.0",
+        privacy_consent_at: new Date().toISOString(),
+      },
+    },
   };
 
   const { data: authData, error } = await supabase.auth.signUp(data);
@@ -47,11 +55,10 @@ export async function signup(formData: FormData) {
   }
 
   if (authData?.user) {
-      const orgId = formData.get("organizationId") as string | undefined;
       await syncUserProfile({
           uid: authData.user.id,
           email: authData.user.email,
-      }, undefined, orgId);
+      });
   }
 
   revalidatePath("/", "layout");

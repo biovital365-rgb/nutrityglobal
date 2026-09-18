@@ -1,25 +1,17 @@
 "use server";
 
-import { getServerUser } from "./user-actions";
 import { getUserExpedientData } from "@/lib/reporting/getUserExpedientData";
 import { generatePDFBuffer } from "@/lib/pdf-generator";
-import { supabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
+import { requireUser, requireUserAccess } from "@/lib/authz";
 
 export async function generatePatientPDFReport(patientId?: string) {
     try {
         // 1. Validar sesión
-        const user = await getServerUser();
-        if (!user) {
-            throw new Error("Unauthorized");
-        }
-
-        const targetUserId = patientId || user.id;
-
-        // Solo un admin/coach puede generar reportes de otros usuarios
-        if (targetUserId !== user.id && user.role !== "ADMIN" && user.role !== "COACH") {
-            throw new Error("Unauthorized to access this patient's report");
-        }
+        const user = await requireUser();
+        const { target } = await requireUserAccess(patientId || user.id, { coachAllowed: true });
+        const targetUserId = target.id;
 
         // 2. Obtener datos
         const data = await getUserExpedientData(targetUserId);
@@ -30,6 +22,7 @@ export async function generatePatientPDFReport(patientId?: string) {
         // 4. Subir a Supabase Storage
         const fileName = `report_${targetUserId}_${Date.now()}.pdf`;
         
+        const supabaseAdmin = getSupabaseAdmin();
         const { data: uploadData, error: uploadError } = await supabaseAdmin
             .storage
             .from('pdf-reports')
@@ -58,14 +51,14 @@ export async function generatePatientPDFReport(patientId?: string) {
         await prisma.pDFReportLog.create({
             data: {
                 userId: targetUserId,
-                organizationId: user.organizationId,
+                organizationId: target.organizationId,
                 status: "GENERATED"
             }
         });
 
         return { success: true, url: signedUrlData.signedUrl };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Error generating PDF:", error);
-        return { success: false, error: error.message || "Failed to generate report" };
+        return { success: false, error: error instanceof Error ? error.message : "Failed to generate report" };
     }
 }

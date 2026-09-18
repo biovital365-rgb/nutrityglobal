@@ -5,7 +5,7 @@ import { NutrityDashboard } from "@/components/NutrityDashboard";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { getLatestEvaluation, getLatestBiologicalDiagnosis, getUserAssignmentSubmissions, getUserQuizAttempts } from "@/actions/db-actions";
+import { getLatestEvaluation, getUserAssignmentSubmissions, getUserQuizAttempts } from "@/actions/db-actions";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -29,13 +29,9 @@ export default function DashboardPage() {
       try {
         // Sync user with DB and merge returned profile into state
         const { syncUserProfile } = await import("@/actions/db-actions");
-        // Leer posible código de invitación del Coach
-        const orgId = localStorage.getItem("invitation_org_id");
-        
         const dbProfile = await syncUserProfile(
           { uid: authUser.id, email: authUser.email },
-          authUser.user_metadata?.full_name,
-          orgId || undefined
+          authUser.user_metadata?.full_name
         );
         // Merge the DB profile so user.profile is always available in dashboard
         setUser({ ...authUser, profile: dbProfile });
@@ -47,7 +43,7 @@ export default function DashboardPage() {
         setUserSubmissions(subs);
         setUserQuizAttempts(quizzes);
 
-        let evalData = await getLatestEvaluation(authUser.id);
+        const evalData = await getLatestEvaluation(authUser.id);
         let actualPlan = null;
 
         // Recover guest evaluation if available
@@ -69,14 +65,16 @@ export default function DashboardPage() {
           }
         }
 
-        let nmgData = await getLatestBiologicalDiagnosis(authUser.id);
-
         if (!actualPlan && evalData && evalData.results) {
           actualPlan = {
             ...(evalData.results as object),
-            rawAnswers: evalData.data,
-            nmg: nmgData
+            rawAnswers: evalData.data
           };
+        }
+
+        if (actualPlan && actualPlan.routeVersion !== '2.0' && dbProfile?.role !== 'COACH' && dbProfile?.role !== 'ADMIN') {
+          router.push('/onboarding');
+          return;
         }
 
         if (!actualPlan && dbProfile?.role !== 'COACH' && dbProfile?.role !== 'ADMIN') {

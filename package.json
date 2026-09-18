@@ -4,11 +4,12 @@
   "version": "4.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port=3001 --host=0.0.0.0",
-    "build": "vite build",
-    "preview": "vite preview",
-    "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "dev": "npm --prefix nutrity-nextjs run dev",
+    "build": "npm --prefix nutrity-nextjs run build",
+    "start": "npm --prefix nutrity-nextjs run start",
+    "lint": "npm --prefix nutrity-nextjs run lint",
+    "typecheck": "npm --prefix nutrity-nextjs run typecheck",
+    "check": "npm --prefix nutrity-nextjs run check"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

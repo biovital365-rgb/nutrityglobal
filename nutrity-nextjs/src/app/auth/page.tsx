@@ -18,8 +18,8 @@ export default async function AuthPage(props: {
           </h2>
           <p className="text-gray-500 text-sm">
             {isRegister 
-              ? "Guarda tu Bio-Plan y accede a tu panel personalizado." 
-              : "Inicia sesión para ver tu progreso y tu Bio-Plan."}
+              ? "Guarda tu Ruta Nutrity y accede a tu panel personalizado."
+              : "Inicia sesión para ver tu progreso y tu Ruta Nutrity."}
           </p>
         </div>
         

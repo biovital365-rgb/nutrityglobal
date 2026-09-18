@@ -291,9 +291,9 @@ model PDFReportLog {
   @@index([organizationId])
 }
 
-// ─── TRIAJE HOLÍSTICO NMG ────────────────────────────────────────────────────
-// Almacena el síntoma principal del paciente + la decodificación biológica
-// que la IA genera durante el Onboarding. Permite audit trail clínico.
+// ─── TABLA LEGADA INACTIVA ───────────────────────────────────────────────────
+// Se conserva solo para una futura migración controlada de datos históricos.
+// Ningún flujo de la aplicación lee o escribe este modelo.
 model BiologicalDiagnosis {
   id               String        @id @default(cuid())
   userId           String
@@ -303,9 +303,9 @@ model BiologicalDiagnosis {
   affectedSystem   String // ej: "Digestivo", "Inmune", "Hormonal"
   symptomDuration  String? // ej: "6 meses", "2 años"
   emotionalContext String? // ej: "miedo al futuro", "conflicto de territorio"
-  // Resultado de la IA (NMG/Biodescodificación)
-  nmgConflict      String? // La raíz emocional identificada
-  nmgOrgan         String? // El órgano o sistema biológico involucrado
+  // Columnas históricas; no se usan para inferencias ni para contenido visible.
+  nmgConflict      String?
+  nmgOrgan         String?
   holisticApproach Json? // Array de disciplinas: MTC, Ayurveda, PNL, etc.
   aiRawResponse    String? // El texto íntegro de la IA para auditoría
   // Control

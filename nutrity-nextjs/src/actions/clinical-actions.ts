@@ -2,22 +2,19 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getServerUser, getInternalId } from "./user-actions";
+import { organizationScope, requireOrganizationResource, requireRole, requireUserAccess } from "@/lib/authz";
+import type { Prisma } from "@prisma/client";
 
 export async function saveEvaluation(userId: string, organizationId: string | undefined, data: any, results: any) {
-    const currentUser = await getServerUser();
-    if (!currentUser) throw new Error("Unauthorized");
-    
-    const internalId = await getInternalId(userId);
-    
-    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
-        const patient = await prisma.user.findUnique({ where: { id: internalId }});
-        if (!['COACH', 'ELITE'].includes(currentUser.role) || patient?.organizationId !== currentUser.organizationId) {
-            throw new Error("Forbidden");
-        }
-    }
-    
-    const targetOrgId = currentUser.role === 'ADMIN' ? (organizationId || null) : currentUser.organizationId;
+    const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
+    const targetOrgId = actor.role === 'ADMIN' ? (organizationId || target.organizationId) : target.organizationId;
+
+    if (data?.privacyConsent !== true) throw new Error('Privacy consent required');
+    const consentedData = {
+        ...data,
+        privacyConsent: { accepted: true, version: '1.0', recordedAt: new Date().toISOString() },
+    };
 
     const existingEval = await prisma.evaluation.findFirst({
         where: { userId: internalId }
@@ -26,121 +23,24 @@ export async function saveEvaluation(userId: string, organizationId: string | un
     if (existingEval) {
         return await prisma.evaluation.update({
             where: { id: existingEval.id },
-            data: { data, results, organizationId: targetOrgId }
+            data: { data: consentedData, results, organizationId: targetOrgId }
         });
     } else {
         return await prisma.evaluation.create({
             data: {
                 userId: internalId,
                 organizationId: targetOrgId,
-                data,
+                data: consentedData,
                 results
             }
         });
     }
 }
 
-export async function saveBiologicalDiagnosis(
-    userId: string,
-    organizationId: string | undefined,
-    triaje: {
-        mainSymptom: string;
-        affectedSystem: string;
-        symptomDuration: string;
-        emotionalContext: string;
-    },
-    nmgDiagnosis: {
-        conflict: string;
-        organ: string;
-        phase: string;
-        holisticApproach: Array<{ discipline: string; recommendation: string }>;
-    }
-) {
-    const currentUser = await getServerUser();
-    if (!currentUser) throw new Error("Unauthorized");
-    
-    const internalId = await getInternalId(userId);
-    
-    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
-        const patient = await prisma.user.findUnique({ where: { id: internalId }});
-        if (!['COACH', 'ELITE'].includes(currentUser.role) || patient?.organizationId !== currentUser.organizationId) {
-            throw new Error("Forbidden");
-        }
-    }
-    
-    const targetOrgId = currentUser.role === 'ADMIN' ? (organizationId || null) : currentUser.organizationId;
-
-    const existing = await prisma.biologicalDiagnosis.findFirst({
-        where: { userId: internalId }
-    });
-
-    const payload = {
-        userId: internalId,
-        organizationId: targetOrgId,
-        mainSymptom: triaje.mainSymptom,
-        affectedSystem: triaje.affectedSystem,
-        symptomDuration: triaje.symptomDuration,
-        emotionalContext: triaje.emotionalContext,
-        nmgConflict: nmgDiagnosis.conflict,
-        nmgOrgan: nmgDiagnosis.organ,
-        phase: nmgDiagnosis.phase,
-        holisticApproach: nmgDiagnosis.holisticApproach as any,
-        updatedAt: new Date()
-    };
-
-    try {
-        if (existing) {
-            return await prisma.biologicalDiagnosis.update({
-                where: { id: existing.id },
-                data: payload
-            });
-        } else {
-            return await prisma.biologicalDiagnosis.create({
-                data: payload
-            });
-        }
-    } catch(e: any) {
-        console.error('[NMG] saveBiologicalDiagnosis error:', {
-            userId: internalId,
-            error: e.message,
-            step: 'upsert BiologicalDiagnosis',
-        });
-        throw e;
-    }
-}
-
-export async function getLatestBiologicalDiagnosis(userId: string) {
-    const currentUser = await getServerUser();
-    if (!currentUser) throw new Error("Unauthorized");
-
-    const internalId = await getInternalId(userId);
-    
-    const where: any = { userId: internalId };
-    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
-        where.organizationId = currentUser.organizationId || null;
-    }
-
-    const data = await prisma.biologicalDiagnosis.findFirst({
-        where,
-        orderBy: { updatedAt: 'desc' }
-    });
-
-    return data;
-}
-
 export async function getLatestEvaluation(userId: string, organizationId?: string) {
-    const currentUser = await getServerUser();
-    if (!currentUser) throw new Error("Unauthorized");
-
-    const internalId = await getInternalId(userId);
-    
-    const where: any = { userId: internalId };
-    
-    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
-        where.organizationId = currentUser.organizationId || null;
-    } else if (organizationId) {
-        where.organizationId = organizationId;
-    }
+    const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
+    const where: any = { userId: target.id };
+    if (actor.role === 'ADMIN' && organizationId) where.organizationId = organizationId;
 
     const data = await prisma.evaluation.findFirst({
         where,
@@ -150,18 +50,31 @@ export async function getLatestEvaluation(userId: string, organizationId?: strin
     return data;
 }
 
-export async function getMeasurements(userId: string, organizationId?: string) {
-    const currentUser = await getServerUser();
-    if (!currentUser) throw new Error("Unauthorized");
+export async function updateRouteAction(userId: string, actionId: string, completed: boolean) {
+    const { target } = await requireUserAccess(userId);
+    const evaluation = await prisma.evaluation.findFirst({
+        where: { userId: target.id },
+        orderBy: { timestamp: 'desc' },
+    });
+    if (!evaluation || !evaluation.results || typeof evaluation.results !== 'object') throw new Error('Ruta Nutrity no encontrada');
 
-    const internalId = await getInternalId(userId);
-    const where: any = { userId: internalId };
-    
-    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
-        where.organizationId = currentUser.organizationId || null;
-    } else if (organizationId) {
-        where.organizationId = organizationId;
-    }
+    const results = evaluation.results as Record<string, unknown>;
+    if (!Array.isArray(results.weeklyActions)) throw new Error('La evaluación no contiene una Ruta Nutrity vigente');
+    const weeklyActions = results.weeklyActions.map(item => {
+        if (!item || typeof item !== 'object') return item;
+        const action = item as Record<string, unknown>;
+        return action.id === actionId ? { ...action, completed } : action;
+    });
+    const nextResults = { ...results, weeklyActions, updatedAt: new Date().toISOString() } as Prisma.InputJsonValue;
+    await prisma.evaluation.update({ where: { id: evaluation.id }, data: { results: nextResults } });
+    revalidatePath('/dashboard');
+    return nextResults;
+}
+
+export async function getMeasurements(userId: string, organizationId?: string) {
+    const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
+    const where: any = { userId: target.id };
+    if (actor.role === 'ADMIN' && organizationId) where.organizationId = organizationId;
 
     const data = await prisma.measurement.findMany({
         where,
@@ -172,20 +85,15 @@ export async function getMeasurements(userId: string, organizationId?: string) {
 }
 
 export async function saveMeasurement(userId: string, organizationId: string | undefined, measurement: any) {
-    const currentUser = await getServerUser();
-    if (!currentUser) throw new Error("Unauthorized");
-
-    const internalId = await getInternalId(userId);
-    
-    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
-        const patient = await prisma.user.findUnique({ where: { id: internalId }});
-        if (!['COACH', 'ELITE'].includes(currentUser.role) || patient?.organizationId !== currentUser.organizationId) {
-            throw new Error("Forbidden");
-        }
-        organizationId = currentUser.organizationId || undefined;
-    }
+    const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
+    organizationId = actor.role === 'ADMIN' ? organizationId : (target.organizationId || undefined);
 
     const id = measurement.id && measurement.id.length > 20 ? measurement.id : crypto.randomUUID();
+    if (measurement.id) {
+        const existing = await prisma.measurement.findUnique({ where: { id }, select: { userId: true } });
+        if (!existing || existing.userId !== internalId) throw new Error('Forbidden');
+    }
     
     const payload = {
         label: measurement.label,
@@ -207,11 +115,12 @@ export async function saveMeasurement(userId: string, organizationId: string | u
 }
 
 export async function getAppointments(userId: string, organizationId?: string, includeDeleted = false) {
-    const internalId = await getInternalId(userId);
+    const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
     
     const where: any = { userId: internalId };
     if (!includeDeleted) where.deletedAt = null;
-    if (organizationId) where.organizationId = organizationId;
+    if (actor.role === 'ADMIN' && organizationId) where.organizationId = organizationId;
     
     const data = await prisma.appointment.findMany({
         where,
@@ -222,9 +131,15 @@ export async function getAppointments(userId: string, organizationId?: string, i
 }
 
 export async function saveAppointment(userId: string, organizationId: string | undefined, appointment: any) {
-    const internalId = await getInternalId(userId);
+    const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
+    organizationId = actor.role === 'ADMIN' ? organizationId : (target.organizationId || undefined);
 
     const id = appointment.id && appointment.id.length > 20 ? appointment.id : crypto.randomUUID();
+    if (appointment.id) {
+        const existing = await prisma.appointment.findUnique({ where: { id }, select: { userId: true } });
+        if (!existing || existing.userId !== internalId) throw new Error('Forbidden');
+    }
     
     const payload = {
         title: appointment.title,
@@ -246,9 +161,10 @@ export async function saveAppointment(userId: string, organizationId: string | u
 }
 
 export async function getAllAppointments(organizationId?: string, includeDeleted = false) {
-    const where: any = {};
+    const actor = await requireRole('ADMIN', 'COACH');
+    const scopedOrg = organizationScope(actor, organizationId);
+    const where: any = scopedOrg ? { organizationId: scopedOrg } : {};
     if (!includeDeleted) where.deletedAt = null;
-    if (organizationId) where.organizationId = organizationId;
     
     const data = await prisma.appointment.findMany({
         where,
@@ -262,14 +178,26 @@ export async function getAllAppointments(organizationId?: string, includeDeleted
 }
 
 export async function updateAppointment(id: string, updates: any) {
+    const existing = await prisma.appointment.findUnique({ where: { id }, select: { userId: true } });
+    if (!existing) throw new Error('Appointment not found');
+    await requireUserAccess(existing.userId, { coachAllowed: true });
     const data = await prisma.appointment.update({
         where: { id },
-        data: updates
+        data: {
+            title: updates.title,
+            date: updates.date,
+            time: updates.time,
+            type: updates.type,
+            status: updates.status,
+        }
     });
     return data;
 }
 
 export async function deleteAppointment(id: string) {
+    const existing = await prisma.appointment.findUnique({ where: { id }, select: { userId: true } });
+    if (!existing) throw new Error('Appointment not found');
+    await requireUserAccess(existing.userId, { coachAllowed: true });
     await prisma.appointment.update({
         where: { id },
         data: { deletedAt: new Date() }
@@ -278,6 +206,9 @@ export async function deleteAppointment(id: string) {
 }
 
 export async function restoreAppointment(id: string) {
+    const existing = await prisma.appointment.findUnique({ where: { id }, select: { organizationId: true } });
+    if (!existing) throw new Error('Appointment not found');
+    await requireOrganizationResource(existing.organizationId);
     const data = await prisma.appointment.update({
         where: { id },
         data: { deletedAt: null }
@@ -287,6 +218,9 @@ export async function restoreAppointment(id: string) {
 }
 
 export async function logPDFReport(userId: string, organizationId: string | undefined, status: 'GENERATED' | 'DOWNLOADED' | 'ERROR', errorMessage?: string) {
+    const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
+    userId = target.id;
+    organizationId = actor.role === 'ADMIN' ? organizationId : (target.organizationId || undefined);
     const id = crypto.randomUUID();
     
     try {
@@ -308,8 +242,9 @@ export async function logPDFReport(userId: string, organizationId: string | unde
 }
 
 export async function getPDFReports(organizationId?: string) {
-    const where: any = {};
-    if (organizationId) where.organizationId = organizationId;
+    const actor = await requireRole('ADMIN', 'COACH');
+    const scopedOrg = organizationScope(actor, organizationId);
+    const where: any = scopedOrg ? { organizationId: scopedOrg } : {};
     
     const data = await prisma.pDFReportLog.findMany({
         where,

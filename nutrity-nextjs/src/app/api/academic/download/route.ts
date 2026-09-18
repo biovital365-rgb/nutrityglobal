@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
         const lessonId = searchParams.get("lessonId");
         const type = searchParams.get("type"); // "pdf" | "presentation"
 
-        if (!lessonId || !type) {
+        if (!lessonId || (type !== 'pdf' && type !== 'presentation')) {
             return new NextResponse("Faltan parámetros", { status: 400 });
         }
 
@@ -40,7 +40,16 @@ export async function GET(req: NextRequest) {
             return new NextResponse("Recurso no disponible", { status: 404 });
         }
 
-        const fetchRes = await fetch(targetUrl);
+        const resourceUrl = new URL(targetUrl);
+        const allowedHosts = (process.env.ACADEMIC_RESOURCE_HOSTS || '')
+            .split(',')
+            .map(host => host.trim().toLowerCase())
+            .filter(Boolean);
+        if (resourceUrl.protocol !== 'https:' || !allowedHosts.includes(resourceUrl.hostname.toLowerCase())) {
+            return new NextResponse('Origen del recurso no autorizado', { status: 403 });
+        }
+
+        const fetchRes = await fetch(resourceUrl, { redirect: 'error' });
         if (!fetchRes.ok) {
             return new NextResponse("Error al recuperar el archivo del almacenamiento", { status: fetchRes.status });
         }

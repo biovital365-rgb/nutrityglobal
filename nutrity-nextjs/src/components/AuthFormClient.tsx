@@ -1,21 +1,10 @@
 "use client";
 import { login, signup } from "@/actions/auth-actions";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
-export function AuthFormClient({ isRegister, error }: { isRegister: boolean, error?: string }) {
-    const [orgId, setOrgId] = useState<string>("");
-
-    useEffect(() => {
-        const storedOrgId = localStorage.getItem("invitation_org_id");
-        if (storedOrgId) {
-            setOrgId(storedOrgId);
-        }
-    }, []);
-
+export function AuthFormClient({ isRegister }: { isRegister: boolean, error?: string }) {
     return (
         <form className="flex flex-col gap-5">
-            <input type="hidden" name="organizationId" value={orgId} />
             <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5" htmlFor="email">
                 Correo Electrónico
@@ -29,6 +18,21 @@ export function AuthFormClient({ isRegister, error }: { isRegister: boolean, err
                 placeholder="tu@email.com"
                 />
             </div>
+
+            {isRegister && (
+                <label className="flex items-start gap-3 text-sm text-gray-600">
+                    <input
+                        type="checkbox"
+                        name="privacyAccepted"
+                        value="yes"
+                        required
+                        className="mt-1 h-4 w-4 rounded border-gray-300 text-[#84cc16] focus:ring-[#84cc16]"
+                    />
+                    <span>
+                        He leído y acepto el <Link href="/privacy" className="font-semibold text-[#65a30d] hover:underline">Aviso de Privacidad</Link> y los <Link href="/terms" className="font-semibold text-[#65a30d] hover:underline">Términos de Uso</Link>.
+                    </span>
+                </label>
+            )}
             
             <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5" htmlFor="password">

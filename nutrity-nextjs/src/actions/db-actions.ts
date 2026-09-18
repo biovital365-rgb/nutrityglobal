@@ -55,9 +55,8 @@ export {
 
 export {
     saveEvaluation,
-    saveBiologicalDiagnosis,
-    getLatestBiologicalDiagnosis,
     getLatestEvaluation,
+    updateRouteAction,
     getMeasurements,
     saveMeasurement,
     getAppointments,

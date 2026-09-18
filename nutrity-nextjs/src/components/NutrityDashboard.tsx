@@ -44,6 +44,7 @@ import {
     ChefHat,
     ArrowLeft,
     Shield,
+    ShieldAlert,
     Target,
     Leaf,
     LayoutDashboard,
@@ -102,34 +103,9 @@ interface NutrityDashboardProps {
 }
 
 export function NutrityDashboard({ results, user, userSubmissions = [], userQuizAttempts = [], onViewDetail, onGeneratePDF, onRequireAuth, onLogout, isGeneratingPDF, onMenuUpdate }: NutrityDashboardProps) {
-    const isCoachOrAdminInit = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com';
+    const isCoachOrAdminInit = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE';
     const [activeTab, setActiveTab] = useState(isCoachOrAdminInit ? "organization" : "main");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-    if (user?.profile?.status === 'BLOCKED') {
-        return (
-            <div className="min-h-screen bg-nutrity-bg flex items-center justify-center p-6">
-                <div className="nutrity-card p-12 max-w-lg text-center space-y-6 animate-in fade-in zoom-in duration-500">
-                    <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Shield className="w-10 h-10" />
-                    </div>
-                    <h2 className="text-3xl font-display font-bold text-nutrity-primary">Acceso Restringido</h2>
-                    <p className="text-nutrity-gray-text font-medium leading-relaxed">
-                        Tu cuenta ha sido bloqueada temporalmente por infracciones a los términos de servicio, falta de pago o por estar en estado de observación administrativa.
-                    </p>
-                    <div className="pt-4 space-y-4">
-                        <p className="text-sm text-nutrity-gray-text opacity-70">Por favor, contacta con tu asesor o soporte para regularizar tu situación.</p>
-                        <button 
-                            onClick={onLogout} 
-                            className="bg-nutrity-primary text-white px-10 py-4 rounded-xl font-bold uppercase tracking-widest transition-all hover:bg-nutrity-accent shadow-lg shadow-nutrity-primary/20 active:scale-95"
-                        >
-                            Cerrar Sesión
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
     // Priority: diagnostic name → DB profile name → email prefix (never hardcode "Freddy")
     const firstName = (
         results?.name ||
@@ -394,7 +370,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
         // Redirigir a perfil SOLO si:
         // 1. No es ADMIN (los admins tienen libertad total)
         // 2. El perfil ya cargó pero está incompleto
-        const isAdmin = user?.profile?.role === 'ADMIN' || user?.email === 'biovital.365@gmail.com';
+        const isAdmin = user?.profile?.role === 'ADMIN';
         
         if ((user?.id || user?.uid) && user?.profile && !isProfileComplete && activeTab !== "profile" && !isAdmin) {
             setActiveTab("profile");
@@ -643,7 +619,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
         }
     };
 
-    const isCoachOrAdmin = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com';
+    const isCoachOrAdmin = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE';
 
     const navItems = isCoachOrAdmin ? [
         { id: "organization", icon: Users, label: user?.profile?.role === 'ADMIN' ? "Superadmin Global" : "Mi Organización" },
@@ -678,6 +654,31 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
         .filter(a => new Date(a.date) >= new Date(new Date().setHours(0,0,0,0)))
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const nextAppt = upcomingAppointments[0];
+
+    if (user?.profile?.status === 'BLOCKED') {
+        return (
+            <div className="min-h-screen bg-nutrity-bg flex items-center justify-center p-6">
+                <div className="nutrity-card p-12 max-w-lg text-center space-y-6 animate-in fade-in zoom-in duration-500">
+                    <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Shield className="w-10 h-10" />
+                    </div>
+                    <h2 className="text-3xl font-display font-bold text-nutrity-primary">Acceso Restringido</h2>
+                    <p className="text-nutrity-gray-text font-medium leading-relaxed">
+                        Tu cuenta ha sido bloqueada temporalmente por infracciones a los términos de servicio, falta de pago o por estar en estado de observación administrativa.
+                    </p>
+                    <div className="pt-4 space-y-4">
+                        <p className="text-sm text-nutrity-gray-text opacity-70">Por favor, contacta con tu asesor o soporte para regularizar tu situación.</p>
+                        <button
+                            onClick={onLogout}
+                            className="bg-nutrity-primary text-white px-10 py-4 rounded-xl font-bold uppercase tracking-widest transition-all hover:bg-nutrity-accent shadow-lg shadow-nutrity-primary/20 active:scale-95"
+                        >
+                            Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div id="dashboard-container" className="flex h-screen bg-nutrity-bg text-nutrity-primary overflow-hidden font-body pb-[90px] md:pb-0">
@@ -764,7 +765,20 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                 <AdminPanel user={user} onLogout={onLogout} />
                             </motion.div>
                         )}
-                        {activeTab === "main" && (
+                        {activeTab === "main" && results?.routeVersion === '2.0' && (
+                            <motion.div key="main-route" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                <BioPlanSection plan={results} userName={firstName} userId={user?.profile?.id || user?.id || user?.uid} />
+                            </motion.div>
+                        )}
+                        {activeTab === "main" && results?.routeVersion !== '2.0' && (
+                            <div className="nutrity-card p-10 text-center">
+                                <ShieldAlert className="mx-auto h-10 w-10 text-amber-600" />
+                                <h2 className="mt-4 text-2xl font-black">Actualiza tu recorrido</h2>
+                                <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">La evaluación anterior fue retirada. Completa la nueva Ruta Nutrity para recibir acciones educativas de 12 semanas sin diagnósticos ni predicciones.</p>
+                                <button onClick={() => window.location.assign('/onboarding')} className="mt-6 rounded-xl bg-nutrity-primary px-6 py-3 font-bold text-white">Crear mi Ruta Nutrity</button>
+                            </div>
+                        )}
+                        {false && activeTab === "main" && results?.routeVersion !== '2.0' && (
                             <motion.div key="main" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                                 {/* Hero Card - Removing 'nutrity-card' to avoid baseline white override */}
                                 <div className="bg-nutrity-primary p-6 md:p-12 text-white rounded-[32px] md:rounded-[40px] relative overflow-hidden group shadow-2xl ring-1 ring-white/10">
@@ -772,15 +786,15 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                         <div className="space-y-6">
                                             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10">
                                                 <Zap className="w-4 h-4 text-nutrity-accent" />
-                                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Fase de Remisión Activa</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Recorrido de hábitos</span>
                                             </div>
                                             <h2 className="text-3xl md:text-5xl font-display font-bold leading-[1.1] uppercase tracking-tighter">PROTOCOLO MAESTRO: {results.phase} 2025</h2>
-                                            <p className="text-base md:text-xl text-white/60 font-medium max-w-md">Hemos calibrado tu ecosistema metabólico basado en tu perfil biológico para acelerar tu restauración celular.</p>
+                                            <p className="text-base md:text-xl text-white/60 font-medium max-w-md">Organizamos acciones educativas a partir de la información que compartiste.</p>
                                         </div>
                                         <div className="grid md:grid-cols-2 gap-8">
                                             {/* Results Grid - Dynamic from 'results' */}
                                             <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 flex flex-col justify-center items-center text-center">
-                                                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Score de Remisión</p>
+                                                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Indicador histórico retirado</p>
                                                 <div className="flex items-baseline gap-1">
                                                     <h4 className="text-4xl md:text-5xl font-black">{results.remissionScore}</h4>
                                                     <span className="text-lg md:text-xl font-bold opacity-40">%</span>
@@ -825,8 +839,8 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                                         <Stethoscope className="w-5 h-5" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-nutrity-accent">Nueva Medicina Germánica · NMG</p>
-                                                        <h3 className="font-display font-bold text-lg leading-none">Mapa de Ruta Biológico</h3>
+                                                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-nutrity-accent">Contenido anterior retirado</p>
+                                                        <h3 className="font-display font-bold text-lg leading-none">Actualiza tu Ruta Nutrity</h3>
                                                     </div>
                                                 </div>
                                                 <span className={`text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border ${
@@ -874,7 +888,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
 
                                             <div className="flex items-center gap-2 pt-2 border-t border-nutrity-border">
                                                 <Brain className="w-3.5 h-3.5 text-nutrity-accent" />
-                                                <p className="text-[9px] text-nutrity-gray-text">Generado por IA basado en tu Triaje Holístico · Actualiza tu diagnóstico completando un nuevo onboarding.</p>
+                                                <p className="text-[9px] text-nutrity-gray-text">Este contenido ya no forma parte de Nutrity. Completa el nuevo onboarding educativo.</p>
                                             </div>
                                         </motion.div>
                                         
@@ -883,8 +897,8 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-xl mb-4">
                                                     <Crown className="w-8 h-8 text-nutrity-accent" />
                                                 </div>
-                                                <h4 className="text-2xl font-display font-bold text-slate-800 mb-2">Desbloquea tu Diagnóstico Completo</h4>
-                                                <p className="text-slate-600 max-w-sm mb-6">Conoce la raíz biológica de tus síntomas y obtén tu mapa de remisión integral.</p>
+                                                <h4 className="text-2xl font-display font-bold text-slate-800 mb-2">Crea tu Ruta Nutrity</h4>
+                                                <p className="text-slate-600 max-w-sm mb-6">Organiza hábitos semanales y registra tu progreso.</p>
                                                 <button 
                                                     onClick={() => setActiveTab('subscription')}
                                                     className="bg-slate-800 text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-slate-900 transition-colors shadow-xl"
@@ -1040,7 +1054,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                         <div className="flex-1">
                                             <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Plan Nutricional</p>
                                             <h4 className="font-bold text-sm mt-0.5">Dieta Especial AI</h4>
-                                            <p className="text-[10px] font-bold text-nutrity-success mt-1 opacity-50">Prescripción de Precisión</p>
+                                            <p className="text-[10px] font-bold text-nutrity-success mt-1 opacity-50">Orientación educativa</p>
                                         </div>
                                     </div>
                                     <div className="nutrity-card p-6 flex items-center gap-6 cursor-pointer hover:border-nutrity-accent transition-all group" onClick={() => setShowMeasureModal(true)}>
@@ -1177,7 +1191,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {(user?.profile?.role === 'ADMIN' || user?.email === 'biovital.365@gmail.com' || user?.email === 'biovital.360@gmail.com') ? (
+                        {user?.profile?.role === 'ADMIN' ? (
                             <button
                                 onClick={() => setActiveTab("organization")}
                                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-nutrity-primary/5 hover:bg-nutrity-primary/10 text-nutrity-primary transition-all group"

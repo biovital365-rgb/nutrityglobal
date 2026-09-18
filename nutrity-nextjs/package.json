@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run typecheck && next build --webpack",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint --quiet",
+    "lint:all": "eslint",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm run build",
+    "db:generate": "prisma generate",
     "postinstall": "prisma generate"
   },
   "dependencies": {

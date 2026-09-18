@@ -1,11 +1,16 @@
 import { MetadataRoute } from 'next'
 import { getPosts } from '@/actions/db-actions'
 
+export const dynamic = 'force-dynamic'
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nutrity.global'
 
   // Get all published blog posts
-  const posts = await getPosts()
+  const posts = await getPosts().catch((error) => {
+    console.error('[SITEMAP] No se pudieron cargar las publicaciones', error)
+    return []
+  })
   const publishedPosts = posts.filter(post => post.isPublished)
 
   const blogUrls = publishedPosts.map((post) => ({

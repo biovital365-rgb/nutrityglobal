@@ -26,7 +26,7 @@ export default function SubscriptionTab({ user, onSuccess }: Props) {
       id: "free",
       name: "BioVital Free",
       price: "0.00",
-      description: "Inicia tu camino hacia la remisión metabólica.",
+      description: "Crea tu primera ruta de hábitos y registra tu avance.",
       features: [
         "Acceso Básico a la Plataforma",
         "Perfil Metabólico Inicial",
@@ -40,7 +40,7 @@ export default function SubscriptionTab({ user, onSuccess }: Props) {
       id: "basic",
       name: "Básico",
       price: "9.99",
-      description: "Inicia tu remisión con generación de menú asistida.",
+      description: "Convierte tu ruta en una rutina semanal guiada.",
       features: [
         "1 Menú Semanal IA al mes",
         "Descarga de Reporte PDF Estándar",
@@ -57,7 +57,7 @@ export default function SubscriptionTab({ user, onSuccess }: Props) {
       description: "Potencia tu restauración con menús ilimitados.",
       features: [
         "Menús semanales IA ilimitados",
-        "Reporte PDF Premium (Biodescodificación)",
+        "Reporte educativo de progreso",
         "Feedback loop (Solicitar Cambios)",
         "Acceso completo a Cursos y Recetario"
       ],
@@ -87,7 +87,7 @@ export default function SubscriptionTab({ user, onSuccess }: Props) {
       <div className="text-center space-y-2 mb-12">
         <h2 className="text-3xl font-display font-bold">Planes de Suscripción</h2>
         <p className="text-nutrity-gray-text text-sm max-w-lg mx-auto">
-          Desbloquea todo el potencial de la remisión metabólica con acceso a herramientas avanzadas y seguimiento profesional.
+          Amplía tu Ruta Nutrity con planificación semanal, seguimiento y acompañamiento opcional.
         </p>
       </div>
 

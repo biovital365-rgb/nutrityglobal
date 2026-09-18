@@ -1,20 +1,18 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Nutrity Global
 
-# Run and deploy your AI Studio app
+La aplicación oficial y única ruta de despliegue está en [`nutrity-nextjs`](./nutrity-nextjs).
+El código Vite de la raíz se conserva temporalmente solo como referencia durante la consolidación y no debe desplegarse.
 
-This contains everything you need to run your app locally.
+## Desarrollo local
 
-View your app in AI Studio: https://ai.studio/apps/15d1bd6b-c37c-4521-9a86-dc6949da7bfa
+1. `npm --prefix nutrity-nextjs ci`
+2. Copia `nutrity-nextjs/.env.example` a `nutrity-nextjs/.env.local` y completa los secretos fuera de Git.
+3. `npm run dev`
 
-## Run Locally
+## Verificación
 
-**Prerequisites:**  Node.js
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Consulta [`nutrity-nextjs/README.md`](./nutrity-nextjs/README.md) para la configuración completa.

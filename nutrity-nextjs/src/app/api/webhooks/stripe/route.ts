@@ -3,14 +3,31 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { prisma as db } from '@/lib/prisma';
 
-const stripe = new Stripe((process.env.STRIPE_SECRET_KEY || 'sk_test_mock') as string, {
-  apiVersion: '2026-04-22.dahlia',
-});
+const ALLOWED_PLANS = new Set(['BASIC', 'ADVANCED', 'ELITE']);
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
+function planFromSubscription(subscription: Stripe.Subscription) {
+  const priceId = subscription.items.data[0]?.price.id;
+  const entries = [
+    ['BASIC', process.env.STRIPE_PRICE_BASIC],
+    ['ADVANCED', process.env.STRIPE_PRICE_ADVANCED],
+    ['ELITE', process.env.STRIPE_PRICE_ELITE],
+  ] as const;
+  return entries.find(([, configuredPriceId]) => configuredPriceId && configuredPriceId === priceId)?.[0] || null;
+}
+
+function paidRole(currentRole: string, plan: string) {
+  if (currentRole === 'ADMIN') return 'ADMIN';
+  return plan === 'ELITE' ? 'COACH' : 'USER';
+}
 
 export async function POST(req: Request) {
   try {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!stripeKey || !webhookSecret) {
+      return new NextResponse('Webhook not configured', { status: 503 });
+    }
+    const stripe = new Stripe(stripeKey, { apiVersion: '2026-04-22.dahlia' });
     const body = await req.text();
     const signature = (await headers()).get('stripe-signature') as string;
 
@@ -18,9 +35,10 @@ export async function POST(req: Request) {
 
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (err: any) {
-      console.error(`Webhook signature verification failed: ${err.message}`);
-      return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Invalid signature';
+      console.error(`Webhook signature verification failed: ${message}`);
+      return new NextResponse(`Webhook Error: ${message}`, { status: 400 });
     }
 
     // Handle the event
@@ -29,18 +47,26 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.mode === 'subscription') {
           const subscriptionId = session.subscription as string;
-          const planType = session.metadata?.planType;
           const userId = session.metadata?.userId;
 
-          if (userId && planType) {
+          if (userId && subscriptionId) {
+            const [user, subscription] = await Promise.all([
+              db.user.findUnique({ where: { id: userId } }),
+              stripe.subscriptions.retrieve(subscriptionId),
+            ]);
+            const planType = planFromSubscription(subscription);
+            const isEntitled = subscription.status === 'active' || subscription.status === 'trialing';
+            const customerMatches = Boolean(user?.stripeCustomerId && user.stripeCustomerId === session.customer);
+            if (!user || !planType || !ALLOWED_PLANS.has(planType) || !isEntitled || !customerMatches) {
+              return new NextResponse('Invalid subscription entitlement', { status: 400 });
+            }
             await db.user.update({
               where: { id: userId },
               data: {
                 subscriptionId: subscriptionId,
-                subscriptionStatus: 'ACTIVE',
+                subscriptionStatus: subscription.status.toUpperCase(),
                 plan: planType,
-                // Si el plan es ELITE, actualizamos el rol también
-                ...(planType === 'ELITE' ? { role: 'ADMIN' } : {}),
+                role: paidRole(user.role, planType),
               },
             });
             console.log(`User ${userId} upgraded to ${planType}`);
@@ -59,22 +85,24 @@ export async function POST(req: Request) {
         });
 
         if (user) {
-          // If subscription is canceled or unpaid, fallback to FREE
-          if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
+          const planType = planFromSubscription(subscription);
+          const isEntitled = subscription.status === 'active' || subscription.status === 'trialing';
+          if (!isEntitled || !planType) {
             await db.user.update({
               where: { id: user.id },
               data: {
-                subscriptionStatus: subscription.status,
+                subscriptionStatus: subscription.status.toUpperCase(),
                 plan: 'FREE',
-                role: 'USER', // Evita que coaches mantengan acceso admin sin pagar
+                role: user.role === 'ADMIN' ? 'ADMIN' : 'USER',
               },
             });
           } else {
-             // For active or past_due statuses
              await db.user.update({
               where: { id: user.id },
               data: {
-                subscriptionStatus: subscription.status,
+                subscriptionStatus: subscription.status.toUpperCase(),
+                plan: planType,
+                role: paidRole(user.role, planType),
               },
             });
           }
@@ -87,7 +115,7 @@ export async function POST(req: Request) {
     }
 
     return new NextResponse(null, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[STRIPE_WEBHOOK_ERROR]', error);
     return new NextResponse('Internal Error', { status: 500 });
   }

@@ -4,80 +4,39 @@ import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { sendWelcomeEmail } from "./email-actions";
+import { getAuthenticatedUser, requireRole, requireUser, requireUserAccess } from "@/lib/authz";
+import { z } from "zod";
 
-const ADMIN_EMAILS = [
-    'biovital.365@gmail.com',
-    'biovital.360@gmail.com',
-    'admin@nutrity.global',
-    'apexdigital70@gmail.com'
-];
-
-// Cache para IDs de usuario para acelerar la carga (30s -> <2s)
-const userIdCache: Record<string, string> = {};
+const userProfileUpdateSchema = z.object({
+    name: z.string().trim().min(1).max(120).optional(),
+    phone: z.string().trim().max(40).nullable().optional(),
+    address: z.string().trim().max(240).nullable().optional(),
+    age: z.string().trim().max(3).nullable().optional(),
+    occupation: z.string().trim().max(120).nullable().optional(),
+    maritalStatus: z.string().trim().max(60).nullable().optional(),
+    socialMedia: z.string().trim().max(240).nullable().optional(),
+}).strict();
 
 export async function getServerUser() {
-    const supabaseClient = await createClient();
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return null;
-    return await prisma.user.findFirst({
-        where: { 
-            OR: [
-                { firebaseUid: user.id }, 
-                { email: user.email! }
-            ] 
-        },
-        include: { organization: true }
-    });
+    return getAuthenticatedUser();
 }
 
 // Helper para obtener ID interno desde Firebase UID o el propio ID interno
 export async function getInternalId(idOrUid: string): Promise<string> {
-    if (!idOrUid) return idOrUid;
-    
-    if (idOrUid.startsWith('c') && idOrUid.length > 20 && !idOrUid.includes('-')) {
-        return idOrUid; // CUID de Prisma
-    }
-
-    if (userIdCache[idOrUid]) return userIdCache[idOrUid];
-    
-    const data = await prisma.user.findFirst({
-        where: { firebaseUid: idOrUid },
-        select: { id: true }
-    });
-        
-    if (data) {
-        userIdCache[idOrUid] = data.id;
-        return data.id;
-    }
-    
-    return idOrUid;
+    const { target } = await requireUserAccess(idOrUid, { coachAllowed: true });
+    return target.id;
 }
 
 export async function getUserProfile(firebaseUid?: string) {
-    const currentUser = await getServerUser();
-    if (!currentUser) return null;
-    
-    const targetUid = firebaseUid || currentUser.firebaseUid;
-    if (currentUser.role !== 'ADMIN' && targetUid !== currentUser.firebaseUid) {
-        return null;
-    }
-
-    return await prisma.user.findFirst({
-        where: { firebaseUid: targetUid as string, deletedAt: null },
-        include: { organization: true }
-    });
+    const currentUser = await requireUser();
+    const { target } = await requireUserAccess(firebaseUid || currentUser.id, { coachAllowed: true });
+    return prisma.user.findUnique({ where: { id: target.id }, include: { organization: true } });
 }
 
-export async function updateUserProfile(userId: string, profileData: any) {
-    const currentUser = await getServerUser();
-    if (!currentUser) throw new Error("Unauthorized");
-    
-    const internalId = await getInternalId(userId);
-    if (currentUser.role !== 'ADMIN' && currentUser.id !== internalId) {
-        throw new Error("Forbidden");
-    }
-
-    const { email, ...safeData } = profileData;
+export async function updateUserProfile(userId: string, profileData: unknown) {
+    const { target } = await requireUserAccess(userId);
+    const internalId = target.id;
+    const safeData = userProfileUpdateSchema.parse(profileData);
     const updated = await prisma.user.update({
         where: { id: internalId },
         data: { ...safeData, updatedAt: new Date() },
@@ -88,8 +47,7 @@ export async function updateUserProfile(userId: string, profileData: any) {
 }
 
 export async function getAllUsers(organizationIdParam?: string, includeDeleted = false) {
-    const currentUser = await getServerUser();
-    if (!currentUser || !['ADMIN', 'COACH'].includes(currentUser.role)) throw new Error("Forbidden");
+    const currentUser = await requireRole('ADMIN', 'COACH');
 
     // Si es Elite/Coach y tiene organizationId propio, forzamos que solo vea los suyos.
     // Si no tiene organizationId (SuperAdmin), puede ver todo o filtrar por el parámetro.
@@ -114,8 +72,7 @@ export async function getAllUsers(organizationIdParam?: string, includeDeleted =
 }
 
 export async function updateUserStatus(userId: string, status: 'ACTIVE' | 'BLOCKED' | 'OBSERVED') {
-    const currentUser = await getServerUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') throw new Error("Forbidden");
+    await requireRole('ADMIN');
 
     const updated = await prisma.user.update({
         where: { id: userId },
@@ -126,8 +83,7 @@ export async function updateUserStatus(userId: string, status: 'ACTIVE' | 'BLOCK
 }
 
 export async function deleteUser(userId: string) {
-    const currentUser = await getServerUser();
-    if (!currentUser || currentUser.role !== 'ADMIN') throw new Error("Forbidden");
+    await requireRole('ADMIN');
 
     await prisma.user.update({
         where: { id: userId },
@@ -138,13 +94,15 @@ export async function deleteUser(userId: string) {
     return true;
 }
 
-export async function syncUserProfile(firebaseUser: any, name?: string, organizationId?: string) {
+export async function syncUserProfile(_firebaseUser?: unknown, name?: string) {
     try {
-        const email = (firebaseUser.email || '').toLowerCase().trim();
-        const isAdminEmail = ADMIN_EMAILS.includes(email);
+        const supabaseClient = await createClient();
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
+        if (error || !user?.email) throw new Error("Unauthorized");
+        const email = user.email.toLowerCase().trim();
 
         let profile = await prisma.user.findFirst({
-            where: { firebaseUid: firebaseUser.uid, deletedAt: null },
+            where: { firebaseUid: user.id, deletedAt: null },
             include: { organization: true }
         });
 
@@ -158,9 +116,7 @@ export async function syncUserProfile(firebaseUser: any, name?: string, organiza
                 profile = await prisma.user.update({
                     where: { id: emailProfile.id },
                     data: {
-                        firebaseUid: firebaseUser.uid,
-                        role: isAdminEmail ? 'ADMIN' : (emailProfile.role || 'USER'),
-                        plan: isAdminEmail ? 'ELITE' : (emailProfile.plan || 'FREE'),
+                        firebaseUid: user.id,
                         updatedAt: new Date()
                     },
                     include: { organization: true }
@@ -170,12 +126,12 @@ export async function syncUserProfile(firebaseUser: any, name?: string, organiza
                     profile = await prisma.user.create({
                         data: {
                             id: crypto.randomUUID(),
-                            firebaseUid: firebaseUser.uid,
+                            firebaseUid: user.id,
                             email: email,
-                            name: name || firebaseUser.displayName || 'Nuevo Usuario',
-                            role: isAdminEmail ? 'ADMIN' : 'USER',
-                            plan: isAdminEmail ? 'ELITE' : 'FREE',
-                            organizationId: organizationId || null,
+                            name: name || String(user.user_metadata?.full_name || 'Nuevo Usuario'),
+                            role: 'USER',
+                            plan: 'FREE',
+                            organizationId: null,
                             updatedAt: new Date()
                         },
                         include: { organization: true }
@@ -183,24 +139,18 @@ export async function syncUserProfile(firebaseUser: any, name?: string, organiza
                     
                     // Disparar correo de bienvenida asincrónicamente sin bloquear el SSR
                     sendWelcomeEmail(email, profile.name || 'Amig@').catch(err => console.error('Failed to send welcome email', err));
-                } catch (e: any) {
-                    if (e.code === 'P2002') {
+                } catch (error: unknown) {
+                    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2002') {
                         // Race condition handled: another request already created the user
                         profile = await prisma.user.findFirst({
-                            where: { firebaseUid: firebaseUser.uid },
+                            where: { firebaseUid: user.id },
                             include: { organization: true }
                         });
                     } else {
-                        throw e;
+                        throw error;
                     }
                 }
             }
-        } else if (isAdminEmail && (profile.role !== 'ADMIN' || profile.plan !== 'ELITE')) {
-            profile = await prisma.user.update({
-                where: { id: profile.id },
-                data: { role: 'ADMIN', plan: 'ELITE' },
-                include: { organization: true }
-            });
         }
 
         return profile;
@@ -211,6 +161,7 @@ export async function syncUserProfile(firebaseUser: any, name?: string, organiza
 }
 
 export async function restoreUser(id: string) {
+    await requireRole('ADMIN');
     const data = await prisma.user.update({
         where: { id },
         data: { deletedAt: null }
@@ -221,47 +172,32 @@ export async function restoreUser(id: string) {
 // --- CLINIC REGISTRATION (B2B SaaS) ---
 export async function registerClinic(userId: string, clinicName: string, userName: string) {
     try {
-        // 1. Crear OrganizaciÃ³n
+        const { actor, target } = await requireUserAccess(userId);
+        if (actor.id !== target.id) throw new Error('Forbidden');
+        if (!clinicName.trim()) throw new Error('Clinic name is required');
+
         const orgId = crypto.randomUUID();
-        const org = await prisma.organization.create({
-            data: {
-                id: orgId,
-                name: clinicName
-            }
-        });
+        await prisma.$transaction([
+            prisma.organization.create({ data: { id: orgId, name: clinicName.trim() } }),
+            prisma.organizationConfig.create({
+                data: {
+                    organizationId: orgId,
+                    primaryColor: '#012a4a',
+                    accentColor: '#c19b6c',
+                    heroTitle: 'SALUD METABÓLICA',
+                    heroSubtitle: 'Acompañamiento educativo y de hábitos'
+                }
+            }),
+            prisma.user.update({
+                where: { id: target.id },
+                data: { organizationId: orgId, name: userName, role: 'USER' }
+            })
+        ]);
 
-        // 2. ConfiguraciÃ³n por defecto
-        await prisma.organizationConfig.create({
-            data: {
-                organizationId: orgId,
-                primaryColor: '#012a4a',
-                accentColor: '#c19b6c',
-                heroTitle: 'REMISIÃ“N METABÃ“LICA',
-                heroSubtitle: 'De la Diabetes Tipo 2'
-            }
-        });
-
-        // 3. Actualizar Usuario
-        await prisma.user.upsert({
-            where: { id: userId },
-            update: {
-                role: 'COACH',
-                organizationId: orgId,
-                name: userName
-            },
-            create: {
-                id: userId,
-                email: '', // Placeholder, idealmente se pasa
-                role: 'COACH',
-                organizationId: orgId,
-                name: userName
-            }
-        });
-
-        return { success: true, organizationId: orgId };
-    } catch (e: any) {
-        console.error('Error registering clinic:', e);
-        return { success: false, error: e.message };
+        return { success: true, organizationId: orgId, paymentRequired: true };
+    } catch (error: unknown) {
+        console.error('Error registering clinic:', error);
+        return { success: false, error: error instanceof Error ? error.message : 'No se pudo registrar la clínica' };
     }
 }
 

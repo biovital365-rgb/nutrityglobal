@@ -6,5 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+users.json
+users_nutrity.json
+users_vida.json
+test-gemini.ts
+test-gemini-models.ts
 
 /src/generated/prisma

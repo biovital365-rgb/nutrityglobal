@@ -2,20 +2,17 @@
 
 import { NutrityOnboarding } from "@/components/NutrityOnboarding";
 import { useRouter } from "next/navigation";
-import { generateAILifePlan } from "@/actions/ai-actions";
-import { saveEvaluation, saveBiologicalDiagnosis } from "@/actions/db-actions";
+import { generateNutrityRoute } from "@/actions/ai-actions";
+import { saveEvaluation } from "@/actions/db-actions";
+import type { OnboardingData } from "@/lib/schemas";
 import { createClient } from "@/utils/supabase/client";
 
 export default function OnboardingPage() {
   const router = useRouter();
 
-  const handleComplete = async (data: any) => {
+  const handleComplete = async (data: OnboardingData) => {
     try {
-      const plan = await generateAILifePlan(data);
-      if ((plan as any)._error) {
-        alert("Error de Servidor: " + (plan as any)._error);
-        return;
-      }
+      const plan = await generateNutrityRoute(data);
       
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -27,31 +24,11 @@ export default function OnboardingPage() {
       if (userId !== 'guest') {
         await saveEvaluation(userId, organizationId, data, plan);
 
-        // ── Persistir Triaje NMG + Diagnóstico IA ──
-        if (data.mainSymptom && plan?.nmgDiagnosis) {
-          try {
-            await saveBiologicalDiagnosis(
-              userId,
-              organizationId,
-              {
-                mainSymptom: data.mainSymptom,
-                affectedSystem: data.affectedSystem || '',
-                symptomDuration: data.symptomDuration || '',
-                emotionalContext: data.emotionalContext || '',
-              },
-              plan.nmgDiagnosis
-            );
-          } catch (nmgErr) {
-            // No crítico: el usuario igual accede al dashboard
-            console.warn('[NMG] Biological diagnosis not saved:', nmgErr);
-          }
-        }
-
         router.push("/dashboard");
       } else {
         console.warn("Evaluation not saved in DB: user is a guest");
         sessionStorage.setItem("guest_evaluation", JSON.stringify({ data, plan }));
-        alert("¡Tu Bio-Plan ha sido generado con éxito! Regístrate gratis en el siguiente paso para verlo y guardarlo en tu cuenta.");
+        alert("Tu Ruta Nutrity está lista. Regístrate gratis para guardarla y continuar.");
         router.push("/auth?mode=register");
       }
     } catch (err) {

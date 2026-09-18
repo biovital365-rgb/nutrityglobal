@@ -41,7 +41,7 @@ export function AdminCalendarTab({
                                 className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
                                     apptFilter === f ? "bg-nutrity-accent text-white shadow-lg shadow-nutrity-accent/20" : "bg-white text-nutrity-gray-text hover:bg-nutrity-bg"
                                 }`}>
-                                {f === "ALL" ? "Todas" : f === "DIAGNOSTICO" ? "Diagnósticos" : "Controles"}
+                                {f === "ALL" ? "Todas" : f === "DIAGNOSTICO" ? "Evaluaciones iniciales" : "Seguimientos"}
                             </button>
                         ))}
                     </div>

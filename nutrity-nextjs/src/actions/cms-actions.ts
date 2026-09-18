@@ -2,11 +2,11 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getServerUser } from "./user-actions";
+import { getAuthenticatedUser, organizationScope, requireOrganizationResource, requireRole } from "@/lib/authz";
 import { FoodItem, Micronutrient } from "./db-actions"; // Temporarily assume types are exported in db-actions, or better, export them here.
 
 export async function getFoods() {
-    const user = await getServerUser();
+    const user = await getAuthenticatedUser();
     const targetOrg = user?.role === 'ADMIN' ? null : (user?.organizationId || null);
 
     const whereClause: any = { deletedAt: null };
@@ -26,8 +26,7 @@ export async function getFoods() {
 }
 
 export async function saveFood(food: any, organizationIdParam?: string) {
-    const user = await getServerUser();
-    if (!user) throw new Error("Unauthorized");
+    const user = await requireRole('ADMIN', 'COACH');
     const finalOrgId = user.role === 'ADMIN' ? (food.organizationId || organizationIdParam || null) : user.organizationId;
 
     const payload: any = {
@@ -44,6 +43,9 @@ export async function saveFood(food: any, organizationIdParam?: string) {
 
     let result;
     if (food.id) {
+        const existing = await prisma.food.findUnique({ where: { id: food.id }, select: { organizationId: true } });
+        if (!existing) throw new Error('Not found');
+        await requireOrganizationResource(existing.organizationId);
         result = await prisma.food.update({
             where: { id: food.id },
             data: payload
@@ -58,15 +60,9 @@ export async function saveFood(food: any, organizationIdParam?: string) {
 }
 
 export async function deleteFood(id: string) {
-    const user = await getServerUser();
-    if (!user) throw new Error("Unauthorized");
-    
     const food = await prisma.food.findUnique({ where: { id } });
     if (!food) throw new Error("Not found");
-    
-    if (user.role !== 'ADMIN' && food.organizationId !== user.organizationId) {
-        throw new Error("Forbidden");
-    }
+    await requireOrganizationResource(food.organizationId);
 
     await prisma.food.update({
         where: { id },
@@ -76,6 +72,7 @@ export async function deleteFood(id: string) {
 }
 
 export async function deduplicateFoods() {
+    await requireRole('ADMIN');
     const allFoods = await prisma.food.findMany({
         select: { id: true, name: true, organizationId: true, createdAt: true },
         orderBy: { createdAt: 'desc' }
@@ -104,6 +101,9 @@ export async function deduplicateFoods() {
 }
 
 export async function restoreFood(id: string) {
+    const food = await prisma.food.findUnique({ where: { id }, select: { organizationId: true } });
+    if (!food) throw new Error('Not found');
+    await requireOrganizationResource(food.organizationId);
     const data = await prisma.food.update({
         where: { id },
         data: { deletedAt: null }
@@ -113,7 +113,7 @@ export async function restoreFood(id: string) {
 }
 
 export async function getMicronutrients() {
-    const user = await getServerUser();
+    const user = await getAuthenticatedUser();
     const targetOrg = user?.role === 'ADMIN' ? null : (user?.organizationId || null);
 
     const whereClause: any = { deletedAt: null };
@@ -133,8 +133,7 @@ export async function getMicronutrients() {
 }
 
 export async function saveMicronutrient(micro: any, organizationIdParam?: string) {
-    const user = await getServerUser();
-    if (!user) throw new Error("Unauthorized");
+    const user = await requireRole('ADMIN', 'COACH');
     const finalOrgId = user.role === 'ADMIN' ? (micro.organizationId || organizationIdParam || null) : user.organizationId;
 
     const payload: any = {
@@ -152,6 +151,9 @@ export async function saveMicronutrient(micro: any, organizationIdParam?: string
 
     let result;
     if (micro.id) {
+        const existing = await prisma.micronutrient.findUnique({ where: { id: micro.id }, select: { organizationId: true } });
+        if (!existing) throw new Error('Not found');
+        await requireOrganizationResource(existing.organizationId);
         result = await prisma.micronutrient.update({
             where: { id: micro.id },
             data: payload
@@ -166,15 +168,9 @@ export async function saveMicronutrient(micro: any, organizationIdParam?: string
 }
 
 export async function deleteMicronutrient(id: string) {
-    const user = await getServerUser();
-    if (!user) throw new Error("Unauthorized");
-    
     const micro = await prisma.micronutrient.findUnique({ where: { id } });
     if (!micro) throw new Error("Not found");
-    
-    if (user.role !== 'ADMIN' && micro.organizationId !== user.organizationId) {
-        throw new Error("Forbidden");
-    }
+    await requireOrganizationResource(micro.organizationId);
 
     await prisma.micronutrient.update({
         where: { id },
@@ -184,6 +180,7 @@ export async function deleteMicronutrient(id: string) {
 }
 
 export async function deduplicateMicronutrients() {
+    await requireRole('ADMIN');
     const allMicros = await prisma.micronutrient.findMany({
         select: { id: true, name: true, organizationId: true, createdAt: true },
         orderBy: { createdAt: 'desc' }
@@ -212,6 +209,9 @@ export async function deduplicateMicronutrients() {
 }
 
 export async function restoreMicronutrient(id: string) {
+    const micro = await prisma.micronutrient.findUnique({ where: { id }, select: { organizationId: true } });
+    if (!micro) throw new Error('Not found');
+    await requireOrganizationResource(micro.organizationId);
     const data = await prisma.micronutrient.update({
         where: { id },
         data: { deletedAt: null }
@@ -225,8 +225,14 @@ export async function getPosts(organizationId?: string, onlyPublished: boolean =
     const where: any = {
         slug: { not: 'landing-page-config' }
     };
-    if (organizationId) where.organizationId = organizationId;
-    if (onlyPublished) where.isPublished = true;
+    if (onlyPublished) {
+        where.isPublished = true;
+        if (organizationId) where.organizationId = organizationId;
+    } else {
+        const actor = await requireRole('ADMIN', 'COACH');
+        const scopedOrg = organizationScope(actor, organizationId);
+        if (scopedOrg) where.organizationId = scopedOrg;
+    }
     
     const data = await prisma.post.findMany({
         where,
@@ -237,11 +243,29 @@ export async function getPosts(organizationId?: string, onlyPublished: boolean =
 
 export async function getPostBySlug(slug: string) {
     const data = await prisma.post.findUnique({ where: { slug } });
+    if (data && !data.isPublished) await requireOrganizationResource(data.organizationId);
+    if (data?.isPremium && data.isPublished) {
+        const actor = await getAuthenticatedUser();
+        const hasPremiumAccess = Boolean(actor && (actor.role === 'ADMIN' || actor.role === 'COACH' || actor.plan !== 'FREE'));
+        if (!hasPremiumAccess) {
+            return {
+                ...data,
+                content: data.content.substring(0, 600) + (data.content.length > 600 ? '...' : ''),
+            };
+        }
+    }
     return data;
 }
 
 export async function savePost(post: any, organizationId?: string) {
+    const actor = await requireRole('ADMIN', 'COACH');
+    const targetOrgId = organizationScope(actor, organizationId);
     const id = post.id && post.id.length > 20 ? post.id : crypto.randomUUID();
+    if (post.id) {
+        const existing = await prisma.post.findUnique({ where: { id }, select: { organizationId: true } });
+        if (!existing) throw new Error('Not found');
+        await requireOrganizationResource(existing.organizationId);
+    }
     
     const payload = {
         title: post.title,
@@ -254,7 +278,7 @@ export async function savePost(post: any, organizationId?: string) {
         isPublished: post.isPublished,
         isPremium: post.isPremium,
         author: post.author,
-        organizationId: organizationId || null,
+        organizationId: targetOrgId || null,
         updatedAt: new Date()
     };
     
@@ -269,6 +293,9 @@ export async function savePost(post: any, organizationId?: string) {
 }
 
 export async function deletePost(id: string) {
+    const post = await prisma.post.findUnique({ where: { id }, select: { organizationId: true } });
+    if (!post) throw new Error('Not found');
+    await requireOrganizationResource(post.organizationId);
     await prisma.post.delete({ where: { id } });
     revalidatePath('/', 'layout');
     return true;
@@ -300,8 +327,7 @@ export async function getLandingConfig(organizationId?: string) {
 }
 
 export async function saveLandingConfig(configData: any, organizationId?: string) {
-    const currentUser = await getServerUser();
-    if (!currentUser || !['ADMIN', 'COACH'].includes(currentUser.role)) throw new Error("Forbidden");
+    const currentUser = await requireRole('ADMIN', 'COACH');
 
     // Si se pasa un organizationId, o si el usuario es COACH y tiene uno propio, guardamos en Prisma
     const targetOrgId = currentUser.role === 'ADMIN' ? (organizationId || null) : currentUser.organizationId;

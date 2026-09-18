@@ -1,4 +1,23 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nutrity Global
+
+Aplicación oficial de Nutrity Global. BioVital.360 es el canal de contenido y adquisición; no es el nombre del producto.
+
+## Configuración local
+
+1. Copia `.env.example` a `.env.local` y completa valores reales fuera de Git.
+2. Instala dependencias con `npm ci`.
+3. Genera Prisma con `npm run db:generate`.
+4. Ejecuta `npm run dev`.
+
+Nunca agregues exportaciones de usuarios, bases de datos locales ni credenciales al repositorio.
+
+## Verificación
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+
+El despliegue debe detenerse si cualquiera falla.
 
 ## Getting Started
 

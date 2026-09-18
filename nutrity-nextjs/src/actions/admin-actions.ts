@@ -1,35 +1,23 @@
 "use server";
 
-import { createClient } from "@supabase/supabase-js";
 import { prisma } from "@/lib/prisma";
-import { getServerUser } from "./db-actions";
-
-// Initialize Supabase Admin Client
-function getSupabaseAdmin() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
-        throw new Error("Missing Supabase Admin credentials. Please add SUPABASE_SERVICE_ROLE_KEY to your .env file.");
-    }
-
-    return createClient(supabaseUrl, serviceRoleKey, {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    });
-}
+import { getSupabaseAdmin } from "@/lib/supabase";
+import { organizationScope, requireRole } from "@/lib/authz";
 
 /**
  * Creates a new user in Supabase Auth and Prisma
  * This is used by Coaches to register their own patients
  */
 export async function createPatientByCoach(data: { name: string; email: string; phone?: string; age?: string; password?: string }) {
-    const coachUser = await getServerUser();
-    
-    if (!coachUser || !coachUser.organizationId) {
+    const coachUser = await requireRole('ADMIN', 'COACH');
+    const organizationId = organizationScope(coachUser);
+    if (!organizationId) {
         throw new Error("Only users belonging to an organization can create patients.");
+    }
+
+    const temporaryPassword = data.password?.trim();
+    if (!temporaryPassword || temporaryPassword.length < 12) {
+        throw new Error("La contraseña temporal debe tener al menos 12 caracteres.");
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -37,7 +25,7 @@ export async function createPatientByCoach(data: { name: string; email: string; 
     // 1. Create the user in Supabase Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: data.email,
-        password: data.password || "Nutrity2026*", // Default temporary password if not provided
+        password: temporaryPassword,
         email_confirm: true, // Auto confirm since coach is registering them
         user_metadata: {
             name: data.name,
@@ -67,7 +55,7 @@ export async function createPatientByCoach(data: { name: string; email: string; 
                 role: "USER",
                 plan: "FREE",
                 status: "ACTIVE",
-                organizationId: coachUser.organizationId
+                organizationId
             }
         });
 
@@ -81,7 +69,8 @@ export async function createPatientByCoach(data: { name: string; email: string; 
 }
 
 export async function getAdminDashboardData(organizationId?: string | null, showDeleted = false) {
-    const orgIdStr = organizationId || undefined;
+    const actor = await requireRole('ADMIN', 'COACH');
+    const orgIdStr = organizationScope(actor, organizationId);
     
     const { getFoods, getMicronutrients, getPosts, getLandingConfig } = await import("./cms-actions");
     const { getAllUsers } = await import("./user-actions");

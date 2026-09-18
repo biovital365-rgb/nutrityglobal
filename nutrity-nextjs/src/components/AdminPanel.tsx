@@ -373,7 +373,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                             <form onSubmit={handleCreateUser} className="p-8 space-y-6 overflow-y-auto">
                                 <FieldInput label="Nombre Completo *" value={newUser.name} onChange={(v) => setNewUser({ ...newUser, name: v })} required />
                                 <FieldInput label="Email del Paciente *" type="email" value={newUser.email} onChange={(v) => setNewUser({ ...newUser, email: v })} required />
-                                <FieldInput label="Contraseña Temporal *" type="password" value={newUser.password} onChange={(v) => setNewUser({ ...newUser, password: v })} placeholder="Asigna una contraseña segura" required />
+                                <FieldInput label="Contraseña Temporal (mín. 12 caracteres) *" type="password" value={newUser.password} onChange={(v) => setNewUser({ ...newUser, password: v })} placeholder="Asigna una contraseña segura" required />
                                 <div className="grid grid-cols-2 gap-4">
                                     <FieldInput label="Celular (Opcional)" value={newUser.phone} onChange={(v) => setNewUser({ ...newUser, phone: v })} />
                                     <FieldInput label="Edad (Opcional)" type="number" value={newUser.age} onChange={(v) => setNewUser({ ...newUser, age: v })} />

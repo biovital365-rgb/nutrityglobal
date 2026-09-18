@@ -1,149 +1,103 @@
 'use server';
 
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
+import { requireUser } from '@/lib/authz';
+import {
+  getPayPalAccessToken,
+  isPayPalPlan,
+  parsePayPalCustomId,
+  paypalBaseUrl,
+  PAYPAL_PLANS,
+} from '@/lib/paypal';
 
-const { NEXT_PUBLIC_PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, NEXT_PUBLIC_PAYPAL_ENVIRONMENT } = process.env;
+type PayPalOrder = {
+  id?: string;
+  status?: string;
+  purchase_units?: Array<{
+    custom_id?: string;
+    amount?: { currency_code?: string; value?: string };
+    payments?: { captures?: Array<{ amount?: { currency_code?: string; value?: string } }> };
+  }>;
+};
 
-const base = NEXT_PUBLIC_PAYPAL_ENVIRONMENT === "sandbox" 
-  ? "https://api-m.sandbox.paypal.com" 
-  : "https://api-m.paypal.com";
-
-/**
- * Generate an OAuth 2.0 access token for authenticating with PayPal REST APIs.
- */
-async function generateAccessToken() {
-  try {
-    if (!NEXT_PUBLIC_PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
-      throw new Error("MISSING_API_CREDENTIALS");
-    }
-    const auth = Buffer.from(
-      NEXT_PUBLIC_PAYPAL_CLIENT_ID + ":" + PAYPAL_CLIENT_SECRET,
-    ).toString("base64");
-
-    const response = await fetch(`${base}/v1/oauth2/token`, {
-      method: "POST",
-      body: "grant_type=client_credentials",
-      headers: {
-        Authorization: `Basic ${auth}`,
-      },
-      // cache: 'no-store'
-    });
-
-    const data = await response.json();
-    return data.access_token;
-  } catch (error: any) {
-    console.error("Failed to generate Access Token:", error);
-    if (error.message === "MISSING_API_CREDENTIALS") throw error;
-    throw new Error("PayPal Token Error");
-  }
+async function paypalRequest(path: string, init: RequestInit = {}) {
+  const token = await getPayPalAccessToken();
+  return fetch(`${paypalBaseUrl()}${path}`, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+      ...(init.headers || {}),
+    },
+    cache: 'no-store',
+  });
 }
 
-/**
- * Create an order to start the transaction.
- */
-export async function createOrder(userId: string, planType: string) {
+export async function createOrder(_userId: string, planType: string) {
   try {
-    const accessToken = await generateAccessToken();
-    const url = `${base}/v2/checkout/orders`;
+    void _userId;
+    const user = await requireUser();
+    if (!isPayPalPlan(planType)) throw new Error('Plan no válido');
+    const plan = PAYPAL_PLANS[planType];
 
-    // Pricing logic. This must run on the server to prevent manipulation.
-    let price = "0.00";
-    if (planType === "basic") {
-        price = "9.99";
-    } else if (planType === "premium") {
-        price = "49.00"; // Example price for premium
-    } else if (planType === "coach") {
-        price = "149.00"; // Example price for coach/business
-    }
-
-    const payload = {
-      intent: "CAPTURE",
-      purchase_units: [
-        {
-          reference_id: `${userId}_${planType}`, // We encode the user and plan to capture it later
-          custom_id: `${userId}_${planType}`,
-          amount: {
-            currency_code: "USD",
-            value: price,
-          },
-          description: `BioVital.360 - Plan ${planType.toUpperCase()}`
-        },
-      ],
-    };
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(payload),
+    const response = await paypalRequest('/v2/checkout/orders', {
+      method: 'POST',
+      body: JSON.stringify({
+        intent: 'CAPTURE',
+        purchase_units: [{
+          reference_id: `${user.id}:${planType}`,
+          custom_id: `${user.id}:${planType}`,
+          amount: { currency_code: 'USD', value: plan.amount },
+          description: `Nutrity Global - Plan ${planType.toUpperCase()}`,
+        }],
+      }),
     });
 
-    const data = await response.json();
-    if (data.id) {
-        return { success: true, orderId: data.id };
-    } else {
-        console.error("PayPal Create Order Error:", data);
-        return { success: false, error: data.message || "No se pudo crear la orden en PayPal." };
-    }
-  } catch (error: any) {
-    console.error("Error creating order", error);
-    return { success: false, error: error.message === "MISSING_API_CREDENTIALS" ? "Las credenciales de PayPal no están configuradas correctamente." : "Error de comunicación con PayPal." };
-  }
-}
-
-/**
- * Capture payment for the created order to complete the transaction.
- */
-export async function captureOrder(orderID: string, userId: string, planType: string) {
-  try {
-    const accessToken = await generateAccessToken();
-    const url = `${base}/v2/checkout/orders/${orderID}/capture`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    const data = await response.json();
-    
-    // Check if the payment was successful
-    if (data.status === "COMPLETED") {
-        
-        // Upgrade the user's role in the database using Prisma
-        try {
-            const { getInternalId } = await import("@/actions/db-actions");
-            const internalId = await getInternalId(userId);
-
-            const updateData: any = {};
-            if (planType === "basic") {
-                updateData.plan = "BASIC";
-            } else if (planType === "premium") {
-                updateData.plan = "PREMIUM";
-            } else if (planType === "coach") {
-                updateData.role = "COACH";
-                updateData.plan = "ELITE";
-            }
-
-            await prisma.user.update({
-                where: { id: internalId },
-                data: updateData
-            });
-        } catch (dbError) {
-            console.error("Prisma User Update Error after payment:", dbError);
-            return { success: false, error: "Payment received but failed to update profile." };
-        }
-        
-        return { success: true, data };
-    } else {
-        return { success: false, error: "Payment not completed." };
-    }
+    const data = await response.json() as PayPalOrder & { message?: string };
+    if (!response.ok || !data.id) throw new Error(data.message || 'No se pudo crear la orden');
+    return { success: true, orderId: data.id };
   } catch (error) {
-    console.error("Error capturing order", error);
-    return { success: false, error: "Internal Capture Error" };
+    console.error('[PAYPAL_CREATE_ORDER]', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Error de PayPal' };
+  }
+}
+
+export async function captureOrder(orderID: string, _userId: string, _planType: string) {
+  try {
+    void _userId;
+    void _planType;
+    const user = await requireUser();
+
+    const detailsResponse = await paypalRequest(`/v2/checkout/orders/${encodeURIComponent(orderID)}`);
+    const details = await detailsResponse.json() as PayPalOrder;
+    const unit = details.purchase_units?.[0];
+    const parsed = unit?.custom_id ? parsePayPalCustomId(unit.custom_id) : null;
+    if (!detailsResponse.ok || !parsed || parsed.userId !== user.id) throw new Error('Orden no autorizada');
+
+    const expected = PAYPAL_PLANS[parsed.plan];
+    if (unit?.amount?.currency_code !== 'USD' || unit.amount.value !== expected.amount) {
+      throw new Error('El importe de la orden no coincide con el plan');
+    }
+
+    const captureResponse = await paypalRequest(`/v2/checkout/orders/${encodeURIComponent(orderID)}/capture`, { method: 'POST' });
+    const capture = await captureResponse.json() as PayPalOrder;
+    const capturedAmount = capture.purchase_units?.[0]?.payments?.captures?.[0]?.amount;
+    if (!captureResponse.ok || capture.status !== 'COMPLETED') throw new Error('Pago no completado');
+    if (capturedAmount?.currency_code !== 'USD' || capturedAmount.value !== expected.amount) {
+      throw new Error('El importe capturado no coincide con el plan');
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        plan: expected.dbPlan,
+        subscriptionStatus: 'ACTIVE',
+        role: user.role === 'ADMIN' ? 'ADMIN' : (expected.role || 'USER'),
+      },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('[PAYPAL_CAPTURE_ORDER]', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Error de captura' };
   }
 }

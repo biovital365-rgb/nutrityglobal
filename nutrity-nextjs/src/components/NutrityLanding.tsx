@@ -359,12 +359,14 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                         <div className="w-8 h-8 bg-[var(--landing-primary)] rounded-lg flex items-center justify-center">
                             <Leaf className="w-4 h-4 text-[var(--landing-accent)]" />
                         </div>
-                        <span className="text-xs font-bold tracking-widest uppercase text-[var(--landing-primary)]">BioVital.360 • MRGA</span>
+                        <span className="text-xs font-bold tracking-widest uppercase text-[var(--landing-primary)]">Canal BioVital.360</span>
                     </div>
                     <div className="flex flex-wrap justify-center gap-6 text-[10px] font-bold tracking-widest uppercase text-[#2d3748]">
                         <a href="#doble-ciclo" className="hover:text-[var(--landing-accent)] transition-colors">La Ciencia</a>
                         <a href="#alimentacion" className="hover:text-[var(--landing-accent)] transition-colors">Alimentación</a>
-                        <a href="/blog" className="hover:text-[var(--landing-accent)] transition-colors">Blog</a>
+                        <Link href="/blog" className="hover:text-[var(--landing-accent)] transition-colors">Blog</Link>
+                        <Link href="/privacy" className="hover:text-[var(--landing-accent)] transition-colors">Privacidad</Link>
+                        <Link href="/terms" className="hover:text-[var(--landing-accent)] transition-colors">Términos</Link>
                         <button
                             onClick={onAuthClick}
                             className="hover:text-[var(--landing-accent)] transition-colors"

@@ -2,11 +2,12 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { getInternalId, getServerUser } from "./user-actions";
+import { organizationScope, requireRole, requireUserAccess } from "@/lib/authz";
 import { sendMenuApprovedEmail, sendMenuChangesRequestedEmail } from "./email-actions";
 
 export async function saveWeeklyMenu(userId: string, weekStart: string, phase: string, days: Record<string, any>) {
-    const internalId = await getInternalId(userId);
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
     const dayNames = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
     const offsets  = [0, 1, 2, 3, 4, 5, 6];
     const base = new Date(weekStart + 'T12:00:00Z');
@@ -47,7 +48,8 @@ export async function saveWeeklyMenu(userId: string, weekStart: string, phase: s
 }
 
 export async function getWeeklyMenu(userId: string, weekStart: string) {
-    const internalId = await getInternalId(userId);
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
     const data = await prisma.dailyMenu.findMany({
         where: { userId: internalId, weekStart },
         orderBy: { date: 'asc' }
@@ -56,7 +58,8 @@ export async function getWeeklyMenu(userId: string, weekStart: string) {
 }
 
 export async function getApprovedMenu(userId: string) {
-    const internalId = await getInternalId(userId);
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
     const data = await prisma.dailyMenu.findMany({
         where: { userId: internalId, status: 'APPROVED' },
         orderBy: { weekStart: 'desc' },
@@ -66,7 +69,8 @@ export async function getApprovedMenu(userId: string) {
 }
 
 export async function getPendingMenu(userId: string) {
-    const internalId = await getInternalId(userId);
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
     const data = await prisma.dailyMenu.findMany({
         where: { userId: internalId, status: 'PENDING' },
         orderBy: { weekStart: 'desc' },
@@ -76,13 +80,16 @@ export async function getPendingMenu(userId: string) {
 }
 
 export async function approveWeeklyMenu(userId: string, weekStart: string, adminEmail: string, notes?: string) {
-    const internalId = await getInternalId(userId);
+    void adminEmail;
+    const actor = await requireRole('ADMIN', 'COACH');
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
     const data = await prisma.dailyMenu.updateMany({
         where: { userId: internalId, weekStart },
         data: {
             status: 'APPROVED',
             approvedAt: new Date(),
-            approvedBy: adminEmail,
+            approvedBy: actor.email,
             adminNotes: notes || null,
             updatedAt: new Date(),
         }
@@ -96,12 +103,15 @@ export async function approveWeeklyMenu(userId: string, weekStart: string, admin
 }
 
 export async function rejectWeeklyMenu(userId: string, weekStart: string, adminEmail: string, notes: string) {
-    const internalId = await getInternalId(userId);
+    void adminEmail;
+    const actor = await requireRole('ADMIN', 'COACH');
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
     const data = await prisma.dailyMenu.updateMany({
         where: { userId: internalId, weekStart },
         data: {
             status: 'REJECTED',
-            approvedBy: adminEmail,
+            approvedBy: actor.email,
             adminNotes: notes,
             updatedAt: new Date(),
         }
@@ -112,6 +122,9 @@ export async function rejectWeeklyMenu(userId: string, weekStart: string, adminE
 }
 
 export async function updateDayMenu(recordId: string, menuData: any, metabolicGoal: string) {
+    const record = await prisma.dailyMenu.findUnique({ where: { id: recordId }, select: { userId: true } });
+    if (!record) throw new Error('Menu not found');
+    await requireUserAccess(record.userId, { coachAllowed: true });
     const data = await prisma.dailyMenu.update({
         where: { id: recordId },
         data: {
@@ -128,10 +141,12 @@ export async function updateDayMenu(recordId: string, menuData: any, metabolicGo
 export async function getAllMenusStatus(organizationId?: string) {
     // Note: This replaces the raw query grouping since Prisma doesn't naturally do distinct grouped joins as easily.
     // Instead we query the latest by taking all grouped items. Let's do it in code for simplicity to match legacy behavior.
-    const where: any = {};
+    const actor = await requireRole('ADMIN', 'COACH');
+    const scopedOrg = organizationScope(actor, organizationId);
+    const where: any = scopedOrg ? { organizationId: scopedOrg } : {};
     
-    // We could filter by organizationId via users, but legacy just selected everything then grouped by userId.
     const data = await prisma.dailyMenu.findMany({
+        where,
         orderBy: { weekStart: 'desc' },
         include: { user: { select: { id: true, name: true, email: true } } }
     });
@@ -162,7 +177,8 @@ export async function saveDailyMenu(params: { userId: string; date: string; menu
     } else {
         userId_ = params as string; date_ = date!; menuData_ = menuData; metabolicGoal_ = metabolicGoal;
     }
-    const internalId = await getInternalId(userId_);
+    const { target } = await requireUserAccess(userId_, { coachAllowed: true });
+    const internalId = target.id;
     
     const id = crypto.randomUUID();
     
@@ -185,7 +201,8 @@ export async function saveDailyMenu(params: { userId: string; date: string; menu
 }
 
 export async function getDailyMenu(userId: string, date: string) {
-    const internalId = await getInternalId(userId);
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
     const data = await prisma.dailyMenu.findUnique({
         where: { userId_date: { userId: internalId, date } }
     });
@@ -194,7 +211,8 @@ export async function getDailyMenu(userId: string, date: string) {
 }
 
 export async function getDailyMenus(userId: string) {
-    const internalId = await getInternalId(userId);
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
+    const internalId = target.id;
     const data = await prisma.dailyMenu.findMany({
         where: { userId: internalId },
         orderBy: { date: 'desc' }
@@ -204,8 +222,8 @@ export async function getDailyMenus(userId: string) {
 }
 
 export async function requestMenuChanges(userId: string, weekStart: string, notes: string) {
-    const currentUser = await getServerUser();
-    if (!currentUser || currentUser.id !== userId) throw new Error("Forbidden");
+    const { target } = await requireUserAccess(userId);
+    userId = target.id;
 
     // Buscamos si existe al menos un día
     const menu = await prisma.dailyMenu.findFirst({

@@ -65,7 +65,7 @@ export function DashboardAgendaTab({
                 <div className="nutrity-card p-20 flex flex-col items-center justify-center text-center space-y-4 opacity-50">
                     <Calendar className="w-16 h-16 text-nutrity-gray-text" />
                     <p className="font-bold text-nutrity-primary uppercase tracking-widest">No hay citas registradas</p>
-                    <p className="text-xs max-w-xs">Agenda tu primera evaluación para iniciar el seguimiento de tu remisión.</p>
+                    <p className="text-xs max-w-xs">Agenda una conversación para revisar tus objetivos y adaptar tus acciones con apoyo humano.</p>
                 </div>
             )}
         </motion.div>

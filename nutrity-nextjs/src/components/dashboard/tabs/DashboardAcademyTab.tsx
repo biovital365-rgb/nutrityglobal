@@ -35,7 +35,7 @@ export function DashboardAcademyTab({
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <h2 className="text-3xl font-display font-bold">Academia Nutrity Global</h2>
-                    <p className="text-nutrity-gray-text text-sm">Medicina de Restauración y Bio-señalización para la remisión de DM2.</p>
+                    <p className="text-nutrity-gray-text text-sm">Recursos educativos para comprender hábitos, alimentación y seguimiento metabólico.</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                     <div className="bg-nutrity-accent/10 px-4 py-2 rounded-xl flex items-center gap-3 border border-nutrity-accent/20">

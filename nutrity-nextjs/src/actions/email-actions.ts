@@ -2,6 +2,7 @@
 
 import { Resend } from 'resend';
 import { prisma as db } from '@/lib/prisma';
+import { requireUser, requireUserAccess } from '@/lib/authz';
 
 // Inicializar Resend solo si existe la key, de lo contrario usamos un mock
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -10,6 +11,10 @@ const FROM_EMAIL = 'Nutrity Global <onboarding@resend.dev>'; // Idealmente confi
 
 export async function sendWelcomeEmail(userEmail: string, userName: string) {
   try {
+    const actor = await requireUser();
+    if (actor.role !== 'ADMIN' && actor.email.toLowerCase() !== userEmail.toLowerCase()) {
+      throw new Error('Forbidden');
+    }
     if (!resend) {
       console.log(`[MOCK EMAIL] Bienvenida enviada a: ${userEmail}`);
       return { success: true, mock: true };
@@ -18,7 +23,7 @@ export async function sendWelcomeEmail(userEmail: string, userName: string) {
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [userEmail],
-      subject: 'Bienvenido a Nutrity Global - Tu Camino a la Remisión',
+      subject: 'Bienvenido a Nutrity Global - Tu ruta de hábitos',
       html: `
         <div style="font-family: Arial, sans-serif; color: #1e293b; max-w: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
           <div style="background-color: #0f766e; padding: 24px; text-align: center;">
@@ -26,8 +31,8 @@ export async function sendWelcomeEmail(userEmail: string, userName: string) {
           </div>
           <div style="padding: 24px;">
             <h2 style="color: #0f766e;">¡Hola ${userName}!</h2>
-            <p style="font-size: 16px; line-height: 1.5;">Estamos felices de que hayas dado el primer paso hacia tu remisión metabólica.</p>
-            <p style="font-size: 16px; line-height: 1.5;">Para empezar, por favor ingresa a tu panel y completa el Onboarding Biológico para que nuestra Inteligencia Artificial pueda estructurar tu triaje.</p>
+            <p style="font-size: 16px; line-height: 1.5;">Gracias por dar el primer paso hacia hábitos metabólicos más claros y sostenibles.</p>
+            <p style="font-size: 16px; line-height: 1.5;">Ingresa a tu panel y completa la evaluación educativa para crear tu Ruta Nutrity de 12 semanas.</p>
             <div style="text-align: center; margin-top: 32px;">
               <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard" style="background-color: #0f766e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Ir a mi Panel</a>
             </div>
@@ -53,7 +58,8 @@ export async function sendWelcomeEmail(userEmail: string, userName: string) {
 
 export async function sendMenuApprovedEmail(userId: string) {
   try {
-    const user = await db.user.findUnique({ where: { id: userId } });
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
+    const user = await db.user.findUnique({ where: { id: target.id } });
     if (!user || !user.email) throw new Error('Usuario no encontrado o sin email');
 
     if (!resend) {
@@ -96,8 +102,9 @@ export async function sendMenuApprovedEmail(userId: string) {
 
 export async function sendMenuChangesRequestedEmail(userId: string, notes: string) {
   try {
+    const { target } = await requireUserAccess(userId, { coachAllowed: true });
     const user = await db.user.findUnique({ 
-      where: { id: userId },
+      where: { id: target.id },
       include: { organization: true }
     });
     

@@ -1,69 +1,20 @@
-"use client";
-import { motion } from "motion/react";
-import { Users, Activity, Shield, Calendar, AlertTriangle, Zap } from "lucide-react";
+'use client';
+import { motion } from 'motion/react';
+import { Activity, Calendar, ClipboardCheck, Shield, Users } from 'lucide-react';
 
-interface AdminCrmTabProps {
-    users: any[];
-    appointments: any[];
-}
-
-export function AdminCrmTab({ users, appointments }: AdminCrmTabProps) {
-    const avgRemission = Math.round(
-        users.reduce((acc, u) => acc + (u.metabolicResults?.remissionScore || 0), 0) /
-        (users.filter(u => u.metabolicResults).length || 1)
-    );
-    const lowScoreUsers = users.filter(u => u.metabolicResults && u.metabolicResults.remissionScore < 40);
-    const upcomingDiagnostics = appointments
-        .filter(a => a.title.toLowerCase().includes("diagnóstico"))
-        .slice(0, 5);
-
-    return (
-        <motion.div key="crm-dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {[
-                    { icon: Users, value: users.length, label: "Total Usuarios", color: "text-nutrity-accent" },
-                    { icon: Activity, value: `${avgRemission}%`, label: "Remisión Promedio", color: "text-emerald-500" },
-                    { icon: Shield, value: users.filter(u => u.status === "BLOCKED").length, label: "Bloqueados", color: "text-rose-500" },
-                    { icon: Calendar, value: appointments.length, label: "Citas Totales", color: "text-blue-500" },
-                ].map(({ icon: Icon, value, label, color }) => (
-                    <div key={label} className="nutrity-card p-8 space-y-4 text-center">
-                        <Icon className={`w-8 h-8 ${color} mx-auto`} />
-                        <h3 className="text-2xl font-bold">{value}</h3>
-                        <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">{label}</p>
-                    </div>
-                ))}
-            </div>
-
-            <div className="mt-8 grid md:grid-cols-2 gap-6">
-                <div className="nutrity-card p-6">
-                    <h4 className="text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 text-amber-500" /> Pacientes con Score Bajo (&lt;40)
-                    </h4>
-                    <div className="space-y-3">
-                        {lowScoreUsers.length === 0 ? (
-                            <p className="text-xs text-nutrity-gray-text italic text-center py-4">No hay alertas críticas.</p>
-                        ) : lowScoreUsers.map(u => (
-                            <div key={u.id} className="flex items-center justify-between p-3 bg-red-50 rounded-xl">
-                                <span className="text-xs font-bold">{u.name}</span>
-                                <span className="text-[10px] font-bold text-red-600">{u.metabolicResults.remissionScore}%</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-                <div className="nutrity-card p-6">
-                    <h4 className="text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-emerald-500" /> Próximos Diagnósticos
-                    </h4>
-                    <div className="space-y-3">
-                        {upcomingDiagnostics.map(a => (
-                            <div key={a.id} className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl">
-                                <span className="text-xs font-bold">{a.user?.name}</span>
-                                <span className="text-[10px] font-bold text-emerald-600">{new Date(a.date).toLocaleDateString()}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </motion.div>
-    );
+export function AdminCrmTab({ users, appointments }: { users: any[]; appointments: any[] }) {
+  const withRoute = users.filter(user => user.metabolicResults?.routeVersion === '2.0');
+  const completedActions = withRoute.reduce((total, user) => total + (user.metabolicResults.weeklyActions || []).filter((action: any) => action.completed).length, 0);
+  const totalActions = withRoute.reduce((total, user) => total + (user.metabolicResults.weeklyActions || []).length, 0);
+  const upcoming = appointments.slice(0, 5);
+  return <motion.div key="crm-dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+    <div className="grid gap-6 md:grid-cols-4">{[
+      { icon: Users, value: users.length, label: 'Usuarios', color: 'text-nutrity-accent' },
+      { icon: ClipboardCheck, value: withRoute.length, label: 'Rutas creadas', color: 'text-emerald-600' },
+      { icon: Activity, value: `${completedActions}/${totalActions}`, label: 'Acciones registradas', color: 'text-blue-600' },
+      { icon: Shield, value: users.filter(user => user.status === 'BLOCKED').length, label: 'Cuentas bloqueadas', color: 'text-rose-500' },
+    ].map(({ icon: Icon, value, label, color }) => <article key={label} className="nutrity-card p-8 text-center"><Icon className={`mx-auto h-8 w-8 ${color}`} /><h3 className="mt-4 text-2xl font-black">{value}</h3><p className="mt-2 text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</p></article>)}</div>
+    <section className="nutrity-card p-6"><h4 className="flex items-center gap-2 text-xs font-black uppercase tracking-widest"><Calendar className="h-4 w-4 text-blue-600" /> Próximas citas</h4><div className="mt-4 space-y-3">{upcoming.length ? upcoming.map(appointment => <div key={appointment.id} className="flex items-center justify-between rounded-xl bg-blue-50 p-3"><span className="text-xs font-bold">{appointment.user?.name || appointment.title}</span><span className="text-[10px] font-bold text-blue-700">{appointment.date}</span></div>) : <p className="py-4 text-center text-xs text-slate-500">No hay citas próximas.</p>}</div></section>
+    <p className="text-xs text-slate-500">Este panel muestra actividad y seguimiento; no clasifica riesgo ni estima resultados clínicos.</p>
+  </motion.div>;
 }

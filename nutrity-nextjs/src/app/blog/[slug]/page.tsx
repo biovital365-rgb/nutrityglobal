@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { PremiumGate } from "@/components/blog/PremiumGate";
 import { renderMarkdown } from "@/lib/markdown";
 import { getPostBySlug, getPosts } from "@/actions/db-actions";
+import { getAuthenticatedUser } from "@/lib/authz";
 
 // Dynamic rendering — CMS content changes frequently
 export const dynamic = 'force-dynamic';
@@ -70,10 +71,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     const { slug } = await params;
     const post = await getPostBySlug(slug) as Post | null;
     if (!post || !post.isPublished) notFound();
+    const viewer = await getAuthenticatedUser();
+    const hasPremiumAccess = Boolean(viewer && (viewer.role === 'ADMIN' || viewer.role === 'COACH' || viewer.plan !== 'FREE'));
 
     const readingTime = Math.max(1, Math.ceil(post.content.split(" ").length / 200));
-    // For premium posts, only show a teaser to guests (client handles full gate)
-    const teaserContent = post.content.substring(0, 600) + (post.content.length > 600 ? "..." : "");
+    const teaserContent = post.content;
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nutrity.global';
     const jsonLd = {
@@ -186,9 +188,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
                     {/* ── Content: PremiumGate handles auth check client-side ── */}
                     <div className="prose prose-lg max-w-none prose-headings:font-serif prose-headings:font-bold prose-headings:text-[#012a4a] prose-p:text-[#2d3748] prose-p:leading-relaxed prose-a:text-[#c19b6c] hover:prose-a:text-[#012a4a] prose-strong:text-[#1b3b36]">
-                        {post.isPremium ? (
+                        {post.isPremium && !hasPremiumAccess ? (
                             <PremiumGate
-                                fullContent={post.content}
                                 teaserContent={teaserContent}
                             />
                         ) : (
@@ -207,7 +208,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
             <footer className="border-t border-[#c19b6c]/20 mt-16 py-10 px-6 bg-white">
                 <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-[#2d3748]">
-                    <span>© {new Date().getFullYear()} BioVital.360 · MRGA</span>
+                    <span>© {new Date().getFullYear()} Nutrity Global · Contenido de BioVital.360</span>
                     <Link href="/blog" className="hover:text-[#c19b6c] transition-colors flex items-center gap-2">
                         <ArrowLeft className="w-3 h-3" /> Volver al Blog
                     </Link>

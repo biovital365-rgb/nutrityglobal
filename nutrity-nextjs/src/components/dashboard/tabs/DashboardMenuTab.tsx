@@ -22,7 +22,7 @@ export function DashboardMenuTab({
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <h2 className="text-3xl font-display font-bold">Menú Semanal de Precisión</h2>
-                    <p className="text-nutrity-gray-text text-sm">Cronograma nutricional personalizado para tu fase de remisión metabólica.</p>
+                    <p className="text-nutrity-gray-text text-sm">Ejemplo semanal para organizar comidas de acuerdo con tu Ruta Nutrity.</p>
                 </div>
                 {menuStatus === 'APPROVED' && (
                     <div className="flex items-center gap-3">
@@ -132,7 +132,7 @@ export function DashboardMenuTab({
                     </div>
                     <div className="space-y-2">
                         <h3 className="text-xl font-bold text-nutrity-primary">Sin plan nutricional aún</h3>
-                        <p className="text-sm text-nutrity-gray-text max-w-sm">Completa tu diagnóstico metabólico para que tu Coach pueda generar y aprobar tu menú personalizado de Remisión Metabólica.</p>
+                        <p className="text-sm text-nutrity-gray-text max-w-sm">Completa tu Ruta Nutrity para que puedas organizar un menú educativo y revisarlo con tu coach cuando corresponda.</p>
                     </div>
                     <button
                         onClick={() => setActiveTab('main')}

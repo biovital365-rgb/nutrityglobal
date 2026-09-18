@@ -150,7 +150,7 @@ export function AdminMenuTab({ users, isSaving: _isSaving, adminEmail, notify }:
                                 </div>
                                 <div className="min-w-0">
                                     <p className="font-bold text-sm truncate">{u.name || "Sin nombre"}</p>
-                                    <p className="text-[10px] text-nutrity-gray-text truncate">{u.metabolicResults?.phase || "Sin diagnóstico"}</p>
+                                    <p className="text-[10px] text-nutrity-gray-text truncate">{u.metabolicResults?.phase || "Sin Ruta Nutrity"}</p>
                                 </div>
                             </div>
                         </button>
