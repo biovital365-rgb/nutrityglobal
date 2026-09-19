@@ -1,6 +1,6 @@
 # Fase 3 — Marca, oferta y embudo
 
-Estado: cierre técnico preparado el 18 de septiembre de 2026; publicación y auditoría final pendientes de completar en esta sesión.
+Estado: cierre técnico publicado el 18 de septiembre de 2026 en el commit `f098fa3`; queda pendiente la auditoría con cuentas reales.
 
 ## Resultado comercial buscado
 

@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **Estado canónico vigente desde el 18 de septiembre de 2026.** Las secciones históricas posteriores se conservan únicamente como registro de evolución. Cualquier referencia anterior a NMG, biodescodificación, diagnóstico automatizado, puntajes o promesas de remisión, proyecciones de glucosa, causas emocionales o cambio de medicación está retirada y no debe reutilizarse como requisito de producto.
 
-## Estado actual — Fase 3 preparada para publicación (18 sep 2026)
+## Estado actual — Fase 3 publicada (18 sep 2026)
 
 - **Marca oficial:** Nutrity Global es la aplicación y el producto comercial. BioVital.360 es exclusivamente el canal de contenido, adquisición y comunidad. BioVital 365 está descartada.
 - **Producto vigente:** Ruta Nutrity educativa de 12 semanas, con seis etapas, cuatro o cinco acciones semanales, progreso persistente y reporte educativo.
@@ -11,8 +11,8 @@
 - **IA:** limitada a ejemplos educativos de menús y coaching de hábitos; no diagnostica, prescribe, interpreta síntomas como causas emocionales ni promete resultados clínicos.
 - **Aplicación oficial:** Next.js en `nutrity-nextjs`. Los componentes heredados de numerología y diagnóstico fueron retirados del producto activo.
 - **Producción:** [https://nutrityglobal-tau.vercel.app](https://nutrityglobal-tau.vercel.app), despliegue Vercel **Ready / Production**.
-- **Commits publicados:** `f644dd2` (seguridad, privacidad y rediseño del MVP) y `673b61c` (alineación del build con el root configurado en Vercel).
-- **Verificación:** TypeScript y ESLint sin errores; `/`, `/onboarding`, `/privacy`, `/terms` y `/auth` responden HTTP 200 en producción.
+- **Commits publicados:** `f644dd2` (seguridad, privacidad y rediseño del MVP), `673b61c` (alineación del build con el root configurado en Vercel) y `f098fa3` (cierre de marca, oferta, embudo y Academia de Fase 3).
+- **Verificación:** TypeScript y ESLint sin errores; landing, onboarding, autenticación, privacidad, términos y activos de marca validados visualmente en producción. El endpoint de métricas aceptó un evento anónimo de auditoría con HTTP 202.
 - **Fase 3:** identidad N Ruta Clara integrada con activos locales, oferta beta simplificada, embudo medible con consentimiento, Academia organizada como ruta guiada y Manual de Marca 1.0 beta.
 - **Oferta pública beta:** Gratis, Nutrity Plus (USD 9,99/mes), Ruta Nutrity 12 semanas (USD 49/mes) y Profesional (USD 149/mes). Stripe es la única pasarela visible; PayPal queda fuera de la interfaz hasta ofrecer paridad de recurrencia y cancelación.
 - **Auditoría:** el guion de pruebas reales está en `docs/CHECKLIST-AUDITORIA-FASE-3.md`. La publicación y la ejecución con cuentas reales son el siguiente control operativo.
@@ -25,7 +25,8 @@
 - [x] Corregir el contrato de actualización de perfiles para que Superadmin pueda guardar datos básicos, rol, plan y estado sin error 500, manteniendo esos tres campos restringidos a ADMIN.
 - [x] Añadir “Otra” a la barrera principal del onboarding y un campo breve para especificarla.
 - [x] Añadir una confirmación explícita y no ambigua: “Ninguna de las anteriores — quiero continuar con mi Ruta Nutrity”; cualquier señal urgente sigue bloqueando el recorrido.
-- [ ] Publicar estos ajustes y repetir las pruebas con Superadmin, Coach y usuario nuevo.
+- [x] Publicar en producción los ajustes de perfil, onboarding, marca, oferta, embudo y Academia.
+- [ ] Repetir las pruebas reales con Superadmin, Coach y usuario nuevo usando `docs/CHECKLIST-AUDITORIA-FASE-3.md`.
 - [x] Rediseñar Academia como una ruta guiada por unidades interactivas con la metodología “Comprende, practica y registra”, manteniendo progresión, evaluaciones y retos.
 - [x] Retirar de la interfaz activa promesas clínicas o absolutas del contenido académico y aplicar un filtro defensivo al contenido heredado de la base de datos. La revisión clínica externa sigue pendiente.
 - [x] Crear el Manual de Marca 1.0 beta de Nutrity Global y el sistema de convivencia con BioVital.360.
