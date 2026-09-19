@@ -19,6 +19,18 @@ const DashboardMicronutrientsTab = dynamic(() => import("./dashboard/tabs/Dashbo
 const DashboardGoalsTab = dynamic(() => import("./dashboard/tabs/DashboardGoalsTab").then(mod => mod.DashboardGoalsTab), { loading: () => <DashboardTabSkeleton /> });
 const DashboardAgendaTab = dynamic(() => import("./dashboard/tabs/DashboardAgendaTab").then(mod => mod.DashboardAgendaTab), { loading: () => <DashboardTabSkeleton /> });
 
+function publicAppTitle(value: unknown) {
+    if (typeof value !== "string" || !value.trim()) return "Nutrity Global · Ruta de hábitos";
+    return /bio[- ]?panel|bio[- ]?master|clinical edition|m[eé]dico|nutrity v\d/i.test(value)
+        ? "Nutrity Global · Ruta de hábitos"
+        : value.trim();
+}
+
+function publicPlanName(plan: unknown) {
+    const key = typeof plan === "string" ? plan.toUpperCase() : "FREE";
+    return ({ FREE: "Nutrity Inicio", BASIC: "Nutrity Plus", ADVANCED: "Ruta Nutrity 12 semanas", ELITE: "Nutrity Profesional" } as Record<string, string>)[key] || "Nutrity Inicio";
+}
+
 import { z } from "zod";
 import { WeeklyMenuSchema } from "../lib/schemas";
 import * as aiService from "@/actions/ai-actions";
@@ -74,6 +86,8 @@ import {
     FileText
 } from "lucide-react";
 import { PricingTable } from './PricingTable';
+import { BrandLogo } from './BrandLogo';
+import { trackEventOnce } from '@/lib/analytics';
 import { Course, Micronutrient } from "../lib/types";
 import { FoodItem } from "../lib/types";
 import { weeklyMenuData } from "../lib/menu-data";
@@ -83,7 +97,6 @@ import { useDropzone } from "react-dropzone";
 import { AdminPanel } from "./AdminPanel";
 import { SuperadminPanel } from "./SuperadminPanel";
 import { ThemeInjector } from "./ThemeInjector";
-import SubscriptionTab from "./SubscriptionTab";
 import { getDirectImageUrl } from '../lib/utils';
 import { BioPlanSection } from './BioPlanSection';
 import { LessonAssignment } from './LessonAssignment';
@@ -106,6 +119,10 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
     const isCoachOrAdminInit = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH' || user?.profile?.plan === 'ELITE';
     const [activeTab, setActiveTab] = useState(isCoachOrAdminInit ? "organization" : "main");
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        if (activeTab === "subscription") trackEventOnce("plan_viewed", { source: "dashboard" });
+    }, [activeTab]);
     // Priority: diagnostic name → DB profile name → email prefix (never hardcode "Freddy")
     const firstName = (
         results?.name ||
@@ -502,7 +519,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
         setChatMessages([
             {
                 role: 'ai',
-                text: `¡Hola ${firstName}! Bienvenido a tu ecosistema de precisión metabólica. \n\nSoy tu Coach con IA y estoy sincronizado con tu plan de **${results?.phase || 'Activación'}**. \n\nHe analizado tus bio-marcadores recientes y veo que tu pilar de **${results?.pillars?.[0]?.title || 'Metabolismo'}** es la prioridad hoy. ¿Deseas registrar una nueva medición o tienes alguna duda sobre tu dieta?`
+                text: `¡Hola ${firstName}! Soy el acompañante educativo de Nutrity. \n\nPuedo ayudarte a comprender tu ruta de **${results?.phase || 'hábitos'}** y a elegir una acción pequeña para hoy. La información que registras no constituye un diagnóstico. ¿Quieres revisar tu siguiente acción o preparar una pregunta para tu profesional?`
             }
         ]);
     }, [results?.name, results?.phase]);
@@ -590,7 +607,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
             setNewMeasure({ ...newMeasure, value: "" });
         } catch (err) {
             console.error("Error adding measurement:", err);
-            alert("Error al guardar la medición médica.");
+            alert("Error al guardar el registro.");
         }
     };
 
@@ -686,13 +703,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
             {/* Desktop Sidebar */}
             <aside className="hidden lg:flex flex-col w-64 bg-nutrity-primary text-white border-r border-white/5 overflow-y-auto hide-scroll-indicator">
                 <div className="p-8 min-h-max">
-                    <div className="flex items-center gap-3 mb-10">
-                        <img 
-                            src={landingConfig?.logoUrl ? landingConfig.logoUrl : "https://drive.google.com/uc?export=view&id=1LSl9LF795Q6E2YnjvZ0kZ40DjVuk7LuS"} 
-                            alt="Clinic Logo" 
-                            className="w-40 h-auto object-contain drop-shadow-md" 
-                        />
-                    </div>
+                    <BrandLogo inverse className="mb-10 h-14 w-auto" />
                     <nav className="space-y-1">
                         {navItems.map((item) => (
                             <button
@@ -713,7 +724,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                 <header className="h-20 bg-white border-b border-nutrity-border flex items-center justify-between px-8 z-20">
                     <div className="flex items-center gap-4">
                         <button className="lg:hidden p-2" onClick={() => setIsSidebarOpen(true)}><LayoutDashboard /></button>
-                        <h1 className="text-sm md:text-xl font-display font-bold text-nutrity-primary tracking-tight truncate max-w-[150px] md:max-w-none">{landingConfig?.appTitle || "Nutrity V7 - Bio-Panel Médico"}</h1>
+                        <h1 className="text-sm md:text-xl font-display font-bold text-nutrity-primary tracking-tight truncate max-w-[150px] md:max-w-none">{publicAppTitle(landingConfig?.appTitle)}</h1>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="hidden md:flex flex-col text-right">
@@ -723,7 +734,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                 user?.profile?.plan === 'PREMIUM' || user?.profile?.plan === 'AVANZADO' ? 'text-slate-400' :
                                 user?.profile?.plan === 'BASIC' || user?.profile?.plan === 'BÁSICO' ? 'text-blue-500' :
                                 'text-green-500'
-                            }`}>{user?.profile?.plan || 'Básico (FREE)'}</span>
+                            }`}>{publicPlanName(user?.profile?.plan)}</span>
                         </div>
                         <button onClick={onGeneratePDF} disabled={isGeneratingPDF} className="bg-nutrity-primary text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-3 shadow-lg shadow-nutrity-primary/10 hover:scale-105 transition-all">
                             {isGeneratingPDF ? (
@@ -788,7 +799,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                                 <Zap className="w-4 h-4 text-nutrity-accent" />
                                                 <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Recorrido de hábitos</span>
                                             </div>
-                                            <h2 className="text-3xl md:text-5xl font-display font-bold leading-[1.1] uppercase tracking-tighter">PROTOCOLO MAESTRO: {results.phase} 2025</h2>
+                                            <h2 className="text-3xl md:text-5xl font-display font-bold leading-[1.1] uppercase tracking-tighter">RUTA NUTRITY: {results.phase}</h2>
                                             <p className="text-base md:text-xl text-white/60 font-medium max-w-md">Organizamos acciones educativas a partir de la información que compartiste.</p>
                                         </div>
                                         <div className="grid md:grid-cols-2 gap-8">
@@ -812,7 +823,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                                         <Brain className="w-5 h-5" />
                                                     </div>
                                                     <div className="space-y-1">
-                                                        <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Bio-Insight IA</p>
+                                                        <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Orientación educativa</p>
                                                         <p className="text-sm font-medium leading-relaxed italic">"{results.insight}"</p>
                                                     </div>
                                                 </div>
@@ -823,7 +834,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                     <div className="absolute top-0 right-0 w-96 h-96 bg-nutrity-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
                                 </div>
 
-                                {/* ── MAPA DE RUTA BIOLÓGICO NMG (sólo si la IA lo generó) ── */}
+                                {/* Compatibilidad visual con evaluaciones históricas; el usuario debe actualizar su Ruta Nutrity. */}
                                 {results?.nmgDiagnosis && (
                                     <div className="relative">
                                         <motion.div
@@ -854,22 +865,22 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                                 </span>
                                             </div>
 
-                                            {/* Conflicto raíz + órgano */}
+                                            {/* Datos históricos retirados del producto vigente. */}
                                             <div className="grid sm:grid-cols-2 gap-4">
                                                 <div className="p-4 bg-nutrity-bg rounded-2xl space-y-1">
-                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Raíz Emocional del Conflicto</p>
+                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Contenido histórico retirado</p>
                                                     <p className="text-sm font-bold text-nutrity-primary">{results.nmgDiagnosis.conflict}</p>
                                                 </div>
                                                 <div className="p-4 bg-nutrity-bg rounded-2xl space-y-1">
-                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Sistema Biológico Afectado</p>
+                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Registro anterior</p>
                                                     <p className="text-sm font-bold text-nutrity-primary">{results.nmgDiagnosis.organ}</p>
                                                 </div>
                                             </div>
 
-                                            {/* Enfoque holístico multi-disciplina */}
+                                            {/* Contenido histórico mostrado solo para dirigir a la nueva ruta. */}
                                             {results.nmgDiagnosis.holisticApproach?.length > 0 && (
                                                 <div className="space-y-3">
-                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Protocolo Holístico Personalizado</p>
+                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">Recomendaciones anteriores retiradas</p>
                                                     <div className="grid sm:grid-cols-2 gap-3">
                                                         {(results.nmgDiagnosis.holisticApproach || []).map((item: { discipline: string; recommendation: string }, idx: number) => (
                                                             <div key={idx} className="flex gap-3 p-3 bg-nutrity-accent/5 border border-nutrity-accent/10 rounded-xl">
@@ -916,7 +927,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                         <div className="relative z-10 grid md:grid-cols-3 gap-6 items-center">
                                             <div className="md:col-span-2 space-y-4">
                                                 <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                                                    <Brain className="w-3 h-3" /> Coach Funcional IA
+                                                    <Brain className="w-3 h-3" /> Acompañante educativo
                                                 </div>
                                                 <p className="text-sm md:text-base font-medium leading-relaxed">{results.coachCallToAction}</p>
                                             </div>
@@ -1053,7 +1064,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Plan Nutricional</p>
-                                            <h4 className="font-bold text-sm mt-0.5">Dieta Especial AI</h4>
+                                            <h4 className="font-bold text-sm mt-0.5">Planificación semanal</h4>
                                             <p className="text-[10px] font-bold text-nutrity-success mt-1 opacity-50">Orientación educativa</p>
                                         </div>
                                     </div>
@@ -1145,7 +1156,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                         {/* Fallback for other tabs */}
                         {activeTab === "subscription" && (
                             <motion.div key="subscription" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-                                <SubscriptionTab user={user} onSuccess={() => window.location.reload()} />
+                                <PricingTable currentPlan={user?.profile?.plan || "FREE"} userId={user?.profile?.id || user?.id || user?.uid} />
                             </motion.div>
                         )}
 
@@ -1174,8 +1185,8 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                     <FlaskConical className="w-10 h-10" />
                                 </div>
                                 <div className="space-y-2">
-                                    <h3 className="text-2xl font-display font-bold">Sección en Sincronización</h3>
-                                    <p className="text-nutrity-gray-text max-w-sm">Estamos actualizando este componente para cumplir con los estándares Clinical Tech v4.2.</p>
+                                    <h3 className="text-2xl font-display font-bold">Sección en actualización</h3>
+                                    <p className="text-nutrity-gray-text max-w-sm">Estamos preparando esta experiencia para que mantenga la claridad y seguridad de Ruta Nutrity.</p>
                                 </div>
                                 <button onClick={() => setActiveTab("main")} className="text-nutrity-accent font-bold text-sm uppercase tracking-widest hover:underline px-6 py-2 border border-nutrity-accent/20 rounded-xl">Regresar al Panel</button>
                             </motion.div>
@@ -1187,7 +1198,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                 <footer className="px-4 md:px-8 py-4 md:py-6 border-t border-nutrity-border bg-white/50 backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
                     <div className="flex items-center gap-2 text-nutrity-gray-text opacity-40">
                         <Activity className="w-4 h-4" />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">&copy; 2025 Nutrity Global AI - Clinical Edition</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest">&copy; 2026 Nutrity Global · Educación y hábitos</span>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -1198,7 +1209,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                                 title="Acceso Directo Admin"
                             >
                                 <Shield className="w-4 h-4 text-nutrity-accent group-hover:scale-110 transition-transform" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest">Panel de Control Bio-Master</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Panel Nutrity Global</span>
                             </button>
                         ) : (
                             <button
@@ -1232,7 +1243,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white w-full max-w-md rounded-2xl p-10 shadow-2xl relative border border-white/20">
                             <button onClick={() => { setShowApptModal(false); setEditingApptId(null); }} className="absolute top-8 right-8 p-2 rounded-full hover:bg-nutrity-bg text-nutrity-gray-text opacity-50"><X className="w-5 h-5" /></button>
                             <h3 className="text-2xl font-display font-bold mb-1">{editingApptId ? "Editar Cita" : "Agendar Nueva Cita"}</h3>
-                            <p className="text-sm text-nutrity-gray-text mb-8 font-medium">Organiza tu seguimiento médico inteligente</p>
+                            <p className="text-sm text-nutrity-gray-text mb-8 font-medium">Organiza tus próximos pasos y recordatorios</p>
                             <form onSubmit={handleAddAppointment} className="space-y-6">
                                 <div className="space-y-1.5 font-medium">
                                     <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Asunto de la Cita</label>
@@ -1327,7 +1338,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                             <div className="p-8 space-y-8 flex-1 bg-slate-50">
                                 <section>
                                     <h3 className="text-sm font-bold text-nutrity-gray-text uppercase tracking-widest mb-3 flex items-center gap-2">
-                                        <Info className="w-4 h-4 text-nutrity-accent" /> Descripción Clínica
+                                        <Info className="w-4 h-4 text-nutrity-accent" /> Descripción educativa
                                     </h3>
                                     <p className="text-nutrity-primary font-medium leading-relaxed text-sm md:text-base">{selectedFood.description}</p>
                                 </section>

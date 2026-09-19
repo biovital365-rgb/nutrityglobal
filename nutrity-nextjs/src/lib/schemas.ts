@@ -36,8 +36,10 @@ export const OnboardingDataSchema = z.object({
   sleepQuality: z.enum(['poor', 'fair', 'good']),
   mealPattern: z.enum(['irregular', 'improvable', 'structured']),
   primaryGoal: z.enum(['food', 'movement', 'energy', 'tracking', 'consistency']),
-  biggestBarrier: z.enum(['time', 'cost', 'motivation', 'information', 'support']),
+  biggestBarrier: z.enum(['time', 'cost', 'motivation', 'information', 'support', 'other']),
+  barrierOther: z.string().trim().max(240).optional(),
   urgentSymptoms: z.array(z.enum(['chest_pain', 'breathing_difficulty', 'confusion', 'fainting', 'persistent_vomiting'])).default([]),
+  noUrgentSymptoms: z.literal(true),
   privacyConsent: z.literal(true), safetyAcknowledgement: z.literal(true),
 });
 

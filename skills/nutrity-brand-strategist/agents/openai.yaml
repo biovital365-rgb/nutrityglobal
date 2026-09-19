@@ -1,0 +1,5 @@
+interface:
+  display_name: "Especialista de Marca Nutrity"
+  short_description: "Estrategia, identidad y manual profesional"
+  brand_color: "#17324D"
+  default_prompt: "Usa $nutrity-brand-strategist para desarrollar o revisar el sistema de marca de Nutrity Global."

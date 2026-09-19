@@ -17,6 +17,18 @@ const userProfileUpdateSchema = z.object({
     socialMedia: z.string().trim().max(240).nullable().optional(),
 }).strict();
 
+const adminUserUpdateSchema = z.object({
+    role: z.enum(['USER', 'COACH', 'ADMIN']).optional(),
+    plan: z.enum(['FREE', 'BASIC', 'ADVANCED', 'ELITE']).optional(),
+    status: z.enum(['ACTIVE', 'BLOCKED', 'OBSERVED']).optional(),
+}).strict();
+
+function selectFields(source: Record<string, unknown>, fields: string[]) {
+    return Object.fromEntries(
+        fields.filter(field => Object.prototype.hasOwnProperty.call(source, field)).map(field => [field, source[field]])
+    );
+}
+
 export async function getServerUser() {
     return getAuthenticatedUser();
 }
@@ -34,12 +46,17 @@ export async function getUserProfile(firebaseUid?: string) {
 }
 
 export async function updateUserProfile(userId: string, profileData: unknown) {
-    const { target } = await requireUserAccess(userId);
+    const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
     const internalId = target.id;
-    const safeData = userProfileUpdateSchema.parse(profileData);
+    const rawData = z.record(z.string(), z.unknown()).parse(profileData);
+    const safeData = userProfileUpdateSchema.parse(selectFields(rawData, [
+        'name', 'phone', 'address', 'age', 'occupation', 'maritalStatus', 'socialMedia'
+    ]));
+    const requestedAdminData = selectFields(rawData, ['role', 'plan', 'status']);
+    const adminData = actor.role === 'ADMIN' ? adminUserUpdateSchema.parse(requestedAdminData) : {};
     const updated = await prisma.user.update({
         where: { id: internalId },
-        data: { ...safeData, updatedAt: new Date() },
+        data: { ...safeData, ...adminData, updatedAt: new Date() },
         include: { organization: true }
     });
     revalidatePath('/', 'layout');

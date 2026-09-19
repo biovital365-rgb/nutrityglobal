@@ -103,7 +103,7 @@ export function DashboardClinicalTab({
 
             <div className="nutrity-card bg-white overflow-hidden flex flex-col shadow-xl shadow-slate-200/50">
                 <div className="p-8 border-b border-nutrity-border flex items-center justify-between">
-                    <h3 className="font-display font-bold text-xl">Bitácora Médica</h3>
+                    <h3 className="font-display font-bold text-xl">Registro personal</h3>
                     <TrendingDown className="w-6 h-6 text-nutrity-accent opacity-40" />
                 </div>
                 <div className="overflow-x-auto">

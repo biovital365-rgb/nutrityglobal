@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     description: "Artículos educativos sobre alimentación, hábitos y seguimiento de la salud metabólica.",
     openGraph: {
         title: "Blog | BioVital.360",
-        description: "Artículos de salud metabólica, nutrición clínica y bienestar.",
+        description: "Artículos educativos sobre hábitos, alimentación y bienestar metabólico.",
         type: "website",
     },
 };
@@ -180,7 +180,7 @@ export default async function BlogPage() {
                         Ciencia y <span className="text-[#1b3b36] italic">sabiduría</span> al servicio de tu salud
                     </h1>
                     <p className="text-[#2d3748] text-lg md:text-xl max-w-2xl mx-auto font-medium">
-                        Protocolos clínicos, evidencia científica y guías prácticas para transformar tu metabolismo.
+                        Explicaciones basadas en evidencia y guías prácticas para construir hábitos sostenibles.
                     </p>
                 </section>
 

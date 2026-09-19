@@ -106,7 +106,7 @@ export async function POST(request: Request) {
         await prisma.dailyMenu.createMany({ data: rows });
 
         const metabolicPlan = user.evaluations?.[0]?.results as any || null;
-        let promptContext = `Paciente: ${user.name || "Nutrity"} (Edad: ${user.age || "N/A"})\nFase: ${phase}\n`;
+        let promptContext = `Persona: ${user.name || "Usuario Nutrity"} (Edad: ${user.age || "N/A"})\nEtapa educativa: ${phase}\n`;
         if (metabolicPlan) {
             promptContext += `Meta: ${metabolicPlan.meta}\nSuperfoods: ${metabolicPlan.superfoods?.join(", ")}\n`;
         }

@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { motion } from "motion/react";
 import { Check, Star, Crown, Zap, Shield, ArrowRight } from 'lucide-react';
 import { createCheckoutSession, createCustomerPortal } from '@/actions/stripe-actions';
+import Link from 'next/link';
+import { trackEvent } from '@/lib/analytics';
 
 interface PricingTableProps {
   currentPlan?: string;
@@ -15,6 +17,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
 
   const handleUpgrade = async (planType: 'BASIC' | 'ADVANCED' | 'ELITE') => {
     setLoading(planType);
+    trackEvent('checkout_started', { plan: planType, source: 'stripe' });
     const { url, error } = await createCheckoutSession(userId, planType);
     if (url) {
       window.location.assign(url);
@@ -40,29 +43,29 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
   const plans = [
     {
       type: 'BASIC',
-      name: 'Básico',
+      name: 'Nutrity Plus',
       price: '9.99',
       description: 'Convierte tu Ruta Nutrity en una rutina semanal.',
       icon: Zap,
       color: 'bg-nutrity-success/10 text-nutrity-success',
       borderColor: 'border-nutrity-success/20',
       features: [
-        '1 Menú Semanal IA al mes',
-        'Descarga de Reporte PDF Estándar',
-        'Tracker de Bioquímica básico'
+        '1 planificación semanal con IA al mes',
+        'Reporte educativo descargable',
+        'Registro personal de indicadores'
       ],
     },
     {
       type: 'ADVANCED',
-      name: 'Avanzado',
-      price: '24.99',
-      description: 'Potencia tu restauración con menús ilimitados.',
+      name: 'Ruta Nutrity 12 semanas',
+      price: '49.00',
+      description: 'Sigue una ruta educativa completa con recursos y revisión de avances.',
       popular: true,
       icon: Star,
       color: 'bg-nutrity-accent/10 text-nutrity-accent',
       borderColor: 'border-nutrity-accent',
       features: [
-        'Menús semanales IA Ilimitados',
+        'Planificación semanal con IA sujeta a uso responsable',
         'Reporte educativo de progreso',
         'Feedback loop (Solicitar Cambios)',
         'Acceso completo a Cursos y Recetario'
@@ -70,17 +73,17 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
     },
     {
       type: 'ELITE',
-      name: 'Elite (Coach)',
-      price: '49.99',
-      description: 'Plataforma administrativa para acompañamiento VIP.',
+      name: 'Nutrity Profesional',
+      price: '149.00',
+      description: 'Espacio de gestión para coaches y profesionales autorizados.',
       icon: Crown,
       color: 'bg-purple-500/10 text-purple-500',
       borderColor: 'border-purple-500/20',
       features: [
-        'Rol de COACH Administrativo',
-        'Gestión de pacientes propios (Organización)',
+        'Panel administrativo para coach',
+        'Gestión de participantes de la organización',
         'Aprobación manual de menús',
-        'Analytics metabólicos de pacientes'
+        'Panel de actividad y seguimiento'
       ],
     }
   ];
@@ -89,7 +92,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
     <div className="w-full py-10">
       <div className="text-center mb-10">
         <h2 className="text-3xl font-bold text-nutrity-primary mb-3">Elige el apoyo que necesitas</h2>
-        <p className="text-nutrity-gray-text max-w-xl mx-auto">Desbloquea el poder completo de la IA y nuestra metodología clínica para acelerar tus resultados.</p>
+        <p className="text-nutrity-gray-text max-w-xl mx-auto">Elige las herramientas y el acompañamiento educativo que mejor se adapten a tus próximos pasos.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
@@ -179,6 +182,9 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
           </button>
         </div>
       )}
+      <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-5 text-nutrity-gray-text">
+        Precios en USD por mes. La suscripción se renueva hasta que la canceles desde el portal de facturación. Los impuestos aplicables se muestran antes de pagar. Consulta los <Link href="/terms" className="font-bold underline">Términos de Uso</Link>.
+      </p>
     </div>
   );
 };

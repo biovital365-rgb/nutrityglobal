@@ -19,7 +19,7 @@ export function DashboardAgendaTab({
         <motion.div key="agenda" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div className="space-y-1">
-                    <h2 className="text-3xl font-display font-bold">Agenda de Control Médico</h2>
+                    <h2 className="text-3xl font-display font-bold">Agenda de seguimiento</h2>
                     <p className="text-nutrity-gray-text text-sm">Gestiona tus citas de seguimiento y evaluaciones metabólicas.</p>
                 </div>
                 <button

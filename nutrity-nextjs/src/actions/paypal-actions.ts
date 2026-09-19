@@ -95,6 +95,7 @@ export async function captureOrder(orderID: string, _userId: string, _planType: 
         role: user.role === 'ADMIN' ? 'ADMIN' : (expected.role || 'USER'),
       },
     });
+    console.info('[NUTRITY_FUNNEL]', JSON.stringify({ event: 'payment_confirmed', path: '/paypal', metadata: { plan: expected.dbPlan, source: 'paypal' }, at: new Date().toISOString() }));
     return { success: true };
   } catch (error) {
     console.error('[PAYPAL_CAPTURE_ORDER]', error);

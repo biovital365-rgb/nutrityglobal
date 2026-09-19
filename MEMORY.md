@@ -1,6 +1,82 @@
 # MEMORY - Nutrity Global SaaS (2026)
 
-## 🎯 Estado Actual (Mayo 2026)
+> [!IMPORTANT]
+> **Estado canónico vigente desde el 18 de septiembre de 2026.** Las secciones históricas posteriores se conservan únicamente como registro de evolución. Cualquier referencia anterior a NMG, biodescodificación, diagnóstico automatizado, puntajes o promesas de remisión, proyecciones de glucosa, causas emocionales o cambio de medicación está retirada y no debe reutilizarse como requisito de producto.
+
+## Estado actual — Fase 3 preparada para publicación (18 sep 2026)
+
+- **Marca oficial:** Nutrity Global es la aplicación y el producto comercial. BioVital.360 es exclusivamente el canal de contenido, adquisición y comunidad. BioVital 365 está descartada.
+- **Producto vigente:** Ruta Nutrity educativa de 12 semanas, con seis etapas, cuatro o cinco acciones semanales, progreso persistente y reporte educativo.
+- **Seguridad clínica:** el onboarding incluye consentimiento explícito y detiene el recorrido ante dolor de pecho, dificultad respiratoria, confusión, desmayo o vómitos persistentes, mostrando derivación urgente.
+- **IA:** limitada a ejemplos educativos de menús y coaching de hábitos; no diagnostica, prescribe, interpreta síntomas como causas emocionales ni promete resultados clínicos.
+- **Aplicación oficial:** Next.js en `nutrity-nextjs`. Los componentes heredados de numerología y diagnóstico fueron retirados del producto activo.
+- **Producción:** [https://nutrityglobal-tau.vercel.app](https://nutrityglobal-tau.vercel.app), despliegue Vercel **Ready / Production**.
+- **Commits publicados:** `f644dd2` (seguridad, privacidad y rediseño del MVP) y `673b61c` (alineación del build con el root configurado en Vercel).
+- **Verificación:** TypeScript y ESLint sin errores; `/`, `/onboarding`, `/privacy`, `/terms` y `/auth` responden HTTP 200 en producción.
+- **Fase 3:** identidad N Ruta Clara integrada con activos locales, oferta beta simplificada, embudo medible con consentimiento, Academia organizada como ruta guiada y Manual de Marca 1.0 beta.
+- **Oferta pública beta:** Gratis, Nutrity Plus (USD 9,99/mes), Ruta Nutrity 12 semanas (USD 49/mes) y Profesional (USD 149/mes). Stripe es la única pasarela visible; PayPal queda fuera de la interfaz hasta ofrecer paridad de recurrencia y cancelación.
+- **Auditoría:** el guion de pruebas reales está en `docs/CHECKLIST-AUDITORIA-FASE-3.md`. La publicación y la ejecución con cuentas reales son el siguiente control operativo.
+- **Skill de marca:** `nutrity-brand-strategist` validado e instalado en Codex; su fuente versionable está en `skills/nutrity-brand-strategist`.
+
+## Tareas pendientes priorizadas
+
+### Hallazgos de la primera prueba real (18 sep 2026)
+
+- [x] Corregir el contrato de actualización de perfiles para que Superadmin pueda guardar datos básicos, rol, plan y estado sin error 500, manteniendo esos tres campos restringidos a ADMIN.
+- [x] Añadir “Otra” a la barrera principal del onboarding y un campo breve para especificarla.
+- [x] Añadir una confirmación explícita y no ambigua: “Ninguna de las anteriores — quiero continuar con mi Ruta Nutrity”; cualquier señal urgente sigue bloqueando el recorrido.
+- [ ] Publicar estos ajustes y repetir las pruebas con Superadmin, Coach y usuario nuevo.
+- [x] Rediseñar Academia como una ruta guiada por unidades interactivas con la metodología “Comprende, practica y registra”, manteniendo progresión, evaluaciones y retos.
+- [x] Retirar de la interfaz activa promesas clínicas o absolutas del contenido académico y aplicar un filtro defensivo al contenido heredado de la base de datos. La revisión clínica externa sigue pendiente.
+- [x] Crear el Manual de Marca 1.0 beta de Nutrity Global y el sistema de convivencia con BioVital.360.
+- [x] Reemplazar el logotipo remoto por activos SVG locales/versionados y definir variantes positiva, negativa, monocroma y micro.
+
+### P0 — Seguridad antes de dirigir tráfico
+
+- [ ] Rotar credenciales de Gemini, Supabase/PostgreSQL, Stripe, PayPal, Resend y cualquier secreto que haya estado versionado o compartido.
+- [ ] Comprobar que las credenciales antiguas están revocadas y documentar evidencia de la rotación.
+- [ ] Reescribir y purgar el historial Git que contiene secretos o exportaciones antiguas; ejecutar un nuevo escaneo del historial y del árbol vigente.
+- [ ] Revisar las 12 alertas actuales de `npm audit` —1 baja, 2 moderadas, 8 altas y 1 crítica—, identificar dependencias alcanzables y aplicar actualizaciones compatibles sin usar `--force` de forma ciega.
+- [ ] Repetir typecheck, lint, build y pruebas funcionales después de resolver dependencias.
+
+### P1 — Dominio, QA y validación clínica
+
+- [ ] Definir y conectar el dominio comercial definitivo. `nutrityglobal.vercel.app` devuelve actualmente 404; el dominio activo es `nutrityglobal-tau.vercel.app`.
+- [ ] Actualizar enlaces públicos, metadata, correos, webhooks y documentación cuando se apruebe el dominio definitivo.
+- [ ] Obtener revisión clínica externa del contenido educativo, señales de alarma y mensajes de derivación.
+- [ ] Ejecutar E2E con cuentas reales de prueba para los casos: recorrido normal, datos opcionales omitidos y cada señal de alarma.
+- [ ] Validar móvil y escritorio: onboarding, Ruta Nutrity, checklist semanal, menús, coach, reporte y privacidad.
+- [ ] Probar aislamiento horizontal entre usuarios y organizaciones, roles ADMIN/COACH/USER y bloqueo de recursos premium.
+- [ ] Probar Stripe en sandbox: checkout, webhook firmado, idempotencia, activación, cancelación y rechazo de importes/planes manipulados. PayPal no forma parte de la oferta pública beta.
+- [ ] Probar exportación y eliminación de cuenta con datos reales de prueba.
+
+### P1 — Observabilidad posterior al despliegue
+
+- [ ] Revisar Vercel Runtime Logs, tasa de errores y tiempos de respuesta durante las primeras 24–48 horas.
+- [ ] Vigilar el pool de conexiones de Supabase/PostgreSQL y verificar que producción usa el Transaction Pooler previsto.
+- [ ] Confirmar recepción y procesamiento idempotente de webhooks sin errores silenciosos.
+- [ ] Revisar errores 404 de assets y URLs antiguas del catálogo antes de la beta.
+
+### P2 — Fase 3: marca, oferta y embudo
+
+- [x] Completar barrido de interfaz, correos, PDFs, metadata, Academia y administración: Nutrity Global como producto y BioVital.360 solo como canal.
+- [x] Crear e instalar el skill `nutrity-brand-strategist` para estrategia, identidad, manual, co-branding y control de claims.
+- [x] Consolidar el Manual de Marca 1.0 beta con posicionamiento, arquitectura, voz, paleta, tipografía, usos y activos de N Ruta Clara.
+- [x] Incorporar `public/logo.png` como propuesta real del fundador y evaluarla frente a Ruta Clara, sin sustituirla. Se documentaron tres evoluciones provisionales.
+- [x] Evaluar la variante 02 del logotipo con “y” amarilla: queda como candidata principal a color, condicionada a pruebas de contraste y escala; la versión verde se conserva como referencia monocromática.
+- [x] Preparar prototipos conceptuales de Conservación óptica y N Ruta Clara, más una lámina comparativa, en `docs/brand-prototypes/`.
+- [x] Decisión de marca: Prototipo B — N Ruta Clara aprobado por el propietario el 18 de septiembre de 2026.
+- [x] Crear familia vectorial inicial del símbolo en color, monocroma, negativa y micro, más prueba técnica de 16, 24, 48 y 160 px. Regla provisional: símbolo completo desde 48 px y micro entre 16–32 px.
+- [x] Integrar la familia beta de N Ruta Clara y el wordmark vectorial en landing, autenticación, onboarding, panel, favicon y Open Graph. Un refinamiento tipográfico registrable puede realizarse después de la auditoría.
+- [x] Definir embudo mínimo, eventos y oferta inicial en `docs/FASE-3-MARCA-OFERTA-EMBUDO.md`.
+- [x] Definir y preparar la oferta beta visible: Gratis, Nutrity Plus, Ruta Nutrity 12 semanas y Profesional.
+- [x] Definir precio, moneda, renovación, cancelación, revisión de primera compra, soporte y límites del acompañamiento en términos visibles.
+- [x] Instrumentar eventos del embudo con consentimiento: visita, CTA, onboarding, registro, ruta, primera acción, plan, checkout, pago y Academia.
+- [x] Crear checklist de control de marca, embudo, pagos, perfiles, Academia y roles para la auditoría posterior a publicación.
+- [ ] Preparar beta cerrada con 20 participantes de BioVital.360 y medir finalización, activación, retorno D7, soporte e incidentes.
+- [ ] Evaluar resultados de la Fase 2 en la próxima sesión antes de ampliar alcance o abordar insuficiencia renal.
+
+## 🗄️ Estado histórico (Mayo 2026 — no vigente)
 - **Producto**: Nutrity Global - CRM & Onboarding para Remisión de Diabetes.
 - **Enfoque**: Remisión Metabólica Clínica basada en el modelo de 4 secciones (Antropometría, Bioquímica, Estilo de Vida, PNL/Biodescodificación).
 - **Integración IA**: Sincronización exitosa con **NotebookLM** (vía MCP) para fundamentación clínica (NMG y Medicina Funcional).

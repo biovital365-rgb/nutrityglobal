@@ -316,7 +316,7 @@ export function AdminUsersTab({
                             <form onSubmit={onSaveUser} className="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <FieldInput label="Nombre Completo" value={editingUser.name || ""} onChange={(v) => setEditingUser({ ...editingUser, name: v })} required />
-                                    <FieldInput label="Email" value={editingUser.email || ""} onChange={(v) => setEditingUser({ ...editingUser, email: v })} required />
+                                    <FieldInput label="Email de acceso (solo lectura)" value={editingUser.email || ""} onChange={() => {}} disabled />
                                     <FieldInput label="Celular de Contacto" value={editingUser.phone || ""} onChange={(v) => setEditingUser({ ...editingUser, phone: v })} placeholder="+591 ..." />
                                     <FieldInput label="Edad" type="number" value={String(editingUser.age || "")} onChange={(v) => setEditingUser({ ...editingUser, age: v })} />
                                     <div className="md:col-span-2">
@@ -342,6 +342,7 @@ export function AdminUsersTab({
                                         <select className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none"
                                             value={editingUser.role || "USER"} onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}>
                                             <option value="USER">Paciente (User)</option>
+                                            <option value="COACH">Coach</option>
                                             <option value="ADMIN">Administrador</option>
                                         </select>
                                     </div>

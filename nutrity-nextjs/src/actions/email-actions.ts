@@ -78,8 +78,8 @@ export async function sendMenuApprovedEmail(userId: string) {
           </div>
           <div style="padding: 24px;">
             <h2 style="color: #0f766e;">Hola ${user.name || 'Amig@'},</h2>
-            <p style="font-size: 16px; line-height: 1.5;">Tu coach clínico ha revisado y aprobado tu menú de precisión para esta semana.</p>
-            <p style="font-size: 16px; line-height: 1.5;">Ingresa ahora a tu panel para ver tu protocolo, imprimirlo y comenzar a aplicar las terapias asignadas.</p>
+            <p style="font-size: 16px; line-height: 1.5;">Tu coach ha revisado y aprobado el ejemplo de planificación para esta semana.</p>
+            <p style="font-size: 16px; line-height: 1.5;">Ingresa a tu panel para revisarlo y decidir qué opciones conversar con tu profesional cuando corresponda.</p>
             <div style="text-align: center; margin-top: 32px;">
               <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard" style="background-color: #0f766e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Ver mi Menú</a>
             </div>
@@ -123,7 +123,7 @@ export async function sendMenuChangesRequestedEmail(userId: string, notes: strin
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: [notifyEmail],
-      subject: `Solicitud de Cambios en Menú - Paciente: ${user.name || user.email}`,
+      subject: `Solicitud de cambios en planificación - Participante: ${user.name || user.email}`,
       html: `
         <div style="font-family: Arial, sans-serif; color: #1e293b; max-w: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
           <div style="background-color: #f59e0b; padding: 24px; text-align: center;">
@@ -131,8 +131,8 @@ export async function sendMenuChangesRequestedEmail(userId: string, notes: strin
           </div>
           <div style="padding: 24px;">
             <h2 style="color: #0f766e;">Hola Coach,</h2>
-            <p style="font-size: 16px; line-height: 1.5;">El paciente <strong>${user.name || user.email}</strong> ha solicitado cambios en su menú semanal.</p>
-            <p style="font-size: 16px; line-height: 1.5;"><strong>Notas del paciente:</strong></p>
+            <p style="font-size: 16px; line-height: 1.5;">El participante <strong>${user.name || user.email}</strong> ha solicitado cambios en su planificación semanal.</p>
+            <p style="font-size: 16px; line-height: 1.5;"><strong>Notas del participante:</strong></p>
             <blockquote style="background-color: #f8fafc; padding: 16px; border-left: 4px solid #f59e0b; font-style: italic;">
               ${notes}
             </blockquote>

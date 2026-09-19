@@ -1,16 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { registerClinic } from "@/actions/db-actions";
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { createOrder, captureOrder } from "@/actions/paypal-actions";
-import { Crown, Loader2, HeartPulse, Sparkles, Building } from "lucide-react";
+import { createCheckoutSession } from "@/actions/stripe-actions";
+import { Crown, Loader2, Sparkles, Building } from "lucide-react";
 import Link from "next/link";
+import { BrandLogo } from "@/components/BrandLogo";
+import { trackEvent } from "@/lib/analytics";
 
 export default function ClinicSignupPage() {
-    const router = useRouter();
     const supabase = createClient();
     
     const [step, setStep] = useState<1 | 2>(1);
@@ -24,12 +23,6 @@ export default function ClinicSignupPage() {
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
-
-    const initialOptions = {
-        clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test",
-        currency: "USD",
-        intent: "capture",
-    };
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -51,8 +44,9 @@ export default function ClinicSignupPage() {
 
             const newUserId = authData.user.id;
             setUserId(newUserId);
+            trackEvent("account_created", { source: "professional_signup" });
 
-            // 2. Register Clinic & Upgrade to COACH
+            // 2. Crear la organización; el rol COACH se activa solo tras confirmar el pago.
             const res = await registerClinic(newUserId, formData.clinicName, formData.name);
             if (!res.success) throw new Error(res.error || "Error al registrar la clínica");
 
@@ -65,19 +59,32 @@ export default function ClinicSignupPage() {
         }
     };
 
+    const handleCheckout = async () => {
+        if (!userId) return;
+        setIsProcessing(true);
+        setError(null);
+        trackEvent("checkout_started", { plan: "ELITE", source: "professional_signup" });
+        try {
+            const result = await createCheckoutSession(userId, "ELITE");
+            if (!result.url) throw new Error(result.error || "No se pudo iniciar el pago");
+            window.location.assign(result.url);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "No se pudo iniciar el pago");
+            setIsProcessing(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#fbf8f1] flex flex-col justify-center py-12 px-6 lg:px-8 font-sans text-[#2d3748]">
             <div className="sm:mx-auto sm:w-full sm:max-w-md mb-8 flex flex-col items-center">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#012a4a] to-[#013a63] flex items-center justify-center shadow-lg shadow-[#012a4a]/20 mb-6">
-                    <HeartPulse className="w-8 h-8 text-[#c19b6c]" />
-                </div>
+                <BrandLogo className="mb-6 h-20 w-auto" priority />
                 <h2 className="text-center text-3xl font-display font-extrabold text-[#012a4a]">
-                    BioVital B2B SaaS
+                    Nutrity Profesional
                 </h2>
                 <p className="mt-2 text-center text-sm text-[#2d3748]/70 max-w-sm">
                     {step === 1 
-                        ? "Registra tu Clínica o Práctica Privada y revoluciona la salud metabólica de tus pacientes."
-                        : "Estás a un paso. Completa la suscripción Elite para activar tu panel B2B."}
+                        ? "Organiza tu práctica y el acompañamiento educativo de tus participantes."
+                        : "Estás a un paso. Completa la suscripción Profesional para activar tu panel."}
                 </p>
             </div>
 
@@ -101,6 +108,11 @@ export default function ClinicSignupPage() {
                                         placeholder="Ej. Clínica Metabólica BioSana" />
                                 </div>
                             </div>
+
+                            <label className="flex items-start gap-3 text-xs leading-5 text-[#2d3748]/75">
+                                <input required type="checkbox" className="mt-1" />
+                                <span>Acepto el <Link href="/privacy" className="font-bold underline">Aviso de Privacidad</Link> y los <Link href="/terms" className="font-bold underline">Términos de Uso</Link>.</span>
+                            </label>
                             
                             <div>
                                 <label className="block text-sm font-bold text-[#2d3748] mb-2">Tu Nombre (Admin)</label>
@@ -139,52 +151,20 @@ export default function ClinicSignupPage() {
                             <div className="bg-[#012a4a] rounded-2xl p-6 text-white text-center relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#c19b6c]/20 rounded-full blur-3xl -mr-10 -mt-10" />
                                 <Crown className="w-10 h-10 text-[#c19b6c] mx-auto mb-3" />
-                                <h3 className="text-xl font-bold font-display mb-1">Plan Elite (SaaS)</h3>
-                                <p className="text-[#fbf8f1]/80 text-sm mb-4">Plataforma Multi-tenant B2B</p>
+                                <h3 className="text-xl font-bold font-display mb-1">Nutrity Profesional</h3>
+                                <p className="text-[#fbf8f1]/80 text-sm mb-4">Herramientas para organizaciones y coaches</p>
                                 <div className="text-4xl font-black mb-4">$149.00 <span className="text-sm font-normal opacity-70">/ mes</span></div>
                                 <ul className="text-left text-sm space-y-2 mb-2">
                                     <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#c19b6c]" /> Tu propia Landing Page</li>
-                                    <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#c19b6c]" /> CRM y Gestión de Pacientes</li>
-                                    <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#c19b6c]" /> Menús IA Ilimitados</li>
+                                    <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#c19b6c]" /> Gestión de participantes</li>
+                                    <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-[#c19b6c]" /> Planificación con IA sujeta a uso responsable</li>
                                 </ul>
                             </div>
 
-                            {isProcessing ? (
-                                <div className="text-center py-8">
-                                    <Loader2 className="w-10 h-10 text-[#c19b6c] animate-spin mx-auto mb-3" />
-                                    <p className="text-sm font-bold text-[#2d3748]/70">Procesando pago...</p>
-                                </div>
-                            ) : (
-                                <PayPalScriptProvider options={initialOptions}>
-                                    <PayPalButtons 
-                                        style={{ layout: "vertical", shape: "rect", color: "blue" }}
-                                        createOrder={async () => {
-                                            setError(null);
-                                            const res = await createOrder(userId, "coach");
-                                            if (res.success && res.orderId) return res.orderId;
-                                            throw new Error(res.error || "Error al iniciar pago");
-                                        }}
-                                        onApprove={async (data) => {
-                                            setIsProcessing(true);
-                                            try {
-                                                const res = await captureOrder(data.orderID, userId, "coach");
-                                                if (res.success) {
-                                                    router.push("/dashboard");
-                                                } else {
-                                                    setError("No se pudo completar el pago: " + res.error);
-                                                }
-                                            } catch (err) {
-                                                setError("Hubo un error procesando tu pago.");
-                                            } finally {
-                                                setIsProcessing(false);
-                                            }
-                                        }}
-                                        onError={(err) => {
-                                            setError("Hubo un error en la ventana de pago de PayPal.");
-                                        }}
-                                    />
-                                </PayPalScriptProvider>
-                            )}
+                            <button type="button" disabled={isProcessing} onClick={handleCheckout} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#17324d] px-5 py-4 font-bold text-white disabled:opacity-60">
+                                {isProcessing ? <><Loader2 className="h-5 w-5 animate-spin" /> Preparando pago...</> : "Continuar al pago seguro"}
+                            </button>
+                            <p className="text-center text-xs leading-5 text-[#2d3748]/65">Suscripción mensual en USD procesada por Stripe. Puedes cancelarla desde el portal de facturación.</p>
                         </div>
                     )}
                 </div>

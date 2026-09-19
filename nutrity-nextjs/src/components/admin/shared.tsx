@@ -5,10 +5,10 @@ import { X, PlusCircle, AlertTriangle } from "lucide-react";
 
 // ─── FieldInput ──────────────────────────────────────────────────────────────
 export function FieldInput({
-    label, value, onChange, type = "text", placeholder = "", required = false, multiline = false,
+    label, value, onChange, type = "text", placeholder = "", required = false, multiline = false, disabled = false,
 }: {
     label: string; value: string; onChange: (v: string) => void;
-    type?: string; placeholder?: string; required?: boolean; multiline?: boolean;
+    type?: string; placeholder?: string; required?: boolean; multiline?: boolean; disabled?: boolean;
 }) {
     return (
         <div className="space-y-1.5">
@@ -16,14 +16,14 @@ export function FieldInput({
             {multiline ? (
                 <textarea
                     value={value} onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder} required={required} rows={3}
-                    className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all resize-none"
+                    placeholder={placeholder} required={required} disabled={disabled} rows={3}
+                    className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all resize-none disabled:cursor-not-allowed disabled:opacity-60"
                 />
             ) : (
                 <input
                     type={type} value={value} onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder} required={required}
-                    className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all"
+                    placeholder={placeholder} required={required} disabled={disabled}
+                    className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all disabled:cursor-not-allowed disabled:opacity-60"
                 />
             )}
         </div>

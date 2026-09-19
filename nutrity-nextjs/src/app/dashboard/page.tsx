@@ -108,7 +108,7 @@ export default function DashboardPage() {
       
       // Intentamos usar el content-disposition si viene, si no fallback
       const disposition = response.headers.get('content-disposition');
-      let filename = `Expediente_Nutrity_${user?.id?.slice(-6) || 'Paciente'}.pdf`;
+      let filename = `Reporte_Educativo_Nutrity_${user?.id?.slice(-6) || 'Usuario'}.pdf`;
       if (disposition && disposition.indexOf('attachment') !== -1) {
           const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
           const matches = filenameRegex.exec(disposition);
@@ -135,7 +135,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error("PDF generation failed:", err);
-      alert("No se pudo generar el expediente. Intenta nuevamente.");
+      alert("No se pudo generar el reporte educativo. Intenta nuevamente.");
       try {
         const { logPDFReport } = await import("@/actions/db-actions");
         const userId = user?.id || user?.uid;
@@ -153,7 +153,7 @@ export default function DashboardPage() {
   // Merge current menu into evaluation results for PDF rendering
   const reportResults = { 
     ...(evaluation || {}), 
-    name: user?.profile?.name || user?.user_metadata?.full_name || evaluation?.name || "Paciente Nutrity",
+    name: user?.profile?.name || user?.user_metadata?.full_name || evaluation?.name || "Usuario Nutrity",
     weeklyMenu: currentMenu 
   };
 

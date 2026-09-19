@@ -6,6 +6,7 @@ import { generateNutrityRoute } from "@/actions/ai-actions";
 import { saveEvaluation } from "@/actions/db-actions";
 import type { OnboardingData } from "@/lib/schemas";
 import { createClient } from "@/utils/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function OnboardingPage() {
   const handleComplete = async (data: OnboardingData) => {
     try {
       const plan = await generateNutrityRoute(data);
+      trackEvent("route_created", { source: "onboarding" });
       
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();

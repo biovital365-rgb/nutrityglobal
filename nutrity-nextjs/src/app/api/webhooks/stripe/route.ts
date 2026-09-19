@@ -69,6 +69,7 @@ export async function POST(req: Request) {
                 role: paidRole(user.role, planType),
               },
             });
+            console.info('[NUTRITY_FUNNEL]', JSON.stringify({ event: 'payment_confirmed', path: '/api/webhooks/stripe', metadata: { plan: planType, source: 'stripe' }, at: new Date().toISOString() }));
             console.log(`User ${userId} upgraded to ${planType}`);
           }
         }

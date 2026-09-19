@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Activity, Check, ClipboardCheck, Moon, ShieldAlert, Utensils } from 'lucide-react';
 import { updateRouteAction } from '@/actions/clinical-actions';
 import type { MetabolicPlan } from '@/lib/schemas';
+import { trackEventOnce } from '@/lib/analytics';
 
 type Props = { plan: MetabolicPlan; userName: string; userId: string };
 
@@ -19,6 +20,7 @@ export function BioPlanSection({ plan, userName, userId }: Props) {
     setActions(current => current.map(action => action.id === actionId ? { ...action, completed: value } : action));
     try {
       await updateRouteAction(userId, actionId, value);
+      if (value) trackEventOnce('first_action_completed', { source: 'route' });
     } catch {
       setActions(current => current.map(action => action.id === actionId ? { ...action, completed: !value } : action));
     } finally { setSaving(null); }

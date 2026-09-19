@@ -27,7 +27,7 @@ export function DashboardProfileTab({
     return (
         <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             <div className="space-y-1 mb-8">
-                <h2 className="text-3xl font-display font-bold">Perfil del Paciente</h2>
+                <h2 className="text-3xl font-display font-bold">Mi perfil</h2>
                 <p className="text-nutrity-gray-text text-sm">
                     {!isProfileComplete
                         ? "Por favor, completa todos tus datos personales obligatorios para continuar utilizando Nutrity Global."

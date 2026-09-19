@@ -25,6 +25,7 @@ export async function login(formData: FormData) {
           uid: authData.user.id,
           email: authData.user.email,
       });
+      console.info("[NUTRITY_FUNNEL]", JSON.stringify({ event: "account_created", path: "/auth", metadata: { source: "email" }, at: new Date().toISOString() }));
   }
 
   revalidatePath("/", "layout");

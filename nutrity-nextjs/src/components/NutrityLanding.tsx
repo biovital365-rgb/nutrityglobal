@@ -24,11 +24,26 @@ import {
 } from "lucide-react";
 import { getPosts, getLandingConfig } from "@/actions/db-actions";
 import type { Post } from "@/lib/types";
+import { BrandLogo } from "@/components/BrandLogo";
+import { trackEvent } from "@/lib/analytics";
 
 interface NutrityLandingProps {
     user?: any;
     onStart: () => void;
     onAuthClick: () => void;
+}
+
+function educationalLandingCopy(value: unknown, fallback: string) {
+    if (typeof value !== "string" || !value.trim()) return fallback;
+    return value
+        .replace(/remisi[oó]n metab[oó]lica/gi, "hábitos metabólicos sostenibles")
+        .replace(/revertir (?:la )?diabetes/gi, "apoyar hábitos en diabetes")
+        .replace(/remisi[oó]n/gi, "ruta")
+        .replace(/curar?|cura/gi, "acompañar")
+        .replace(/transformar tu salud metab[oó]lica/gi, "fortalecer tus hábitos cotidianos")
+        .replace(/estabilizar (?:tu |la )?glucosa/gi, "comprender tus registros de glucosa")
+        .replace(/prevenir enfermedades/gi, "apoyar tu bienestar")
+        .replace(/salva vidas/gi, "apoya cambios sostenibles");
 }
 
 export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingProps) {
@@ -70,10 +85,15 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
         );
     }
 
+    const startRoute = (source: string) => {
+        trackEvent("primary_cta_click", { source });
+        onStart();
+    };
+
     const dynamicStyles = {
-        '--landing-primary': landingConfig.primaryColor || '#012a4a',
-        '--landing-accent': landingConfig.accentColor || '#c19b6c',
-        '--landing-secondary': '#1b3b36',
+        '--landing-primary': landingConfig.primaryColor || '#17324d',
+        '--landing-accent': landingConfig.accentColor || '#ffcc00',
+        '--landing-secondary': '#3a6447',
         '--landing-bg': '#fbf8f1'
     } as React.CSSProperties;
 
@@ -82,19 +102,13 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
             {/* Sticky Navigation */}
             <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "backdrop-blur-xl bg-[var(--landing-bg)]/90 border-b border-[var(--landing-accent)]/20 py-3 shadow-lg" : "bg-transparent py-5"}`}>
                 <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <img 
-                            src="https://drive.google.com/uc?export=view&id=1LSl9LF795Q6E2YnjvZ0kZ40DjVuk7LuS" 
-                            alt="Nutrity Global Logo" 
-                            className="w-40 h-auto object-contain drop-shadow-md" 
-                        />
-                    </div>
+                    <BrandLogo className="h-10 w-auto md:h-12" priority />
                     <nav className="hidden lg:flex items-center gap-8 bg-white/50 backdrop-blur-md px-8 py-2 rounded-full border border-[var(--landing-accent)]/20">
                         <a href="#doble-ciclo" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">La Ciencia</a>
                         <a href="#alimentacion" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Alimentación</a>
                         <a href="#movimiento" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Movimiento</a>
                         <a href="#estrategias" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Estrategias</a>
-                        <button onClick={() => onStart()} className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Planes</button>
+                        <button onClick={() => startRoute("navigation_plans")} className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Planes</button>
                         <Link href="/blog" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Blog</Link>
                     </nav>
                     <button
@@ -133,22 +147,22 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             </div>
 
                             <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight tracking-tight mb-4 text-[var(--landing-primary)] whitespace-pre-line">
-                                {landingConfig?.heroTitle || ""}
+                                {educationalLandingCopy(landingConfig?.heroTitle, "Convierte información en hábitos posibles")}
                             </h1>
                             
                             <h2 className="text-sm md:text-lg font-bold tracking-widest text-[var(--landing-secondary)] mb-8 uppercase bg-[var(--landing-secondary)]/5 inline-block px-4 py-2 border-l-4 border-r-4 border-[var(--landing-secondary)]">
-                                {landingConfig?.heroSubtitle || ""}
+                                {educationalLandingCopy(landingConfig?.heroSubtitle, "Tu Ruta Nutrity, paso a paso")}
                             </h2>
 
                             <p className="text-base md:text-xl text-[#2d3748] italic font-serif leading-relaxed mb-10 max-w-2xl mx-auto">
-                                {landingConfig?.heroDescription || ""}
+                                {educationalLandingCopy(landingConfig?.heroDescription, "Educación, registro y acciones semanales para organizar tu bienestar con claridad.")}
                             </p>
 
                             <button
-                                onClick={onStart}
+                                onClick={() => startRoute("hero")}
                                 className="bg-[var(--landing-accent)] text-[var(--landing-primary)] px-8 py-4 rounded-xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-[var(--landing-accent)]/20 hover:scale-105 transition-all border border-[var(--landing-accent)] mx-auto"
                             >
-                                {landingConfig?.ctaText || "Comenzar"}
+                                {educationalLandingCopy(landingConfig?.ctaText, "Crear mi Ruta Nutrity")}
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         </motion.div>
@@ -159,10 +173,10 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                 <section id="doble-ciclo" className="py-24 bg-[var(--landing-primary)] text-[var(--landing-bg)] relative border-t border-[var(--landing-accent)]/20 overflow-hidden">
                     <div className="max-w-5xl mx-auto px-6 relative z-10">
                         <div className="text-center mb-12">
-                            <h2 className="text-[10px] md:text-xs font-bold text-[var(--landing-accent)] uppercase tracking-[0.3em] mb-4">La Ciencia</h2>
-                            <h3 className="text-3xl md:text-5xl font-serif font-bold mb-6">El Doble Ciclo</h3>
+                            <h2 className="text-[10px] md:text-xs font-bold text-[var(--landing-accent)] uppercase tracking-[0.3em] mb-4">Comprende tus hábitos</h2>
+                            <h3 className="text-3xl md:text-5xl font-serif font-bold mb-6">Alimentación, actividad y energía</h3>
                             <p className="text-[#e6d3a8] text-sm md:text-base font-serif italic max-w-2xl mx-auto">
-                                Entendiendo la resistencia a la insulina desde sus raíces biológicas.
+                                Una introducción educativa para preparar mejores preguntas y decisiones con tu profesional.
                             </p>
                         </div>
                         
@@ -173,8 +187,8 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             className="flex justify-center"
                         >
                             <img 
-                                src={landingConfig?.scienceImage || ""} 
-                                alt="Ciencia y órganos" 
+                                src={landingConfig?.scienceImage || "/landing-img-1.jpg"}
+                                alt="Educación sobre hábitos y energía"
                                 className="w-full max-w-3xl rounded-3xl shadow-2xl border-4 border-[var(--landing-secondary)]"
                             />
                         </motion.div>
@@ -187,14 +201,14 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                         <div className="inline-flex items-center gap-3 mb-6 justify-center">
                             <span className="text-3xl font-serif text-[var(--landing-accent)]">01</span>
                             <div className="h-10 w-[2px] bg-[var(--landing-accent)]"></div>
-                            <span className="text-[10px] md:text-xs font-bold text-[var(--landing-secondary)] uppercase tracking-[0.3em]">Misión Metabólica</span>
+                            <span className="text-[10px] md:text-xs font-bold text-[var(--landing-secondary)] uppercase tracking-[0.3em]">Alimentación cotidiana</span>
                         </div>
                         
                         <h2 className="text-3xl md:text-5xl font-serif font-bold text-[var(--landing-primary)] mb-6 leading-tight">
                             Comer <span className="italic text-[var(--landing-secondary)]">mejor</span>, no menos.
                         </h2>
                         <p className="text-sm md:text-base text-[#2d3748] mb-12 max-w-2xl mx-auto">
-                            Cada comida le dice a tu cuerpo si debe almacenar grasa, inflamar tejidos o utilizar la energía y regenerarse.
+                            Aprende a combinar alimentos de una manera práctica, flexible y compatible con tu contexto.
                         </p>
 
                         <motion.div 
@@ -204,8 +218,8 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             className="flex justify-center mb-12"
                         >
                             <img 
-                                src={landingConfig?.missionImage || ""} 
-                                alt="Misión Metabólica" 
+                                src={landingConfig?.missionImage || "/landing-img-2.jpg"}
+                                alt="Alimentación cotidiana"
                                 className="w-full max-w-2xl rounded-3xl shadow-xl"
                             />
                         </motion.div>
@@ -227,7 +241,7 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                     </div>
                 </section>
 
-                {/* Movimiento como Medicina */}
+                {/* Movimiento cotidiano */}
                 <section id="movimiento" className="py-24 bg-[var(--landing-bg)] relative border-t border-[var(--landing-accent)]/20">
                     <div className="max-w-5xl mx-auto px-6">
                         <div className="text-center mb-12">
@@ -236,9 +250,9 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                                 <div className="h-10 w-[2px] bg-[var(--landing-accent)]"></div>
                                 <span className="text-[10px] md:text-xs font-bold text-[var(--landing-secondary)] uppercase tracking-[0.3em]">El Cuerpo en Acción</span>
                             </div>
-                            <h2 className="text-3xl md:text-5xl font-serif font-bold text-[var(--landing-primary)] mb-4">El Movimiento como Medicina</h2>
+                            <h2 className="text-3xl md:text-5xl font-serif font-bold text-[var(--landing-primary)] mb-4">Movimiento que cabe en tu vida</h2>
                             <p className="text-sm md:text-base text-[#2d3748] max-w-2xl mx-auto">
-                                Activar tus músculos es clave para sensibilizar el cuerpo a la insulina.
+                                Incorpora actividad gradual y segura de acuerdo con tu capacidad y las indicaciones de tu profesional.
                             </p>
                         </div>
 
@@ -256,9 +270,9 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             </motion.div>
                             <div className="space-y-6">
                                 {[
-                                    { title: "Caminar", desc: "Reduce la glucosa postprandial.", icon: Activity },
-                                    { title: "Fuerza", desc: "Crea más receptores musculares.", icon: Dumbbell },
-                                    { title: "Cardio", desc: "Mejora la eficiencia mitocondrial.", icon: Heart }
+                                    { title: "Caminar", desc: "Empieza con recorridos breves que puedas repetir.", icon: Activity },
+                                    { title: "Fuerza", desc: "Adapta ejercicios básicos a tu capacidad actual.", icon: Dumbbell },
+                                    { title: "Actividad aeróbica", desc: "Elige una opción segura que disfrutes y puedas sostener.", icon: Heart }
                                 ].map((item, i) => (
                                     <div key={i} className="flex items-center gap-4 bg-white p-5 rounded-2xl border border-[var(--landing-accent)]/10 shadow-sm">
                                         <div className="w-12 h-12 bg-[var(--landing-accent)]/10 rounded-full flex items-center justify-center shrink-0">
@@ -279,9 +293,9 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                 <section id="estrategias" className="py-24 bg-white relative border-t border-[var(--landing-accent)]/20">
                     <div className="max-w-5xl mx-auto px-6 text-center">
                         <div className="mb-12">
-                            <h2 className="text-3xl md:text-5xl font-serif font-bold text-[var(--landing-primary)] mb-4">Enfoques Clínicos Respaldados</h2>
+                            <h2 className="text-3xl md:text-5xl font-serif font-bold text-[var(--landing-primary)] mb-4">Estrategias educativas para tu rutina</h2>
                             <p className="text-[#2d3748] text-sm md:text-base max-w-2xl mx-auto">
-                                Estrategias comprobadas (Restricción Calórica, Low-Carb, Ayuno) personalizadas para tu éxito metabólico.
+                                Aprende a comparar opciones de alimentación y hábitos para conversar decisiones relevantes con un profesional habilitado.
                             </p>
                         </div>
 
@@ -355,11 +369,9 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
 
             <footer className="py-16 px-6 bg-[var(--landing-bg)] border-t border-[var(--landing-accent)]/20">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-[var(--landing-primary)] rounded-lg flex items-center justify-center">
-                            <Leaf className="w-4 h-4 text-[var(--landing-accent)]" />
-                        </div>
-                        <span className="text-xs font-bold tracking-widest uppercase text-[var(--landing-primary)]">Canal BioVital.360</span>
+                    <div className="flex items-center gap-4">
+                        <BrandLogo compact className="h-9 w-9" />
+                        <div><strong className="block text-sm text-[var(--landing-primary)]">Nutrity Global</strong><span className="text-[10px] font-bold tracking-widest uppercase text-[var(--landing-secondary)]">Conectado desde BioVital.360</span></div>
                     </div>
                     <div className="flex flex-wrap justify-center gap-6 text-[10px] font-bold tracking-widest uppercase text-[#2d3748]">
                         <a href="#doble-ciclo" className="hover:text-[var(--landing-accent)] transition-colors">La Ciencia</a>

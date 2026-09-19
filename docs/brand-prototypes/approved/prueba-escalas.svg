@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Prueba inicial de escalas del símbolo N Ruta Clara</title>
+  <desc id="desc">Símbolo a 160, 48, 24 y 16 píxeles sobre fondo claro y oscuro.</desc>
+  <defs>
+    <mask id="steps">
+      <rect width="304" height="310" fill="#FFFFFF"/>
+      <circle cx="101" cy="183" r="11" fill="#000000"/>
+      <circle cx="137" cy="139" r="11" fill="#000000"/>
+      <circle cx="173" cy="94" r="11" fill="#000000"/>
+    </mask>
+    <g id="symbolColor">
+      <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#88B831" mask="url(#steps)"/>
+      <circle cx="211" cy="49" r="16" fill="#FFCC00"/>
+    </g>
+    <g id="symbolNegative">
+      <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#FFFFFF" mask="url(#steps)"/>
+      <circle cx="211" cy="49" r="16" fill="#FFFFFF"/>
+    </g>
+  </defs>
+  <rect width="1200" height="720" fill="#FBF8F1"/>
+  <text x="70" y="72" fill="#17324D" font-family="Arial, sans-serif" font-size="36" font-weight="700">N Ruta Clara · prueba inicial de escalas</text>
+  <text x="70" y="112" fill="#3A6447" font-family="Arial, sans-serif" font-size="20">Dirección aprobada · refinamiento óptico todavía pendiente</text>
+
+  <rect x="70" y="160" width="500" height="460" rx="28" fill="#FFFFFF"/>
+  <text x="105" y="205" fill="#17324D" font-family="Arial, sans-serif" font-size="22" font-weight="700">Fondo claro</text>
+  <g transform="translate(105 245)"><g transform="scale(.516)"><use href="#symbolColor"/></g></g>
+  <text x="105" y="445" fill="#3A6447" font-family="Arial, sans-serif" font-size="17">160 px</text>
+  <g transform="translate(320 260)"><g transform="scale(.155)"><use href="#symbolColor"/></g></g>
+  <text x="320" y="330" fill="#3A6447" font-family="Arial, sans-serif" font-size="17">48 px</text>
+  <g transform="translate(415 272)"><g transform="scale(.077)"><use href="#symbolColor"/></g></g>
+  <text x="410" y="330" fill="#3A6447" font-family="Arial, sans-serif" font-size="17">24 px</text>
+  <g transform="translate(495 276)"><g transform="scale(.052)"><use href="#symbolColor"/></g></g>
+  <text x="488" y="330" fill="#3A6447" font-family="Arial, sans-serif" font-size="17">16 px</text>
+  <text x="105" y="510" fill="#3A6447" font-family="Arial, sans-serif" font-size="19">Lectura prevista:</text>
+  <text x="105" y="544" fill="#3A6447" font-family="Arial, sans-serif" font-size="18">• 48 px o más: versión completa.</text>
+  <text x="105" y="576" fill="#3A6447" font-family="Arial, sans-serif" font-size="18">• 16–24 px: simplificar los pasos.</text>
+
+  <rect x="630" y="160" width="500" height="460" rx="28" fill="#17324D"/>
+  <text x="665" y="205" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="22" font-weight="700">Fondo oscuro</text>
+  <g transform="translate(665 245)"><g transform="scale(.516)"><use href="#symbolNegative"/></g></g>
+  <text x="665" y="445" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="17">160 px</text>
+  <g transform="translate(880 260)"><g transform="scale(.155)"><use href="#symbolNegative"/></g></g>
+  <text x="880" y="330" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="17">48 px</text>
+  <g transform="translate(975 272)"><g transform="scale(.077)"><use href="#symbolNegative"/></g></g>
+  <text x="970" y="330" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="17">24 px</text>
+  <g transform="translate(1055 276)"><g transform="scale(.052)"><use href="#symbolNegative"/></g></g>
+  <text x="1048" y="330" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="17">16 px</text>
+  <text x="665" y="510" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="19">Versión negativa:</text>
+  <text x="665" y="544" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="18">• Utilizar en fondos oscuros uniformes.</text>
+  <text x="665" y="576" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="18">• Evitar fotografías sin placa de contraste.</text>
+  <text x="70" y="675" fill="#6A786F" font-family="Arial, sans-serif" font-size="17">PRUEBA TÉCNICA · NO SUSTITUYE LA VALIDACIÓN EN DISPOSITIVOS REALES</text>
+</svg>

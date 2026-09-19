@@ -1,23 +1,24 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AnalyticsConsent } from "@/components/AnalyticsConsent";
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nutrity.global';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: "Nutrity Global | Hábitos y salud metabólica",
-  description: "Recuperando tu salud metabólica con ciencia, hábitos y esperanza. Programa integral de nutrición y bienestar.",
+  description: "Una ruta educativa para organizar hábitos, registrar avances y preparar mejores conversaciones con tu profesional.",
   keywords: ["salud metabólica", "hábitos", "nutrición", "bienestar", "BioVital.360", "seguimiento"],
   openGraph: {
     type: "website",
     locale: "es_ES",
     url: baseUrl,
     title: "Nutrity Global | Hábitos y salud metabólica",
-    description: "Recuperando tu salud metabólica con ciencia, hábitos y esperanza.",
+    description: "Tu próximo paso, claro y posible. Educación y acompañamiento para organizar hábitos sostenibles.",
     siteName: "Nutrity Global",
     images: [
       {
-        url: `/og-image.jpg`,
+        url: `/og-image.png`,
         width: 1200,
         height: 630,
         alt: "Nutrity Global",
@@ -27,9 +28,10 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Nutrity Global | Hábitos y salud metabólica",
-    description: "Recuperando tu salud metabólica con ciencia, hábitos y esperanza.",
-    images: [`/og-image.jpg`],
+    description: "Tu próximo paso, claro y posible. Educación y acompañamiento para organizar hábitos sostenibles.",
+    images: [`/og-image.png`],
   },
+  icons: { icon: "/brand/nutrity-symbol-micro.svg", apple: "/brand/nutrity-symbol.svg" },
 };
 
 const jsonLd = {
@@ -40,7 +42,7 @@ const jsonLd = {
       '@id': `${baseUrl}/#website`,
       url: baseUrl,
       name: 'Nutrity Global',
-      description: 'Recuperando tu salud metabólica con ciencia, hábitos y esperanza.',
+      description: 'Una ruta educativa para organizar hábitos y registrar avances.',
       publisher: {
         '@id': `${baseUrl}/#organization`
       },
@@ -53,7 +55,7 @@ const jsonLd = {
       url: baseUrl,
       logo: {
         '@type': 'ImageObject',
-        url: `${baseUrl}/favicon.ico`
+        url: `${baseUrl}/brand/nutrity-symbol.svg`
       }
     }
   ]
@@ -72,7 +74,7 @@ export default function RootLayout({
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">{children}<AnalyticsConsent /></body>
     </html>
   );
 }

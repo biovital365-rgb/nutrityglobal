@@ -33,7 +33,7 @@ export function DashboardCoachTab({
                             <h3 className="font-display font-bold text-lg md:text-xl leading-none">Nutrity Coach IA</h3>
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 bg-nutrity-success rounded-full animate-pulse"></span>
-                                <p className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-[0.2em]">Sincronía Biológica Activa</p>
+                                <p className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-[0.2em]">Acompañamiento educativo</p>
                             </div>
                         </div>
                     </div>
@@ -61,7 +61,7 @@ export function DashboardCoachTab({
                                 <p className="text-xs md:text-[13px] font-medium leading-relaxed whitespace-pre-line">{msg.text}</p>
                                 {msg.role === 'ai' && (
                                     <div className="mt-4 pt-4 border-t border-nutrity-border flex items-center gap-2 text-[8px] font-bold text-nutrity-accent uppercase tracking-[0.2em]">
-                                        <Zap className="w-3 h-3" /> Bio-Feedback Activo v4.0
+                                        <Zap className="w-3 h-3" /> Orientación generada con IA
                                     </div>
                                 )}
                             </div>
@@ -86,7 +86,7 @@ export function DashboardCoachTab({
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                            placeholder="Ej: ¿Qué puedo cenar para estabilizar mi glucosa?"
+                            placeholder="Ej: ¿Cómo puedo organizar una cena sencilla y equilibrada?"
                             className="flex-1 bg-nutrity-bg border border-nutrity-border rounded-xl px-5 py-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all"
                         />
                         <button

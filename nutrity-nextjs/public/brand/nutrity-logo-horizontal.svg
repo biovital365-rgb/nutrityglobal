@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 220" role="img" aria-labelledby="title desc">
+  <title id="title">Nutrity Global</title>
+  <desc id="desc">Logotipo Nutrity Global con símbolo N Ruta Clara.</desc>
+  <defs>
+    <mask id="steps">
+      <rect width="304" height="310" fill="#fff"/>
+      <circle cx="101" cy="183" r="11" fill="#000"/>
+      <circle cx="137" cy="139" r="11" fill="#000"/>
+      <circle cx="173" cy="94" r="11" fill="#000"/>
+    </mask>
+  </defs>
+  <g transform="translate(12 18) scale(.58)">
+    <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#88B831" mask="url(#steps)"/>
+    <circle cx="211" cy="49" r="16" fill="#FFCC00"/>
+  </g>
+  <text x="205" y="133" fill="#88B831" font-family="Trebuchet MS, Arial, sans-serif" font-size="118" font-weight="700" letter-spacing="-8"><tspan>Nutrit</tspan><tspan fill="#FFCC00">y</tspan></text>
+  <text x="480" y="186" text-anchor="middle" fill="#3A6447" font-family="Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="10">GLOBAL</text>
+</svg>

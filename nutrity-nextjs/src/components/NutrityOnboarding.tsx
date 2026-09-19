@@ -1,18 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Check, HeartPulse, ShieldAlert } from 'lucide-react';
 import type { OnboardingData } from '@/lib/schemas';
+import { BrandLogo } from '@/components/BrandLogo';
+import { trackEvent, trackEventOnce } from '@/lib/analytics';
 
 type Props = {
   onComplete: (data: OnboardingData) => Promise<void> | void;
   onBack: () => void;
   onAuthClick: () => void;
 };
-type OnboardingDraft = Omit<OnboardingData, 'privacyConsent' | 'safetyAcknowledgement'> & {
+type OnboardingDraft = Omit<OnboardingData, 'privacyConsent' | 'safetyAcknowledgement' | 'noUrgentSymptoms'> & {
   privacyConsent: boolean;
   safetyAcknowledgement: boolean;
+  noUrgentSymptoms: boolean;
 };
 
 const choiceClass = (selected: boolean) => `rounded-2xl border-2 p-4 text-left transition ${selected ? 'border-[#c19b6c] bg-[#c19b6c]/10' : 'border-slate-200 bg-white hover:border-[#c19b6c]/50'}`;
@@ -23,19 +26,24 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Props) {
   const [data, setData] = useState<OnboardingDraft>({
     name: '', age: '', condition: 'prediabetes', currentGlucose: '', measurementContext: 'unknown',
     treatmentSupport: 'medical_followup', activityLevel: 'light', sleepQuality: 'fair', mealPattern: 'improvable',
-    primaryGoal: 'consistency', biggestBarrier: 'time', urgentSymptoms: [], privacyConsent: false, safetyAcknowledgement: false,
+    primaryGoal: 'consistency', biggestBarrier: 'time', barrierOther: '', urgentSymptoms: [], noUrgentSymptoms: false,
+    privacyConsent: false, safetyAcknowledgement: false,
   });
 
   const hasUrgentSymptoms = data.urgentSymptoms.length > 0;
   const canContinue = step === 1
     ? data.name.trim().length >= 2 && Number(data.age) >= 18
     : step === 4
-      ? data.privacyConsent === true && data.safetyAcknowledgement === true && !hasUrgentSymptoms
+      ? data.privacyConsent === true && data.safetyAcknowledgement === true && data.noUrgentSymptoms === true && !hasUrgentSymptoms
       : true;
 
+  useEffect(() => { trackEventOnce('onboarding_started'); }, []);
+
   function toggleSymptom(value: OnboardingData['urgentSymptoms'][number]) {
+    if (!data.urgentSymptoms.includes(value)) trackEventOnce('onboarding_safety_stop', { outcome: 'urgent_signal_selected' });
     setData(current => ({
       ...current,
+      noUrgentSymptoms: false,
       urgentSymptoms: current.urgentSymptoms.includes(value)
         ? current.urgentSymptoms.filter(item => item !== value)
         : [...current.urgentSymptoms, value],
@@ -44,9 +52,13 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Props) {
 
   async function next() {
     if (!canContinue) return;
+    trackEvent('onboarding_step_completed', { step });
     if (step < 4) return setStep(current => current + 1);
     setBusy(true);
-    try { await onComplete({ ...data, privacyConsent: true, safetyAcknowledgement: true }); } finally { setBusy(false); }
+    try {
+      trackEvent('onboarding_completed');
+      await onComplete({ ...data, privacyConsent: true, safetyAcknowledgement: true, noUrgentSymptoms: true });
+    } finally { setBusy(false); }
   }
 
   return (
@@ -54,6 +66,7 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Props) {
       <div className="mx-auto max-w-3xl">
         <header className="mb-8 flex items-center justify-between">
           <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold"><ArrowLeft className="h-4 w-4" /> Inicio</button>
+          <BrandLogo className="hidden h-10 w-auto sm:block" />
           <button onClick={onAuthClick} className="text-sm font-bold underline">Ya tengo cuenta</button>
         </header>
 
@@ -93,8 +106,9 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Props) {
                 ['sleepQuality', 'Calidad del sueño', [['poor', 'Difícil'], ['fair', 'Variable'], ['good', 'Buena']]],
                 ['mealPattern', 'Organización de comidas', [['irregular', 'Irregular'], ['improvable', 'Mejorable'], ['structured', 'Estructurada']]],
                 ['primaryGoal', 'Prioridad inicial', [['food', 'Alimentación'], ['movement', 'Movimiento'], ['energy', 'Energía'], ['tracking', 'Seguimiento'], ['consistency', 'Constancia']]],
-                ['biggestBarrier', 'Principal barrera', [['time', 'Tiempo'], ['cost', 'Costo'], ['motivation', 'Motivación'], ['information', 'Exceso de información'], ['support', 'Falta de apoyo']]],
+                ['biggestBarrier', 'Principal barrera', [['time', 'Tiempo'], ['cost', 'Costo'], ['motivation', 'Motivación'], ['information', 'Exceso de información'], ['support', 'Falta de apoyo'], ['other', 'Otra']]],
               ].map(([field, label, options]) => <div key={field as string}><p className="mb-3 text-sm font-bold">{label as string}</p><div className="flex flex-wrap gap-2">{(options as string[][]).map(([value, text]) => <button key={value} onClick={() => setData({ ...data, [field as string]: value })} className={choiceClass(data[field as keyof OnboardingData] === value)}>{text}</button>)}</div></div>)}
+              {data.biggestBarrier === 'other' && <label className="block text-sm font-bold">¿Cuál es tu principal barrera?<input value={data.barrierOther || ''} onChange={event => setData({ ...data, barrierOther: event.target.value })} maxLength={240} placeholder="Cuéntanos brevemente" className="mt-2 w-full rounded-xl border p-3 font-normal" /></label>}
             </>}
 
             {step === 4 && <>
@@ -102,6 +116,10 @@ export function NutrityOnboarding({ onComplete, onBack, onAuthClick }: Props) {
               <div className="grid gap-3">{[
                 ['chest_pain', 'Dolor o presión intensa en el pecho'], ['breathing_difficulty', 'Dificultad importante para respirar'], ['confusion', 'Confusión repentina'], ['fainting', 'Desmayo'], ['persistent_vomiting', 'Vómitos persistentes'],
               ].map(([value, label]) => <label key={value} className="flex cursor-pointer gap-3 rounded-xl border p-4"><input type="checkbox" checked={data.urgentSymptoms.includes(value as OnboardingData['urgentSymptoms'][number])} onChange={() => toggleSymptom(value as OnboardingData['urgentSymptoms'][number])} className="mt-1" /><span>{label}</span></label>)}</div>
+              <button type="button" onClick={() => setData(current => ({ ...current, urgentSymptoms: [], noUrgentSymptoms: true }))} className={`${choiceClass(data.noUrgentSymptoms)} flex w-full items-start gap-3`}>
+                <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${data.noUrgentSymptoms ? 'border-[#c19b6c] bg-[#c19b6c] text-white' : 'border-slate-400'}`}>{data.noUrgentSymptoms && <Check className="h-3.5 w-3.5" />}</span>
+                <span><strong className="block">Ninguna de las anteriores</strong><span className="mt-1 block text-sm text-slate-600">Quiero continuar con mi Ruta Nutrity.</span></span>
+              </button>
               {hasUrgentSymptoms && <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-5 text-red-900"><div className="flex gap-3"><ShieldAlert className="h-6 w-6 shrink-0" /><div><p className="font-black">No continúes con la evaluación.</p><p className="mt-1 text-sm leading-6">Nutrity no atiende urgencias. Busca atención de emergencia local ahora. No esperes una respuesta dentro de la aplicación.</p></div></div></div>}
               <label className="flex gap-3 rounded-xl bg-slate-50 p-4 text-sm"><input type="checkbox" checked={data.safetyAcknowledgement} onChange={event => setData({ ...data, safetyAcknowledgement: event.target.checked })} className="mt-1" /><span>Entiendo que Nutrity ofrece educación y seguimiento de hábitos; no diagnostica ni reemplaza atención profesional.</span></label>
               <label className="flex gap-3 rounded-xl bg-slate-50 p-4 text-sm"><input type="checkbox" checked={data.privacyConsent} onChange={event => setData({ ...data, privacyConsent: event.target.checked })} className="mt-1" /><span>Autorizo el tratamiento de estos datos para crear mi Ruta Nutrity. He leído el <Link href="/privacy" target="_blank" className="font-bold underline">Aviso de Privacidad</Link>.</span></label>

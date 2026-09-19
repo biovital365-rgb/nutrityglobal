@@ -73,7 +73,7 @@ export async function GET(req: Request) {
         return new NextResponse(stream, {
             headers: {
                 'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="Expediente_Nutrity_${user.id.slice(-6)}.pdf"`
+                'Content-Disposition': `attachment; filename="Reporte_Educativo_Nutrity_${user.id.slice(-6)}.pdf"`
             }
         });
 

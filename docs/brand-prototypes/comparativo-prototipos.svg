@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1200" viewBox="0 0 1800 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Comparativo de prototipos de marca Nutrity Global</title>
+  <desc id="desc">Comparación entre Conservación óptica y N Ruta Clara con criterios de fidelidad, diferenciación, escalabilidad y accesibilidad.</desc>
+  <rect width="1800" height="1200" fill="#F3F6F2"/>
+  <text x="100" y="92" fill="#17324D" font-family="Arial, sans-serif" font-size="54" font-weight="700">Dos rutas para una decisión informada</text>
+  <text x="100" y="140" fill="#3A6447" font-family="Arial, sans-serif" font-size="25">Nutrity Global · comparación conceptual · septiembre 2026</text>
+
+  <rect x="90" y="200" width="780" height="570" rx="30" fill="#FFFFFF"/>
+  <text x="135" y="260" fill="#17324D" font-family="Arial, sans-serif" font-size="31" font-weight="700">A · Conservación óptica</text>
+  <image href="source/logo-nutrity-02.png" x="135" y="292" width="690" height="278" preserveAspectRatio="xMidYMid meet"/>
+  <text x="135" y="625" fill="#3A6447" font-family="Arial, sans-serif" font-size="22">Máxima continuidad con el diseño original.</text>
+  <text x="135" y="662" fill="#3A6447" font-family="Arial, sans-serif" font-size="22">Menor diferenciación en favicon y avatar.</text>
+  <text x="135" y="711" fill="#17324D" font-family="Arial, sans-serif" font-size="21" font-weight="700">ROL: control de fidelidad</text>
+
+  <rect x="930" y="200" width="780" height="570" rx="30" fill="#FFFFFF"/>
+  <text x="975" y="260" fill="#17324D" font-family="Arial, sans-serif" font-size="31" font-weight="700">B · N Ruta Clara</text>
+  <g transform="translate(1005 315) scale(.62)">
+    <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#88B831"/>
+    <circle cx="101" cy="183" r="11" fill="#FBF8F1"/>
+    <circle cx="137" cy="139" r="11" fill="#FBF8F1"/>
+    <circle cx="173" cy="94" r="11" fill="#FBF8F1"/>
+    <circle cx="211" cy="49" r="16" fill="#FFCC00"/>
+  </g>
+  <text x="1230" y="420" fill="#88B831" font-family="Trebuchet MS, Arial, sans-serif" font-size="104" font-weight="700" letter-spacing="-7"><tspan>Nutrit</tspan><tspan fill="#FFCC00">y</tspan></text>
+  <text x="1450" y="480" text-anchor="middle" fill="#3A6447" font-family="Arial, sans-serif" font-size="31" font-weight="700" letter-spacing="9">GLOBAL</text>
+  <text x="975" y="625" fill="#3A6447" font-family="Arial, sans-serif" font-size="22">Mayor diferenciación y mejor uso digital.</text>
+  <text x="975" y="662" fill="#3A6447" font-family="Arial, sans-serif" font-size="22">Exige validar que los pasos no parezcan una gráfica.</text>
+  <text x="975" y="711" fill="#17324D" font-family="Arial, sans-serif" font-size="21" font-weight="700">ROL: candidato recomendado para prueba</text>
+
+  <text x="100" y="850" fill="#17324D" font-family="Arial, sans-serif" font-size="34" font-weight="700">Criterios para elegir</text>
+  <g font-family="Arial, sans-serif" font-size="22">
+    <text x="120" y="915" fill="#3A6447">1 · Reconocimiento a 24 px y 48 px</text>
+    <text x="120" y="960" fill="#3A6447">2 · Lectura inmediata de Nutrity, sin confundir la “y” con otra marca</text>
+    <text x="120" y="1005" fill="#3A6447">3 · Coherencia entre TikTok, landing, onboarding, dashboard y Academia</text>
+    <text x="120" y="1050" fill="#3A6447">4 · Funcionamiento en una tinta, fondo oscuro e impresión básica</text>
+    <text x="120" y="1095" fill="#3A6447">5 · Ausencia de códigos médicos, financieros o promesas de resultado</text>
+  </g>
+  <rect x="1285" y="865" width="425" height="230" rx="28" fill="#17324D"/>
+  <text x="1325" y="925" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="25" font-weight="700">RECOMENDACIÓN</text>
+  <text x="1325" y="974" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="21">Refinar A y probar B</text>
+  <text x="1325" y="1008" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="21">en cuatro tamaños antes</text>
+  <text x="1325" y="1042" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="21">de seleccionar el sistema.</text>
+</svg>

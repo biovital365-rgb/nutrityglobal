@@ -85,7 +85,7 @@ export async function generateAIWeeklyMenuSecure(userId: string, phase: string) 
     const route = MetabolicPlanSchema.safeParse(evaluation?.results);
     if (!route.success) return { success: false, error: 'ROUTE_REQUIRED', message: 'Completa primero tu Ruta Nutrity.' };
 
-    const weekly = await generateAIWeeklyMenu(route.data, target.name || 'Paciente Nutrity');
+    const weekly = await generateAIWeeklyMenu(route.data, target.name || 'Usuario Nutrity');
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const weekStart = tomorrow.toISOString().split('T')[0];

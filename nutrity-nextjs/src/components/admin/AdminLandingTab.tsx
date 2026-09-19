@@ -198,7 +198,7 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
                 { name: "heroImage", label: "Imagen Hero (Mujer en montaña)" },
-                { name: "scienceImage", label: "Imagen Ciencia (Órganos flotando)" },
+                { name: "scienceImage", label: "Imagen educativa (hábitos y energía)" },
                 { name: "missionImage", label: "Imagen Misión (Monitor PC)" },
                 { name: "habitsImage", label: "Imagen Alimentación (Mujer estirando)" },
                 { name: "strategiesImage", label: "Imagen Estrategias (Mujer en parque)" },

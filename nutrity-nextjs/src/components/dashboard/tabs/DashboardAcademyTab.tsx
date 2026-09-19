@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { GraduationCap, Shield, Play, BookOpen, ArrowLeft, ArrowUpRight, CheckCircle2, Download, FileText, Lock } from "lucide-react";
-import { getDirectImageUrl } from "@/lib/utils";
 import * as dbService from "@/actions/db-actions";
 import { LessonAssignment } from "../../LessonAssignment";
 import { LessonQuiz } from "../../LessonQuiz";
+import { trackEvent } from "@/lib/analytics";
 
 export interface DashboardAcademyTabProps {
     courses: any[];
@@ -16,6 +16,18 @@ export interface DashboardAcademyTabProps {
     setLessonProgress: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
     userSubmissions: any[];
     userQuizAttempts: any[];
+}
+
+function educationalCopy(value: unknown) {
+    if (typeof value !== "string") return "";
+    return value
+        .replace(/que salva vidas/gi, "para hábitos sostenibles")
+        .replace(/salva vidas/gi, "apoya hábitos sostenibles")
+        .replace(/estabilizar (?:tu |la )?glucosa/gi, "comprender tus registros de glucosa")
+        .replace(/evitar picos de insulina/gi, "reconocer patrones relacionados con tus comidas")
+        .replace(/prevenir enfermedades crónicas/gi, "apoyar tu bienestar a largo plazo")
+        .replace(/transformar tu salud metabólica/gi, "fortalecer tus hábitos cotidianos")
+        .replace(/éxito metabólico/gi, "progreso de hábitos");
 }
 
 export function DashboardAcademyTab({
@@ -58,8 +70,24 @@ export function DashboardAcademyTab({
                 </div>
             </div>
 
+            {!selectedCourse && (
+                <section className="rounded-[2rem] border border-nutrity-border bg-white p-6 md:p-8">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                        <div><p className="text-xs font-black uppercase tracking-[0.2em] text-nutrity-accent">Metodología de aprendizaje</p><h3 className="mt-2 text-2xl font-black text-nutrity-primary">Comprende, practica y registra</h3></div>
+                        <p className="max-w-xl text-sm leading-6 text-nutrity-gray-text">Cada unidad combina una explicación breve, una actividad aplicable y una comprobación de avance. Completa las lecciones en orden para mantener una ruta clara.</p>
+                    </div>
+                    <div className="mt-6 grid gap-4 md:grid-cols-3">
+                        {[
+                            ["1", "Comprende", "Una idea útil, explicada sin promesas clínicas."],
+                            ["2", "Practica", "Una actividad, cuestionario o recurso para aplicarla."],
+                            ["3", "Registra", "Marca el avance y continúa con el siguiente paso."],
+                        ].map(([number, title, description]) => <article key={number} className="rounded-2xl bg-nutrity-bg p-5"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-nutrity-primary text-sm font-black text-white">{number}</span><h4 className="mt-4 font-black">{title}</h4><p className="mt-2 text-sm leading-6 text-nutrity-gray-text">{description}</p></article>)}
+                    </div>
+                </section>
+            )}
+
             {!selectedCourse ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <section><div className="mb-5"><p className="text-xs font-black uppercase tracking-[0.2em] text-nutrity-accent">Ruta guiada</p><h3 className="mt-1 text-2xl font-black">Unidades disponibles</h3></div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[...courses].sort((a, b) => {
                         const getCourseNumber = (title: string): number => {
                             const t = title.toLowerCase();
@@ -118,7 +146,9 @@ export function DashboardAcademyTab({
                         return (
                         <div key={course.id} className="nutrity-card overflow-hidden group hover:border-nutrity-accent transition-all flex flex-col">
                             <div className="h-48 overflow-hidden relative">
-                                <img src={getDirectImageUrl(course.thumbnail)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={course.title} referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
+                                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#17324d] via-[#244b63] to-[#2f6b5d] text-white">
+                                    <div className="max-w-[80%] text-center"><BookOpen className="mx-auto h-10 w-10 text-[#e6d3a8]" /><p className="mt-3 text-xs font-black uppercase tracking-[0.2em]">Unidad educativa Nutrity</p></div>
+                                </div>
                                 <div className="absolute top-4 right-4 flex gap-2">
                                     {course.price > 0 && !user?.profile?.plan?.includes('ELITE') && (
                                         <div className="bg-amber-500 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-lg">
@@ -137,8 +167,8 @@ export function DashboardAcademyTab({
                                 )}
                             </div>
                             <div className="p-8 flex-1 flex flex-col">
-                                <h3 className="text-2xl font-bold mb-3">{course.title}</h3>
-                                <p className="text-sm text-nutrity-gray-text mb-8 leading-relaxed font-medium line-clamp-2">{course.description}</p>
+                                <h3 className="text-2xl font-bold mb-3">{educationalCopy(course.title)}</h3>
+                                <p className="text-sm text-nutrity-gray-text mb-8 leading-relaxed font-medium line-clamp-2">{educationalCopy(course.description)}</p>
                                 <div className="mt-auto pt-6 border-t border-nutrity-border flex items-center justify-between">
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2 mb-1">
@@ -170,6 +200,7 @@ export function DashboardAcademyTab({
                                                         return;
                                                     }
                                                     const detailed = await dbService.getCourseWithLessons(course.id);
+                                                    trackEvent("academy_unit_started", { unitType: isEbook ? "library" : "guided" });
                                                     setSelectedCourse(detailed);
                                                     if (detailed?.lessons && detailed.lessons?.length > 0) {
                                                         setActiveLesson(detailed.lessons.sort((a: any, b: any) => a.order - b.order)[0]);
@@ -197,7 +228,7 @@ export function DashboardAcademyTab({
                             </div>
                         </div>
                     )})}
-                </div>
+                </div></section>
             ) : (
                 <div className="space-y-8">
                     <button onClick={() => { setSelectedCourse(null); setActiveLesson(null); }} className="flex items-center gap-2 text-nutrity-accent font-bold text-xs uppercase tracking-widest hover:underline mb-4">
@@ -220,26 +251,26 @@ export function DashboardAcademyTab({
                                     />
                                 ) : (
                                     <>
-                                        <img src={getDirectImageUrl(selectedCourse.thumbnail)} className="w-full h-full object-cover opacity-60" alt="Image" referrerPolicy="no-referrer" onError={(e) => { e.currentTarget.src = '/food-placeholder.svg'; }} />
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[#17324d] via-[#244b63] to-[#2f6b5d]" />
                                         <div className="absolute inset-0 flex items-center justify-center">
                                             <Play className="w-20 h-20 text-white/20" />
                                             <div className="absolute bottom-8 left-8 right-8 text-white">
                                                 <p className="text-[10px] font-bold uppercase tracking-widest text-nutrity-accent mb-2">Selecciona una lección</p>
-                                                <h3 className="text-2xl font-bold">{selectedCourse.title}</h3>
+                                                <h3 className="text-2xl font-bold">{educationalCopy(selectedCourse.title)}</h3>
                                             </div>
                                         </div>
                                     </>
                                 )}
                             </div>
                             <div className="space-y-4">
-                                <h3 className="text-xl font-bold">{activeLesson ? activeLesson.title : "Acerca de esta lección"}</h3>
+                                <h3 className="text-xl font-bold">{activeLesson ? educationalCopy(activeLesson.title) : "Acerca de esta lección"}</h3>
                                 <p className="text-sm text-nutrity-gray-text leading-relaxed font-medium">
-                                    {activeLesson?.description ? activeLesson.description : selectedCourse.description}
+                                    {educationalCopy(activeLesson?.description ? activeLesson.description : selectedCourse.description)}
                                 </p>
                                 {activeLesson?.videoInstructions && (
                                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mt-4">
                                         <h4 className="text-xs font-bold uppercase tracking-widest text-nutrity-accent mb-2 flex items-center gap-2"><Play className="w-3 h-3" /> Instrucciones del Video</h4>
-                                        <p className="text-sm text-nutrity-gray-text">{activeLesson.videoInstructions}</p>
+                                        <p className="text-sm text-nutrity-gray-text">{educationalCopy(activeLesson.videoInstructions)}</p>
                                     </div>
                                 )}
                                 {(activeLesson && !activeLesson.quiz && !activeLesson.assignment && !lessonProgress[activeLesson.id]) && (
@@ -247,6 +278,7 @@ export function DashboardAcademyTab({
                                         onClick={async () => {
                                             await dbService.markLessonVideoWatched(activeLesson.id);
                                             setLessonProgress(prev => ({ ...prev, [activeLesson.id]: true }));
+                                            trackEvent("academy_unit_completed", { unitType: "lesson" });
                                         }}
                                         className="mt-4 bg-nutrity-success text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-nutrity-success/20 hover:bg-green-600 transition-all flex items-center gap-2"
                                     >
@@ -264,7 +296,7 @@ export function DashboardAcademyTab({
                                             </div>
                                             <div className="flex-1">
                                                 <h4 className="font-bold text-sm text-nutrity-primary">Presentación de la Lección</h4>
-                                                {activeLesson.presentationInstructions && <p className="text-xs text-nutrity-gray-text mt-1.5 leading-relaxed">{activeLesson.presentationInstructions}</p>}
+                                                {activeLesson.presentationInstructions && <p className="text-xs text-nutrity-gray-text mt-1.5 leading-relaxed">{educationalCopy(activeLesson.presentationInstructions)}</p>}
                                             </div>
                                             <a href={`/api/academic/download?lessonId=${activeLesson.id}&type=presentation`} target="_blank" rel="noopener noreferrer" className="mt-2 px-4 py-2.5 text-xs font-bold bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition-colors w-full text-center flex items-center justify-center gap-2 uppercase tracking-widest">
                                                 <ArrowUpRight className="w-3.5 h-3.5" /> Ver Presentación
@@ -278,7 +310,7 @@ export function DashboardAcademyTab({
                                             </div>
                                             <div className="flex-1">
                                                 <h4 className="font-bold text-sm text-nutrity-primary">Recurso PDF Adicional</h4>
-                                                {activeLesson.pdfInstructions && <p className="text-xs text-nutrity-gray-text mt-1.5 leading-relaxed">{activeLesson.pdfInstructions}</p>}
+                                                {activeLesson.pdfInstructions && <p className="text-xs text-nutrity-gray-text mt-1.5 leading-relaxed">{educationalCopy(activeLesson.pdfInstructions)}</p>}
                                             </div>
                                             <a href={`/api/academic/download?lessonId=${activeLesson.id}&type=pdf`} target="_blank" rel="noopener noreferrer" className="mt-2 px-4 py-2.5 text-xs font-bold bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors w-full text-center flex items-center justify-center gap-2 uppercase tracking-widest">
                                                 <Download className="w-3.5 h-3.5" /> Descargar PDF
@@ -343,7 +375,7 @@ export function DashboardAcademyTab({
                                                 {isLessonLocked ? <Lock className="w-4 h-4 opacity-50" /> : (lessonProgress[lesson.id] ? <CheckCircle2 className="w-4 h-4" /> : lesson.order)}
                                             </div>
                                             <div>
-                                                <h4 className={`text-sm font-bold leading-snug ${lessonProgress[lesson.id] && !isLessonLocked ? 'text-nutrity-gray-text line-through' : (activeLesson?.id === lesson.id && !isLessonLocked ? 'text-nutrity-primary' : 'text-nutrity-gray-text')}`}>{lesson.title}</h4>
+                                                <h4 className={`text-sm font-bold leading-snug ${lessonProgress[lesson.id] && !isLessonLocked ? 'text-nutrity-gray-text line-through' : (activeLesson?.id === lesson.id && !isLessonLocked ? 'text-nutrity-primary' : 'text-nutrity-gray-text')}`}>{educationalCopy(lesson.title)}</h4>
                                                 <div className="flex items-center gap-3 mt-2">
                                                     <span className="text-[9px] font-bold text-nutrity-gray-text uppercase tracking-widest">{lesson.duration || '15:00 min'}</span>
                                                     {isLessonLocked ? (
