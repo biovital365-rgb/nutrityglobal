@@ -183,7 +183,7 @@ export function AdminSubmissionsTab({ submissions, quizAttempts = [], isSaving, 
                                 </div>
 
                                 <div className="bg-slate-50 border border-nutrity-border rounded-2xl p-6 mb-6">
-                                    <h4 className="text-xs font-bold uppercase tracking-widest text-nutrity-gray-text mb-3">Respuesta del Paciente:</h4>
+                                    <h4 className="text-xs font-bold uppercase tracking-widest text-nutrity-gray-text mb-3">Respuesta del participante:</h4>
                                     <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap">{selectedSub.content}</p>
                                 </div>
 

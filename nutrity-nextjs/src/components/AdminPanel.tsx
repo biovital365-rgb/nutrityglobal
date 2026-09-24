@@ -216,7 +216,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
             const { createPatientByCoach } = await import("@/actions/admin-actions");
             const result = await createPatientByCoach(newUser);
             if (result.success) {
-                notify("success", "Paciente registrado exitosamente.");
+            notify("success", "Participante registrado correctamente.");
                 setShowAddUserModal(false);
                 setNewUser({ name: "", email: "", phone: "", age: "", password: "" });
                 const updated = await dbService.getAllUsers(user?.profile?.organization?.id);
@@ -291,8 +291,8 @@ export function AdminPanel({ user }: AdminPanelProps) {
     // ─── Section nav ──────────────────────────────────────────────────────────
     const sections: { id: AdminSection; icon: any; label: string; count: number }[] = isCoach ? [
         { id: "conversions", icon: TrendingUp, label: "Mis Conversiones", count: users.length },
-        { id: "users", icon: Users, label: "Mis Pacientes", count: users.length },
-        { id: "landing", icon: LayoutTemplate, label: "Mi Clínica B2B", count: 1 },
+        { id: "users", icon: Users, label: "Mis participantes", count: users.length },
+        { id: "landing", icon: LayoutTemplate, label: "Mi espacio profesional", count: 1 },
     ] : [
         { id: "conversions", icon: TrendingUp, label: "Conversiones", count: users.length },
         { id: "foods", icon: Utensils, label: "Alimentos", count: foods.length },
@@ -331,12 +331,12 @@ export function AdminPanel({ user }: AdminPanelProps) {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <h2 className="text-3xl font-display font-bold">Panel de Administración</h2>
-                    <p className="text-nutrity-gray-text text-sm">Gestión completa del catálogo y contenido de {user?.profile?.organization?.name || "Nutrity Global"}.</p>
+                    <p className="text-nutrity-gray-text text-sm">Gestiona el catálogo, los contenidos y los usuarios de {user?.profile?.organization?.name || "Nutrity Global"}.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="bg-nutrity-accent/10 px-4 py-2 rounded-xl flex items-center gap-3 border border-nutrity-accent/20">
                         <Shield className="w-5 h-5 text-nutrity-accent" />
-                        <span className="text-[10px] font-bold text-nutrity-accent uppercase tracking-widest">{isCoach ? "Coach/Clínica" : "Admin Global"}</span>
+                        <span className="text-[10px] font-bold text-nutrity-primary uppercase tracking-widest">{isCoach ? "Espacio profesional" : "Administrador global"}</span>
                     </div>
                 </div>
             </div>
@@ -344,7 +344,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
             {/* Section Tabs */}
             <div className="flex flex-wrap gap-3">
                 {sections.map((s) => (
-                    <button key={s.id} onClick={() => { setSection(s.id); setSearchTerm(""); }}
+                    <button key={s.id} onClick={() => { setSection(s.id); setSearchTerm(""); }} aria-current={section === s.id ? "page" : undefined}
                         className={`flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-bold transition-all ${
                             section === s.id
                                 ? "bg-nutrity-primary text-white shadow-lg shadow-nutrity-primary/20"
@@ -365,21 +365,21 @@ export function AdminPanel({ user }: AdminPanelProps) {
                         <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                             <div className="p-8 border-b border-nutrity-border flex items-center justify-between shrink-0">
                                 <div>
-                                    <h3 className="text-xl font-bold font-display flex items-center gap-2"><Users className="w-5 h-5 text-nutrity-accent" /> Registrar Nuevo Paciente</h3>
-                                    <p className="text-xs text-nutrity-gray-text font-medium mt-1">Crea una cuenta para tu paciente. Se enviará una confirmación a su email.</p>
+                                    <h3 className="text-xl font-bold font-display flex items-center gap-2"><Users className="w-5 h-5 text-nutrity-route-blue" aria-hidden="true" /> Registrar participante</h3>
+                                    <p className="text-xs text-nutrity-gray-text font-medium mt-1">Crea una cuenta de participante. Se enviará una confirmación a su correo.</p>
                                 </div>
                                 <button onClick={() => setShowAddUserModal(false)} className="p-2 rounded-full hover:bg-nutrity-bg"><X className="w-5 h-5 text-nutrity-gray-text" /></button>
                             </div>
                             <form onSubmit={handleCreateUser} className="p-8 space-y-6 overflow-y-auto">
                                 <FieldInput label="Nombre Completo *" value={newUser.name} onChange={(v) => setNewUser({ ...newUser, name: v })} required />
-                                <FieldInput label="Email del Paciente *" type="email" value={newUser.email} onChange={(v) => setNewUser({ ...newUser, email: v })} required />
+                                <FieldInput label="Correo del participante *" type="email" value={newUser.email} onChange={(v) => setNewUser({ ...newUser, email: v })} required />
                                 <FieldInput label="Contraseña Temporal (mín. 12 caracteres) *" type="password" value={newUser.password} onChange={(v) => setNewUser({ ...newUser, password: v })} placeholder="Asigna una contraseña segura" required />
                                 <div className="grid grid-cols-2 gap-4">
                                     <FieldInput label="Celular (Opcional)" value={newUser.phone} onChange={(v) => setNewUser({ ...newUser, phone: v })} />
                                     <FieldInput label="Edad (Opcional)" type="number" value={newUser.age} onChange={(v) => setNewUser({ ...newUser, age: v })} />
                                 </div>
                                 <button disabled={isSaving} type="submit" className="w-full bg-nutrity-primary text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-nutrity-accent transition-all flex items-center justify-center gap-2 mt-4">
-                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} Registrar Paciente
+                                    {isSaving ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> : <Save className="w-5 h-5" aria-hidden="true" />} Registrar participante
                                 </button>
                             </form>
                         </motion.div>
@@ -401,7 +401,7 @@ export function AdminPanel({ user }: AdminPanelProps) {
                     </div>
                     <div className="flex items-center gap-2 px-4 py-2 bg-white border border-nutrity-border rounded-xl">
                         <span className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest">Ver Eliminados</span>
-                        <button onClick={() => setShowDeleted(!showDeleted)}
+                        <button onClick={() => setShowDeleted(!showDeleted)} aria-label="Mostrar registros eliminados" aria-pressed={showDeleted}
                             className={`w-10 h-5 rounded-full transition-all relative ${showDeleted ? "bg-red-500" : "bg-slate-200"}`}>
                             <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${showDeleted ? "left-6" : "left-1"}`} />
                         </button>

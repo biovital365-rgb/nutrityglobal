@@ -5,14 +5,15 @@
   --font-body: "Segoe UI", Arial, sans-serif;
   --font-serif: Georgia, "Times New Roman", serif;
 
-  /* Nutrity Global "Nature Biotech" Palette - Derived from Image */
+  /* Nutrity Global — identidad operativa Ruta Clara */
   --color-nutrity-primary: #17324d;
   --color-nutrity-accent: #3a6447;
   --color-nutrity-success: #2f6b5d;
+  --color-nutrity-route-blue: #2f6fed;
   --color-nutrity-bg: #fbf8f1;
   --color-nutrity-surface: #ffffff;
-  --color-nutrity-gray-text: #4a6354;
-  --color-nutrity-border: #dce5de;
+  --color-nutrity-gray-text: #4b5f70;
+  --color-nutrity-border: #d7e0e7;
   --color-nutrity-highlight: #ffcc00;
 
   /* Landing Page Premium Palette */
@@ -49,6 +50,14 @@
   h5 {
     @apply font-display tracking-tight leading-tight;
   }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f6fed] focus-visible:ring-offset-2;
+  }
 }
 
 @layer utilities {
@@ -75,6 +84,22 @@
 
   .glass-header {
     @apply backdrop-blur-md bg-white/70 border-b border-nutrity-border sticky top-0 z-50;
+  }
+
+  .brand-lockup-surface {
+    @apply inline-flex items-center rounded-2xl border border-white/70 bg-white/90 px-3 py-2 shadow-lg backdrop-blur-md;
+  }
+
+  .brand-lockup-surface-dark {
+    @apply inline-flex items-center rounded-2xl border border-white/10 bg-[#112a41]/80 px-3 py-2 shadow-lg backdrop-blur-md;
+  }
+
+  .brand-icon-button {
+    @apply inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl border border-nutrity-border bg-white text-nutrity-primary transition-colors hover:bg-nutrity-bg;
+  }
+
+  .nutrity-loading-state {
+    @apply flex min-h-screen flex-col items-center justify-center gap-4 bg-nutrity-bg text-center text-nutrity-primary;
   }
 
   /* Scrollbar clean */

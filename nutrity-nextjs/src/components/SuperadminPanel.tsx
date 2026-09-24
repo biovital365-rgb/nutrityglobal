@@ -66,11 +66,11 @@ export function SuperadminPanel({ user }: SuperadminPanelProps) {
 
     const sections: { id: SuperadminSection; icon: any; label: string; count: number }[] = [
         { id: "users", icon: Users, label: "Todas las Cuentas", count: users.length },
-        { id: "payments", icon: CreditCard, label: "Suscripciones (Elite)", count: users.filter(u => u.plan === "ELITE").length },
-        { id: "foods", icon: Utensils, label: "Catálogo Alimentos", count: foods.length },
-        { id: "micronutrients", icon: Zap, label: "Catálogo Micronutrientes", count: micros.length },
-        { id: "courses", icon: BookOpen, label: "Catálogo Cursos", count: courses.length },
-        { id: "analytics", icon: Activity, label: "Métricas Globales", count: 0 },
+        { id: "payments", icon: CreditCard, label: "Suscripciones", count: users.filter(u => u.plan === "ELITE").length },
+        { id: "foods", icon: Utensils, label: "Alimentos", count: foods.length },
+        { id: "micronutrients", icon: Zap, label: "Micronutrientes", count: micros.length },
+        { id: "courses", icon: BookOpen, label: "Cursos", count: courses.length },
+        { id: "analytics", icon: Activity, label: "Métricas", count: 0 },
     ];
 
     const filteredUsers = users.filter(u =>
@@ -118,26 +118,26 @@ export function SuperadminPanel({ user }: SuperadminPanelProps) {
         <motion.div key="superadmin-panel" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <h2 className="text-3xl font-display font-bold text-slate-800">Panel Superadmin</h2>
-                    <p className="text-slate-500 text-sm">Gestión global de Nutrity SaaS.</p>
+                    <h2 className="text-3xl font-display font-bold text-nutrity-primary">Administración global</h2>
+                    <p className="text-nutrity-gray-text text-sm">Usuarios, contenidos y suscripciones de Nutrity Global.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="bg-red-50 px-4 py-2 rounded-xl flex items-center gap-3 border border-red-200">
-                        <Shield className="w-5 h-5 text-red-500" />
-                        <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">SUPERADMIN MASTER</span>
+                    <div className="bg-[#eef4ff] px-4 py-2 rounded-xl flex items-center gap-3 border border-[#b8cdfd]">
+                        <Shield className="w-5 h-5 text-nutrity-route-blue" aria-hidden="true" />
+                        <span className="text-[10px] font-bold text-nutrity-primary uppercase tracking-widest">Administrador global</span>
                     </div>
                 </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
                 {sections.map((s) => (
-                    <button key={s.id} onClick={() => { setSection(s.id); setSearchTerm(""); }}
+                    <button key={s.id} onClick={() => { setSection(s.id); setSearchTerm(""); }} aria-current={section === s.id ? "page" : undefined}
                         className={`flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-bold transition-all ${
                             section === s.id
-                                ? "bg-slate-900 text-white shadow-lg"
-                                : "bg-white text-slate-500 border border-slate-200 hover:border-slate-400"
+                                ? "bg-nutrity-primary text-white shadow-lg shadow-nutrity-primary/15"
+                                : "bg-white text-nutrity-gray-text border border-nutrity-border hover:border-nutrity-route-blue/50"
                         }`}>
-                        <s.icon className={`w-4 h-4 ${section === s.id ? "text-white" : ""}`} />
+                        <s.icon aria-hidden="true" className={`w-4 h-4 ${section === s.id ? "text-nutrity-highlight" : ""}`} />
                         {s.label}
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${section === s.id ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>
                             {s.count}

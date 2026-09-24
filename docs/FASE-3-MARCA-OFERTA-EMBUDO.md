@@ -71,7 +71,7 @@ No incluir respuestas de salud, síntomas ni mediciones en propiedades analític
 
 ## Decisiones adoptadas para la beta
 
-- Identidad aprobada: **N Ruta Clara**, con “y” y nodo amarillo de llegada.
+- Identidad digital aprobada: **N Ruta Clara**, con tres hitos amarillo, blanco con halo azul oscuro y azul sobre la diagonal de la N. El propietario aprobó expresamente el sistema y sus variantes para fondos claros y oscuros el 24 de septiembre de 2026.
 - Paquete de activos local y versionado; no se usan enlaces remotos para el logotipo.
 - Oferta pública beta: Nutrity Inicio gratis; Nutrity Plus USD 9,99/mes; Ruta Nutrity 12 semanas USD 49/mes; Nutrity Profesional USD 149/mes.
 - Stripe es el flujo público de suscripción mensual. PayPal permanece deshabilitado en la interfaz hasta contar con renovación y cancelación equivalentes.

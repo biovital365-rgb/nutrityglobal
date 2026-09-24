@@ -35,15 +35,11 @@ interface NutrityLandingProps {
 
 function educationalLandingCopy(value: unknown, fallback: string) {
     if (typeof value !== "string" || !value.trim()) return fallback;
-    return value
-        .replace(/remisi[oó]n metab[oó]lica/gi, "hábitos metabólicos sostenibles")
-        .replace(/revertir (?:la )?diabetes/gi, "apoyar hábitos en diabetes")
-        .replace(/remisi[oó]n/gi, "ruta")
-        .replace(/curar?|cura/gi, "acompañar")
-        .replace(/transformar tu salud metab[oó]lica/gi, "fortalecer tus hábitos cotidianos")
-        .replace(/estabilizar (?:tu |la )?glucosa/gi, "comprender tus registros de glucosa")
-        .replace(/prevenir enfermedades/gi, "apoyar tu bienestar")
-        .replace(/salva vidas/gi, "apoya cambios sostenibles");
+    const normalized = value.trim();
+    const unsafeClaim = /(remisi[oó]n|revertir|curar?|diagn[oó]stic|tratamiento|control(?:ar)? (?:tu |la )?glucosa|estabilizar|prevenir enfermedades|salva vidas|grasa hep[aá]tica|resistencia a la insulina|garantiza|resultados cl[ií]nicos)/i;
+    const bareConditionLabel = /^de la diabetes tipo 2$/i;
+    if (unsafeClaim.test(normalized) || bareConditionLabel.test(normalized)) return fallback;
+    return normalized;
 }
 
 export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingProps) {
@@ -52,6 +48,10 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
+        const loadingFallback = window.setTimeout(() => {
+            setLandingConfig((current: unknown) => current ?? {});
+        }, 4000);
+
         getPosts(undefined, true).then(posts => {
             setRecentPosts(posts.slice(0, 3));
         }).catch(err => console.error("Error fetching posts:", err));
@@ -63,9 +63,11 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
         }
 
         getLandingConfig(ref || undefined).then(config => {
+            window.clearTimeout(loadingFallback);
             if (config) setLandingConfig(config);
             else setLandingConfig({}); // Default empty config to stop loading state
         }).catch(err => {
+            window.clearTimeout(loadingFallback);
             console.error("Error fetching landing config:", err);
             setLandingConfig({});
         });
@@ -74,13 +76,18 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
             setIsScrolled(window.scrollY > 20);
         };
         window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
+        return () => {
+            window.clearTimeout(loadingFallback);
+            window.removeEventListener("scroll", handleScroll);
+        };
     }, []);
 
     if (!landingConfig) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-[#fbf8f1]">
-                <Loader2 className="w-8 h-8 animate-spin text-[#c19b6c]" />
+            <div className="nutrity-loading-state" role="status" aria-live="polite">
+                <BrandLogo className="h-14 w-auto" priority />
+                <Loader2 className="h-7 w-7 animate-spin text-nutrity-route-blue" aria-hidden="true" />
+                <p className="text-sm font-semibold">Preparando tu experiencia Nutrity…</p>
             </div>
         );
     }
@@ -91,8 +98,9 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
     };
 
     const dynamicStyles = {
-        '--landing-primary': landingConfig.primaryColor || '#17324d',
-        '--landing-accent': landingConfig.accentColor || '#ffcc00',
+        '--landing-primary': '#17324d',
+        '--landing-accent': '#ffcc00',
+        '--landing-route-blue': '#2f6fed',
         '--landing-secondary': '#3a6447',
         '--landing-bg': '#fbf8f1'
     } as React.CSSProperties;
@@ -101,19 +109,22 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
         <div style={dynamicStyles} className="flex flex-col min-h-screen w-full bg-[var(--landing-bg)] text-[#2d3748] overflow-x-hidden selection:bg-[var(--landing-accent)] selection:text-white font-sans">
             {/* Sticky Navigation */}
             <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "backdrop-blur-xl bg-[var(--landing-bg)]/90 border-b border-[var(--landing-accent)]/20 py-3 shadow-lg" : "bg-transparent py-5"}`}>
-                <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-                    <BrandLogo className="h-10 w-auto md:h-12" priority />
-                    <nav className="hidden lg:flex items-center gap-8 bg-white/50 backdrop-blur-md px-8 py-2 rounded-full border border-[var(--landing-accent)]/20">
-                        <a href="#doble-ciclo" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">La Ciencia</a>
-                        <a href="#alimentacion" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Alimentación</a>
-                        <a href="#movimiento" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Movimiento</a>
-                        <a href="#estrategias" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Estrategias</a>
-                        <button onClick={() => startRoute("navigation_plans")} className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Planes</button>
-                        <Link href="/blog" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-accent)] transition-colors">Blog</Link>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
+                    <div className="brand-lockup-surface shrink-0">
+                        <BrandLogo className="h-8 w-auto sm:h-10 md:h-11" priority />
+                    </div>
+                    <nav aria-label="Navegación principal" className="hidden lg:flex items-center gap-7 bg-white/88 backdrop-blur-md px-8 py-2.5 rounded-full border border-white/80 shadow-sm">
+                        <a href="#doble-ciclo" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-route-blue)] transition-colors">Cómo funciona</a>
+                        <a href="#alimentacion" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-route-blue)] transition-colors">Alimentación</a>
+                        <a href="#movimiento" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-route-blue)] transition-colors">Movimiento</a>
+                        <a href="#estrategias" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-route-blue)] transition-colors">Estrategias</a>
+                        <button onClick={() => startRoute("navigation_plans")} className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-route-blue)] transition-colors">Planes</button>
+                        <Link href="/blog" className="text-xs font-bold uppercase tracking-widest text-[var(--landing-secondary)] hover:text-[var(--landing-route-blue)] transition-colors">Blog</Link>
                     </nav>
                     <button
                         onClick={onAuthClick}
-                        className="bg-[var(--landing-primary)] text-[var(--landing-bg)] px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-[var(--landing-secondary)] transition-all active:scale-95 border border-[var(--landing-primary)]"
+                        aria-label="Acceder a Nutrity Global"
+                        className="bg-[var(--landing-primary)] text-white px-4 sm:px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest shadow-lg hover:bg-[var(--landing-route-blue)] transition-all active:scale-95 border border-[var(--landing-primary)]"
                     >
                         Acceso
                     </button>
@@ -129,8 +140,8 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             alt="Hero Image" 
                             className="w-full h-full object-cover object-top"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--landing-bg)] via-[var(--landing-bg)]/40 to-transparent"></div>
-                        <div className="absolute inset-0 bg-white/10"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--landing-bg)] via-white/48 to-[#17324d]/20"></div>
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.78),rgba(255,255,255,0.08)_68%)]"></div>
                     </div>
 
                     <div className="max-w-4xl mx-auto w-full relative z-10">
@@ -138,15 +149,15 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 1 }}
-                            className="flex flex-col items-center justify-center"
+                            className="flex flex-col items-center justify-center rounded-[2rem] border border-white/70 bg-white/[0.78] px-5 py-8 shadow-2xl shadow-[#17324d]/10 backdrop-blur-[3px] sm:px-10 md:py-12"
                         >
                             <div className="inline-flex items-center gap-3 mb-6">
                                 <span className="w-8 h-[1px] bg-[var(--landing-accent)]"></span>
-                                <span className="text-[10px] md:text-xs font-bold text-[var(--landing-accent)] uppercase tracking-[0.3em]">Guía Práctica Basada en Evidencia</span>
+                                <span className="text-[10px] md:text-xs font-bold text-[var(--landing-secondary)] uppercase tracking-[0.3em]">Educación y hábitos, paso a paso</span>
                                 <span className="w-8 h-[1px] bg-[var(--landing-accent)]"></span>
                             </div>
 
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold leading-tight tracking-tight mb-4 text-[var(--landing-primary)] whitespace-pre-line">
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold leading-[1.02] tracking-tight mb-4 text-[var(--landing-primary)] whitespace-pre-line text-balance">
                                 {educationalLandingCopy(landingConfig?.heroTitle, "Convierte información en hábitos posibles")}
                             </h1>
                             
@@ -154,13 +165,13 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                                 {educationalLandingCopy(landingConfig?.heroSubtitle, "Tu Ruta Nutrity, paso a paso")}
                             </h2>
 
-                            <p className="text-base md:text-xl text-[#2d3748] italic font-serif leading-relaxed mb-10 max-w-2xl mx-auto">
+                            <p className="text-base md:text-lg text-[#34495b] font-medium leading-relaxed mb-10 max-w-2xl mx-auto text-balance">
                                 {educationalLandingCopy(landingConfig?.heroDescription, "Educación, registro y acciones semanales para organizar tu bienestar con claridad.")}
                             </p>
 
                             <button
                                 onClick={() => startRoute("hero")}
-                                className="bg-[var(--landing-accent)] text-[var(--landing-primary)] px-8 py-4 rounded-xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-[var(--landing-accent)]/20 hover:scale-105 transition-all border border-[var(--landing-accent)] mx-auto"
+                                className="bg-[var(--landing-accent)] text-[var(--landing-primary)] px-8 py-4 rounded-xl font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-[var(--landing-accent)]/20 hover:-translate-y-0.5 transition-all border border-[#d5aa00] mx-auto"
                             >
                                 {educationalLandingCopy(landingConfig?.ctaText, "Crear mi Ruta Nutrity")}
                                 <ChevronRight className="w-5 h-5" />
@@ -263,8 +274,8 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                                 viewport={{ once: true }}
                             >
                                 <img 
-                                    src={landingConfig?.habitsImage || ""} 
-                                    alt="Hábitos de Movimiento" 
+                                    src={landingConfig?.habitsImage || "/landing-img-3.jpg"}
+                                    alt="Persona incorporando movimiento a su rutina"
                                     className="w-full rounded-3xl shadow-xl"
                                 />
                             </motion.div>
@@ -306,8 +317,8 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                             className="flex justify-center mb-12"
                         >
                             <img 
-                                src={landingConfig?.strategiesImage || ""} 
-                                alt="Estrategias de Salud" 
+                                src={landingConfig?.strategiesImage || "/landing-img-4.jpg"}
+                                alt="Recursos educativos para organizar hábitos"
                                 className="w-full max-w-3xl rounded-3xl shadow-xl border-4 border-white ring-1 ring-[var(--landing-accent)]/20"
                             />
                         </motion.div>
@@ -326,8 +337,8 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
                             <div>
-                                <h2 className="text-3xl md:text-5xl font-serif font-bold mb-4 text-[#e6d3a8]">Artículos Recientes</h2>
-                                <p className="text-white/80 font-medium">Últimas actualizaciones, ciencia y consejos metabólicos.</p>
+                                <h2 className="text-3xl md:text-5xl font-serif font-bold mb-4 text-white">Artículos recientes</h2>
+                                <p className="text-white/80 font-medium">Ideas educativas para convertir información en acciones cotidianas.</p>
                             </div>
                             <Link href="/blog" className="text-[var(--landing-accent)] text-xs font-bold uppercase tracking-widest hover:text-white transition-colors flex items-center gap-2">
                                 Ver todo el blog <ArrowRight className="w-4 h-4" />
@@ -348,7 +359,7 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                                     )}
                                     <div className="p-8 flex flex-col flex-1">
                                         <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--landing-secondary)] mb-3">{post.category}</span>
-                                        <h3 className="font-serif font-bold text-xl text-[var(--landing-primary)] mb-4 line-clamp-2 leading-tight">{post.title}</h3>
+                                        <h3 className="font-serif font-bold text-xl text-[var(--landing-primary)] mb-4 line-clamp-2 leading-tight">{educationalLandingCopy(post.title, "Artículo educativo de Nutrity")}</h3>
                                         <div className="mt-auto flex items-center justify-between border-t border-[var(--landing-accent)]/20 pt-4">
                                             <span className="text-[10px] font-bold text-[#2d3748] uppercase tracking-widest">
                                                 {new Date(post.createdAt).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
@@ -374,14 +385,14 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                         <div><strong className="block text-sm text-[var(--landing-primary)]">Nutrity Global</strong><span className="text-[10px] font-bold tracking-widest uppercase text-[var(--landing-secondary)]">Conectado desde BioVital.360</span></div>
                     </div>
                     <div className="flex flex-wrap justify-center gap-6 text-[10px] font-bold tracking-widest uppercase text-[#2d3748]">
-                        <a href="#doble-ciclo" className="hover:text-[var(--landing-accent)] transition-colors">La Ciencia</a>
-                        <a href="#alimentacion" className="hover:text-[var(--landing-accent)] transition-colors">Alimentación</a>
-                        <Link href="/blog" className="hover:text-[var(--landing-accent)] transition-colors">Blog</Link>
-                        <Link href="/privacy" className="hover:text-[var(--landing-accent)] transition-colors">Privacidad</Link>
-                        <Link href="/terms" className="hover:text-[var(--landing-accent)] transition-colors">Términos</Link>
+                        <a href="#doble-ciclo" className="hover:text-[var(--landing-route-blue)] transition-colors">Cómo funciona</a>
+                        <a href="#alimentacion" className="hover:text-[var(--landing-route-blue)] transition-colors">Alimentación</a>
+                        <Link href="/blog" className="hover:text-[var(--landing-route-blue)] transition-colors">Blog</Link>
+                        <Link href="/privacy" className="hover:text-[var(--landing-route-blue)] transition-colors">Privacidad</Link>
+                        <Link href="/terms" className="hover:text-[var(--landing-route-blue)] transition-colors">Términos</Link>
                         <button
                             onClick={onAuthClick}
-                            className="hover:text-[var(--landing-accent)] transition-colors"
+                            className="hover:text-[var(--landing-route-blue)] transition-colors"
                         >
                             Acceso
                         </button>

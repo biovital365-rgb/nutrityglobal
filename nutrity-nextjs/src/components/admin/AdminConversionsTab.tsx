@@ -24,7 +24,7 @@ export function AdminConversionsTab({ users }: AdminConversionsTabProps) {
                             <Users className="w-6 h-6" />
                         </div>
                         <div>
-                            <p className="text-sm font-bold text-nutrity-gray-text">Total Pacientes</p>
+                            <p className="text-sm font-bold text-nutrity-gray-text">Total participantes</p>
                             <h3 className="text-2xl font-display font-bold text-nutrity-primary">{totalPatients}</h3>
                         </div>
                     </div>
@@ -70,13 +70,13 @@ export function AdminConversionsTab({ users }: AdminConversionsTabProps) {
             <div className="bg-white border border-nutrity-border rounded-2xl overflow-hidden shadow-sm">
                 <div className="p-6 border-b border-nutrity-border">
                     <h3 className="font-display font-bold text-lg text-nutrity-primary">Detalle de Conversiones</h3>
-                    <p className="text-sm text-nutrity-gray-text">Pacientes registrados con tu código de invitación.</p>
+                    <p className="text-sm text-nutrity-gray-text">Participantes registrados con tu código de invitación.</p>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-nutrity-bg text-nutrity-gray-text font-bold">
                             <tr>
-                                <th className="px-6 py-4">Paciente</th>
+                                <th className="px-6 py-4">Participante</th>
                                 <th className="px-6 py-4">Email</th>
                                 <th className="px-6 py-4">Plan Actual</th>
                                 <th className="px-6 py-4">Fecha de Registro</th>

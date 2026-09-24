@@ -9,8 +9,8 @@
 Queda aprobada la dirección conceptual basada en:
 
 - una **N propietaria** como símbolo central;
-- un recorrido ascendente discreto construido mediante pausas o pasos internos;
-- un único nodo amarillo como llegada, siguiente acción o hito;
+- un recorrido ascendente discreto construido mediante hitos internos;
+- una secuencia de tres nodos legibles que se integra a la diagonal de la N;
 - continuidad con el wordmark Nutrity y su “y” amarilla;
 - aplicación prioritaria en producto digital, favicon, avatar y navegación compacta;
 - territorio verbal y visual **Ruta Clara**.
@@ -23,7 +23,13 @@ Queda aprobada la dirección conceptual basada en:
 - valores maestros de color y equivalencias de impresión;
 - tamaños mínimos definitivos y clear space;
 - validación legal o registral de la marca;
-- implementación en producción.
+- master editorial del wordmark con curvas cerradas en SVG/AI/PDF.
+
+## Aprobación de identidad digital — 24 de septiembre de 2026
+
+El propietario aprueba expresamente para la beta web la evolución cromática con tres hitos **amarillo, blanco y azul**, incluidas sus variantes sobre fondos claros y oscuros. El nodo blanco usa halo azul oscuro para conservar contraste sobre fondos claros y separar los hitos del cuerpo de la N. La forma se mantiene dentro de la diagonal, sin carretera, flecha ni lectura de gráfica financiera.
+
+Esta aprobación convierte el sistema implementado en la identidad digital vigente de Nutrity Global. El master editorial con curvas cerradas en SVG/AI/PDF continúa como refinamiento posterior y no bloquea la publicación ni la auditoría de la beta web.
 
 ## Criterio de implementación
 

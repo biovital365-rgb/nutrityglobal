@@ -1,14 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">Nutrity Global — Tu próximo paso, claro y posible</title>
-  <desc id="desc">Imagen social de Nutrity Global con el símbolo N Ruta Clara.</desc>
+  <desc id="desc">Imagen social de Nutrity Global con la N y tres hitos de Ruta Clara.</desc>
   <defs>
-    <mask id="steps"><rect width="304" height="310" fill="#fff"/><circle cx="101" cy="183" r="11" fill="#000"/><circle cx="137" cy="139" r="11" fill="#000"/><circle cx="173" cy="94" r="11" fill="#000"/></mask>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#17324D"/><stop offset="1" stop-color="#244B63"/></linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <circle cx="1090" cy="85" r="220" fill="#88B831" opacity=".08"/>
   <circle cx="110" cy="600" r="260" fill="#FFCC00" opacity=".05"/>
-  <g transform="translate(100 125) scale(1.18)"><path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#88B831" mask="url(#steps)"/><circle cx="211" cy="49" r="16" fill="#FFCC00"/></g>
+  <g transform="translate(100 125) scale(1.18)">
+    <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#88B831"/>
+    <g stroke="#17324D" stroke-width="7"><circle cx="108" cy="174" r="15" fill="#FFCC00"/><circle cx="157" cy="113" r="15" fill="#FFFFFF"/><circle cx="207" cy="52" r="15" fill="#2F6FED"/></g>
+  </g>
   <text x="480" y="285" fill="#FFFFFF" font-family="Trebuchet MS, Arial, sans-serif" font-size="126" font-weight="700" letter-spacing="-8"><tspan>Nutrit</tspan><tspan fill="#FFCC00">y</tspan></text>
   <text x="735" y="350" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="36" font-weight="700" letter-spacing="11">GLOBAL</text>
   <text x="480" y="430" fill="#E7EFE8" font-family="Arial, sans-serif" font-size="34">Tu próximo paso, claro y posible.</text>

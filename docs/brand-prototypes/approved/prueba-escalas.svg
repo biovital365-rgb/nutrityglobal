@@ -2,24 +2,18 @@
   <title id="title">Prueba inicial de escalas del símbolo N Ruta Clara</title>
   <desc id="desc">Símbolo a 160, 48, 24 y 16 píxeles sobre fondo claro y oscuro.</desc>
   <defs>
-    <mask id="steps">
-      <rect width="304" height="310" fill="#FFFFFF"/>
-      <circle cx="101" cy="183" r="11" fill="#000000"/>
-      <circle cx="137" cy="139" r="11" fill="#000000"/>
-      <circle cx="173" cy="94" r="11" fill="#000000"/>
-    </mask>
     <g id="symbolColor">
-      <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#88B831" mask="url(#steps)"/>
-      <circle cx="211" cy="49" r="16" fill="#FFCC00"/>
+      <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#88B831"/>
+      <g stroke="#17324D" stroke-width="9"><circle cx="108" cy="174" r="19" fill="#FFCC00"/><circle cx="157" cy="113" r="19" fill="#FFFFFF"/><circle cx="207" cy="52" r="19" fill="#2F6FED"/></g>
     </g>
     <g id="symbolNegative">
-      <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#FFFFFF" mask="url(#steps)"/>
-      <circle cx="211" cy="49" r="16" fill="#FFFFFF"/>
+      <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#FFFFFF"/>
+      <g stroke="#17324D" stroke-width="9"><circle cx="108" cy="174" r="19" fill="#FFCC00"/><circle cx="157" cy="113" r="19" fill="#FFFFFF"/><circle cx="207" cy="52" r="19" fill="#2F6FED"/></g>
     </g>
   </defs>
   <rect width="1200" height="720" fill="#FBF8F1"/>
   <text x="70" y="72" fill="#17324D" font-family="Arial, sans-serif" font-size="36" font-weight="700">N Ruta Clara · prueba inicial de escalas</text>
-  <text x="70" y="112" fill="#3A6447" font-family="Arial, sans-serif" font-size="20">Dirección aprobada · refinamiento óptico todavía pendiente</text>
+  <text x="70" y="112" fill="#3A6447" font-family="Arial, sans-serif" font-size="20">Tres hitos provisionales · amarillo, blanco con halo y azul</text>
 
   <rect x="70" y="160" width="500" height="460" rx="28" fill="#FFFFFF"/>
   <text x="105" y="205" fill="#17324D" font-family="Arial, sans-serif" font-size="22" font-weight="700">Fondo claro</text>
@@ -33,7 +27,7 @@
   <text x="488" y="330" fill="#3A6447" font-family="Arial, sans-serif" font-size="17">16 px</text>
   <text x="105" y="510" fill="#3A6447" font-family="Arial, sans-serif" font-size="19">Lectura prevista:</text>
   <text x="105" y="544" fill="#3A6447" font-family="Arial, sans-serif" font-size="18">• 48 px o más: versión completa.</text>
-  <text x="105" y="576" fill="#3A6447" font-family="Arial, sans-serif" font-size="18">• 16–24 px: simplificar los pasos.</text>
+  <text x="105" y="576" fill="#3A6447" font-family="Arial, sans-serif" font-size="18">• 16–32 px: usar la variante micro.</text>
 
   <rect x="630" y="160" width="500" height="460" rx="28" fill="#17324D"/>
   <text x="665" y="205" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="22" font-weight="700">Fondo oscuro</text>

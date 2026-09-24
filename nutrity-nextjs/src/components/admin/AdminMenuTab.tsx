@@ -136,7 +136,7 @@ export function AdminMenuTab({ users, isSaving: _isSaving, adminEmail, notify }:
             <div className="grid lg:grid-cols-3 gap-6">
                 {/* Patient list */}
                 <div className="space-y-3">
-                    <h3 className="text-sm font-bold uppercase tracking-widest text-nutrity-gray-text">Pacientes</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-nutrity-gray-text">Participantes</h3>
                     {activePatients.map(u => (
                         <button key={u.id} onClick={() => loadUserMenu(u)}
                             className={`w-full text-left p-4 rounded-2xl border transition-all ${

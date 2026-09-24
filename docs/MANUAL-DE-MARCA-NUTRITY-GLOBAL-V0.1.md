@@ -1,6 +1,6 @@
 # Manual de Marca Nutrity Global
 
-Versión 1.0 beta · Sistema operativo para auditoría · 18 de septiembre de 2026
+Versión 1.1 beta · Sistema operativo para auditoría · 24 de septiembre de 2026
 
 > Estado: arquitectura verbal y dirección visual **N Ruta Clara** aprobadas e implementadas para la beta. Los resultados de la auditoría real podrán originar ajustes ópticos posteriores.
 
@@ -127,7 +127,7 @@ Desarrollar **Ruta Clara** como territorio principal e incorporar la modularidad
 ## 10. Evaluación de la propuesta de logotipo del fundador
 
 **Fuentes evaluadas:** `public/logo.png` y la variante recibida `logo nutrity 02.png`, ambas en raster de 1186 × 479 px.
-**Estado:** propuesta real de diseño, provisional y pendiente de aprobación final. No debe descartarse ni sustituirse automáticamente.
+**Estado:** propuesta real de diseño preservada como origen del sistema. La reconstrucción web es operativa; el maestro vectorial definitivo del wordmark sigue pendiente.
 
 ### Lectura general
 
@@ -144,7 +144,7 @@ Esta variante es la candidata preferente para el logotipo principal a color, con
 - el amarillo debe ser un acento intencional y limitado, no un tercer color decorativo omnipresente;
 - la “y” no debe separarse visualmente hasta parecer un sufijo, una segunda marca o un error de impresión;
 - en tamaños pequeños se usará una versión monocromática si el amarillo pierde presencia;
-- el mismo acento puede reaparecer en un único nodo final del isotipo, hitos de recorrido y llamadas a la acción, siempre con contraste accesible.
+- el mismo acento puede reaparecer en los hitos del isotipo y llamadas a la acción, siempre con contraste accesible.
 
 Los colores dominantes observados en el PNG son aproximadamente verde `#88B831`, amarillo `#FFCC00` y verde oscuro `#3A6447`. Son muestras técnicas del archivo, no valores maestros aprobados. Sobre blanco, el verde vivo y especialmente el amarillo no ofrecen contraste suficiente para texto funcional; por tanto, no deben trasladarse directamente a textos, botones ni estados de interfaz sin ajustar su tonalidad o tratamiento.
 
@@ -200,7 +200,7 @@ La opción preferible para explorar es un **monograma N derivado del wordmark**,
 - **Tamaños pequeños:** priorizar la N/isotipo. La primera prueba establece el símbolo completo desde 48 px y una variante micro simplificada entre 16 y 32 px. El wordmark completo debe ensayarse desde 120–160 px de ancho. Estos mínimos siguen sujetos a validación en dispositivos reales.
 - **Impresión y reportes:** disponer de versión monocroma y controlar que “GLOBAL” no se pierda por ganancia de tinta o baja resolución.
 
-### Alternativas de evolución provisional
+### Alternativas evaluadas durante la evolución
 
 #### Alternativa 1 — Conservación óptica
 
@@ -211,7 +211,7 @@ Vectorizar la variante 02 prácticamente como está, conservando la “y” amar
 
 #### Alternativa 2 — N Ruta Clara
 
-Conservar el wordmark con la “y” amarilla y evolucionar únicamente la N para integrar un recorrido o dos/tres pasos en su diagonal o espacio negativo. Derivar de ella el isotipo y probar un único nodo amarillo de llegada.
+Conservar el wordmark con la “y” amarilla y evolucionar únicamente la N para integrar tres hitos en su diagonal. Derivar de ella el isotipo y probar una secuencia amarillo–blanco–azul con halo azul oscuro.
 
 - Ventaja: une la idea original con el territorio recomendado y genera un activo digital reconocible.
 - Riesgo: si el gesto es demasiado literal puede parecer una flecha, escalera o gráfica financiera.
@@ -234,7 +234,7 @@ Desarrollar en paralelo **Alternativa 1** y **Alternativa 2**, usando la variant
 Se prepararon dos láminas conceptuales y un comparativo en `docs/brand-prototypes/`:
 
 - **A — Conservación óptica:** preserva la variante 02 con “y” amarilla y explicita los ajustes pendientes del arte maestro.
-- **B — N Ruta Clara:** añade un isotipo vectorial derivado de la N, con pasos discretos y un único nodo amarillo de llegada.
+- **B — N Ruta Clara:** añade un isotipo vectorial derivado de la N, con tres hitos discretos de avance.
 - **Comparativo:** evalúa continuidad, diferenciación, escalabilidad y riesgos de interpretación.
 
 Estos archivos documentan la dirección elegida y permiten probar aplicaciones. No son todavía masters de producción ni sustituyen una reconstrucción vectorial precisa del wordmark. El alcance de la aprobación está registrado en `docs/brand-prototypes/DECISION-IDENTIDAD-001.md`.
@@ -242,7 +242,7 @@ Estos archivos documentan la dirección elegida y permiten probar aplicaciones. 
 ## 11. Brief del logotipo
 
 - Wordmark principal: **Nutrity Global**, con “Nutrity” dominante y “Global” como descriptor estable.
-- Símbolo: una “N” o recorrido propietario construido a partir de dos o tres pasos conectados.
+- Símbolo: una “N” propietaria cuya diagonal funciona como recorrido y contiene tres hitos: amarillo, blanco y azul.
 - Debe funcionar a 24 px, en monocromo y sobre fondos claros u oscuros.
 - Variantes previstas: horizontal, compacta, símbolo, monocroma positiva y negativa.
 - Evitar: cruz médica, corazón, ECG, ADN, gota de sangre, mariposa, hoja genérica o cuerpo humano abstracto.
@@ -250,12 +250,13 @@ Estos archivos documentan la dirección elegida y permiten probar aplicaciones. 
 
 ### Reglas operativas de uso
 
-- **Espacio de seguridad del símbolo:** al menos el diámetro del nodo amarillo alrededor de la N.
+- **Espacio de seguridad del símbolo:** al menos el diámetro de uno de los tres nodos alrededor de la N.
 - **Espacio de seguridad horizontal:** al menos la altura de la palabra “GLOBAL” alrededor del conjunto.
 - **Tamaño mínimo digital:** wordmark horizontal a 160 px de ancho; símbolo completo desde 48 px; símbolo micro entre 16 y 32 px.
 - **Tamaño mínimo impreso provisional:** 35 mm para el wordmark y 8 mm para el símbolo, sujetos a prueba física.
-- **Fondo claro:** versión principal a color.
-- **Fondo oscuro uniforme:** versión negativa.
+- **Fondo claro:** versión principal a color. El nodo blanco siempre conserva halo azul oscuro.
+- **Fondo oscuro uniforme:** versión negativa. Mantener el halo azul oscuro para separar los nodos del cuerpo blanco de la N.
+- **Fotografía o fondo variable:** colocar el wordmark sobre superficie blanca al 90% o usar la versión negativa sobre una superficie azul oscuro controlada; nunca directamente sobre una zona de bajo contraste.
 - **Una tinta:** versión monocromática en azul claridad o negro de producción.
 - Nunca estirar, inclinar, recolorear letras por separado, añadir sombras, encerrar el símbolo en formas no previstas ni usar la N completa por debajo de 48 px.
 
@@ -268,11 +269,16 @@ Estos archivos documentan la dirección elegida y permiten probar aplicaciones. 
 | Verde accesible | `#3A6447` | Enlaces, controles y texto de apoyo con contraste suficiente. |
 | Verde acción | `#2F6B5D` | Progreso y acciones positivas. |
 | Amarillo llegada | `#FFCC00` | Nodo, hitos y CTA con texto azul; nunca texto pequeño sobre blanco. |
+| Azul Ruta | `#2F6FED` | Tercer hito, foco visible y enlaces funcionales sobre fondos claros. |
 | Crema | `#FBF8F1` | Fondo humano y cálido. |
 | Blanco | `#FFFFFF` | Superficies y respiración visual. |
 | Rojo seguridad | `#B42318` | Alertas reales; nunca como recurso promocional. |
 
 La paleta queda aprobada para la beta con separación explícita entre color de identidad y color funcional. Toda combinación nueva debe verificarse con contraste WCAG antes de incorporarse a controles o texto.
+
+### Secuencia de hitos — identidad digital aprobada
+
+La versión 1.1 introduce tres círculos legibles sobre la diagonal de la N: amarillo, blanco y azul. El blanco lleva siempre contorno `#17324D`; los tres comparten el mismo tamaño y halo para leerse como etapas de una ruta, no como decoración, flecha, carretera o gráfica. El propietario aprobó expresamente esta identidad digital y sus variantes para fondos claros y oscuros el **24 de septiembre de 2026**. La aprobación cubre el uso en la beta web; los ajustes ópticos posteriores no deben alterar esta secuencia sin una nueva decisión documentada.
 
 ## 13. Tipografía operativa beta
 
@@ -312,12 +318,13 @@ La beta utiliza fuentes del sistema y no depende de Google Fonts ni descargas ex
 ## 17. Activos y estado
 
 - Propuestas PNG del fundador: versión completamente verde en `public/logo.png` y variante 02 con “y” amarilla; ambas son **provisionales y preservadas como referencias reales**.
-- Prototipo B — N Ruta Clara: **dirección conceptual aprobada** el 18 de septiembre de 2026.
+- Prototipo B — N Ruta Clara: **dirección conceptual aprobada** el 18 de septiembre de 2026 e **identidad digital de tres nodos aprobada** el 24 de septiembre de 2026.
 - Prototipo A y lámina comparativa: preservados como documentación del proceso.
 - Familia fuente del símbolo: color, monocroma, negativa, micro y prueba de escalas en `docs/brand-prototypes/approved/`.
 - Paquete local implementado: `nutrity-nextjs/public/brand/`, con wordmark horizontal, símbolo, variantes negativas, micro y composición social.
 - Icono de aplicación: `nutrity-nextjs/src/app/icon.svg`.
-- Manual: versión 1.0 beta operativa.
+- Manual: versión 1.1 beta operativa.
+- Limitación no bloqueante para la beta web: el wordmark SVG actual reproduce fielmente la jerarquía y el carácter del PNG mediante texto vectorial web. Para registro, imprenta y entregables editoriales debe reconstruirse posteriormente como master con curvas cerradas en SVG/AI/PDF a partir del arte original de mayor calidad.
 - Paleta y tipografías: aprobadas para auditoría beta.
 - Promesa utilizada en beta: “Tu próximo paso, claro y posible.”
 - Próxima revisión: resultados de legibilidad, reconocimiento y comprensión durante la auditoría real.

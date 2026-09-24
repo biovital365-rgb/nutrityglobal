@@ -55,7 +55,7 @@ export function AdminCalendarTab({
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">
-                                    <th className="py-4 px-6">Paciente</th>
+                                    <th className="py-4 px-6">Participante</th>
                                     <th className="py-4 px-6">Fecha</th>
                                     <th className="py-4 px-6">Hora</th>
                                     <th className="py-4 px-6">Motivo</th>
@@ -116,7 +116,7 @@ export function AdminCalendarTab({
                             <form onSubmit={onSave} className="space-y-5">
                                 {!editingAppt.id && (
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Paciente *</label>
+                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Participante *</label>
                                         <select className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none"
                                             value={editingAppt.userId || ""} onChange={(e) => setEditingAppt({ ...editingAppt, userId: e.target.value })} required>
                                             <option value="" disabled>Selecciona un paciente</option>
@@ -136,7 +136,7 @@ export function AdminCalendarTab({
                                     <select className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none"
                                         value={editingAppt.type || "Virtual"} onChange={(e) => setEditingAppt({ ...editingAppt, type: e.target.value })}>
                                         <option value="Virtual">Virtual (IA Sync)</option>
-                                        <option value="Presencial">Presencial (Clínica)</option>
+                                        <option value="Presencial">Presencial</option>
                                     </select>
                                 </div>
                                 <button disabled={isSaving} type="submit"

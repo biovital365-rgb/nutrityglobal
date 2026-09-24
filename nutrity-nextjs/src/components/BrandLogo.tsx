@@ -14,9 +14,12 @@ export function BrandLogo({ compact = false, inverse = false, className = "", pr
     <img
       src={src}
       alt="Nutrity Global"
+      width={compact ? 304 : 760}
+      height={compact ? 310 : 220}
       className={className}
       decoding="async"
       fetchPriority={priority ? "high" : "auto"}
+      draggable={false}
     />
   );
 }

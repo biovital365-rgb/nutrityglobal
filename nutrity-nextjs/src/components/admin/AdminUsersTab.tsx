@@ -44,7 +44,7 @@ export function AdminUsersTab({
                 {onAddUser && (
                     <div className="mb-4 flex justify-end">
                         <button onClick={onAddUser} className="bg-nutrity-primary text-white px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 hover:bg-nutrity-accent transition-all shadow-lg">
-                            Registrar Paciente
+                            Registrar participante
                         </button>
                     </div>
                 )}
@@ -341,7 +341,7 @@ export function AdminUsersTab({
                                         <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Rol del Sistema</label>
                                         <select className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:outline-none"
                                             value={editingUser.role || "USER"} onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}>
-                                            <option value="USER">Paciente (User)</option>
+                                            <option value="USER">Usuario</option>
                                             <option value="COACH">Coach</option>
                                             <option value="ADMIN">Administrador</option>
                                         </select>
@@ -391,7 +391,7 @@ export function AdminUsersTab({
                                 <button disabled={isSaving} type="submit"
                                     className="w-full bg-nutrity-primary text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-nutrity-primary/20 hover:bg-nutrity-accent transition-all flex items-center justify-center gap-2">
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Guardar Cambios del Paciente
+                                    Guardar cambios del usuario
                                 </button>
                             </form>
                         </motion.div>

@@ -1,14 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 304 310" role="img" aria-labelledby="title desc">
   <title id="title">Símbolo negativo N Ruta Clara</title>
-  <desc id="desc">Versión blanca del símbolo para colocación sobre fondos oscuros.</desc>
-  <defs>
-    <mask id="steps">
-      <rect width="304" height="310" fill="#FFFFFF"/>
-      <circle cx="101" cy="183" r="11" fill="#000000"/>
-      <circle cx="137" cy="139" r="11" fill="#000000"/>
-      <circle cx="173" cy="94" r="11" fill="#000000"/>
-    </mask>
-  </defs>
-  <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#FFFFFF" mask="url(#steps)"/>
-  <circle cx="211" cy="49" r="16" fill="#FFFFFF"/>
+  <desc id="desc">Versión blanca con hitos amarillo, blanco y azul para fondos oscuros.</desc>
+  <path d="M22 288V22h58l138 174V22h64v266h-58L86 115v173Z" fill="#FFFFFF"/>
+  <g stroke="#17324D" stroke-width="7"><circle cx="108" cy="174" r="15" fill="#FFCC00"/><circle cx="157" cy="113" r="15" fill="#FFFFFF"/><circle cx="207" cy="52" r="15" fill="#2F6FED"/></g>
 </svg>

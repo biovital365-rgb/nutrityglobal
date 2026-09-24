@@ -4,8 +4,9 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "motion/react";
 
 const DashboardTabSkeleton = () => (
-    <div className="animate-pulse bg-slate-50/50 h-[600px] w-full rounded-[32px] border border-slate-100 p-8 flex items-center justify-center">
-        <span className="text-slate-400 font-bold">Cargando módulo...</span>
+    <div role="status" aria-live="polite" className="animate-pulse bg-slate-50/50 h-[600px] w-full rounded-[32px] border border-slate-100 p-8 flex flex-col gap-3 items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-4 border-nutrity-border border-t-nutrity-route-blue animate-spin" aria-hidden="true" />
+        <span className="text-nutrity-gray-text font-bold">Cargando sección…</span>
     </div>
 );
 
@@ -18,13 +19,6 @@ const DashboardCatalogTab = dynamic(() => import("./dashboard/tabs/DashboardCata
 const DashboardMicronutrientsTab = dynamic(() => import("./dashboard/tabs/DashboardMicronutrientsTab").then(mod => mod.DashboardMicronutrientsTab), { loading: () => <DashboardTabSkeleton /> });
 const DashboardGoalsTab = dynamic(() => import("./dashboard/tabs/DashboardGoalsTab").then(mod => mod.DashboardGoalsTab), { loading: () => <DashboardTabSkeleton /> });
 const DashboardAgendaTab = dynamic(() => import("./dashboard/tabs/DashboardAgendaTab").then(mod => mod.DashboardAgendaTab), { loading: () => <DashboardTabSkeleton /> });
-
-function publicAppTitle(value: unknown) {
-    if (typeof value !== "string" || !value.trim()) return "Nutrity Global · Ruta de hábitos";
-    return /bio[- ]?panel|bio[- ]?master|clinical edition|m[eé]dico|nutrity v\d/i.test(value)
-        ? "Nutrity Global · Ruta de hábitos"
-        : value.trim();
-}
 
 function publicPlanName(plan: unknown) {
     const key = typeof plan === "string" ? plan.toUpperCase() : "FREE";
@@ -700,18 +694,69 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
     return (
         <div id="dashboard-container" className="flex h-screen bg-nutrity-bg text-nutrity-primary overflow-hidden font-body pb-[90px] md:pb-0">
             <ThemeInjector plan={user?.profile?.plan} role={user?.profile?.role} organizationId={user?.profile?.organizationId} />
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <motion.div
+                        className="fixed inset-0 z-[120] flex lg:hidden"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <button
+                            className="absolute inset-0 bg-nutrity-primary/65 backdrop-blur-sm"
+                            aria-label="Cerrar navegación"
+                            onClick={() => setIsSidebarOpen(false)}
+                        />
+                        <motion.aside
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="Navegación del panel"
+                            initial={{ x: -320 }}
+                            animate={{ x: 0 }}
+                            exit={{ x: -320 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            className="relative h-full w-[min(86vw,320px)] overflow-y-auto bg-nutrity-primary p-6 text-white shadow-2xl"
+                        >
+                            <div className="mb-7 flex items-start justify-between gap-4">
+                                <div className="brand-lockup-surface-dark">
+                                    <BrandLogo inverse className="h-12 w-auto" />
+                                </div>
+                                <button className="rounded-xl border border-white/15 p-2.5 text-white" aria-label="Cerrar navegación" onClick={() => setIsSidebarOpen(false)}>
+                                    <X className="h-5 w-5" aria-hidden="true" />
+                                </button>
+                            </div>
+                            <nav className="space-y-1">
+                                {navItems.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
+                                        aria-current={activeTab === item.id ? "page" : undefined}
+                                        className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-bold transition-all ${activeTab === item.id ? "bg-white/12 text-white" : "text-white/65 hover:bg-white/5 hover:text-white"}`}
+                                    >
+                                        <item.icon className={`h-5 w-5 ${activeTab === item.id ? "text-nutrity-highlight" : ""}`} aria-hidden="true" />
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </nav>
+                        </motion.aside>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex flex-col w-64 bg-nutrity-primary text-white border-r border-white/5 overflow-y-auto hide-scroll-indicator">
-                <div className="p-8 min-h-max">
-                    <BrandLogo inverse className="mb-10 h-14 w-auto" />
-                    <nav className="space-y-1">
+            <aside className="hidden lg:flex flex-col w-72 bg-nutrity-primary text-white border-r border-white/5 overflow-y-auto hide-scroll-indicator">
+                <div className="p-7 min-h-max">
+                    <div className="brand-lockup-surface-dark mb-9 w-full justify-center">
+                        <BrandLogo inverse className="h-14 w-auto" />
+                    </div>
+                    <nav aria-label="Navegación del panel" className="space-y-1">
                         {navItems.map((item) => (
                             <button
                                 key={item.id}
                                 onClick={() => setActiveTab(item.id)}
+                                aria-current={activeTab === item.id ? "page" : undefined}
                                 className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${activeTab === item.id ? 'bg-white/10 text-white shadow-lg' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
                             >
-                                <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-nutrity-accent' : ''}`} />
+                                <item.icon aria-hidden="true" className={`w-5 h-5 ${activeTab === item.id ? 'text-nutrity-highlight' : ''}`} />
                                 {item.label}
                             </button>
                         ))}
@@ -723,8 +768,11 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
             <main className="flex-1 flex flex-col overflow-hidden relative">
                 <header className="h-20 bg-white border-b border-nutrity-border flex items-center justify-between px-8 z-20">
                     <div className="flex items-center gap-4">
-                        <button className="lg:hidden p-2" onClick={() => setIsSidebarOpen(true)}><LayoutDashboard /></button>
-                        <h1 className="text-sm md:text-xl font-display font-bold text-nutrity-primary tracking-tight truncate max-w-[150px] md:max-w-none">{publicAppTitle(landingConfig?.appTitle)}</h1>
+                        <button aria-label="Abrir navegación" className="brand-icon-button lg:hidden" onClick={() => setIsSidebarOpen(true)}><LayoutDashboard aria-hidden="true" /></button>
+                        <div>
+                            <h1 className="text-sm md:text-xl font-display font-bold text-nutrity-primary tracking-tight truncate max-w-[190px] md:max-w-none">Nutrity Global</h1>
+                            <p className="hidden text-[10px] font-bold uppercase tracking-[0.18em] text-nutrity-gray-text sm:block">Ruta de hábitos</p>
+                        </div>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="hidden md:flex flex-col text-right">
@@ -740,12 +788,13 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                             {isGeneratingPDF ? (
                                 <span className="animate-pulse">Cargando PDF...</span>
                             ) : (
-                                <><Download className="w-4 h-4" /> Exportar Reporte</>
+                                <><Download className="w-4 h-4" aria-hidden="true" /> Exportar reporte</>
                             )}
                         </button>
                         <button
                             onClick={() => window.location.href = '/'}
                             title="Volver a Inicio"
+                            aria-label="Volver al inicio"
                             className="p-2.5 rounded-xl border border-nutrity-border text-nutrity-gray-text hover:bg-slate-50 transition-all lg:hidden"
                         >
                             <X className="w-4 h-4" />
@@ -753,6 +802,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                         <button
                             onClick={onLogout}
                             title="Cerrar sesión"
+                            aria-label="Cerrar sesión"
                             className="p-2.5 rounded-xl border border-red-100 text-red-500 bg-red-50/30 hover:bg-red-50 hover:text-red-600 transition-all"
                         >
                             <LogOut className="w-4 h-4" />
@@ -1197,32 +1247,19 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                 {/* Dashboard Footer with Admin Access */}
                 <footer className="px-4 md:px-8 py-4 md:py-6 border-t border-nutrity-border bg-white/50 backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
                     <div className="flex items-center gap-2 text-nutrity-gray-text opacity-40">
-                        <Activity className="w-4 h-4" />
+                        <Activity className="w-4 h-4" aria-hidden="true" />
                         <span className="text-[10px] font-bold uppercase tracking-widest">&copy; 2026 Nutrity Global · Educación y hábitos</span>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {user?.profile?.role === 'ADMIN' ? (
+                        {user?.profile?.role === 'ADMIN' && (
                             <button
                                 onClick={() => setActiveTab("organization")}
                                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-nutrity-primary/5 hover:bg-nutrity-primary/10 text-nutrity-primary transition-all group"
-                                title="Acceso Directo Admin"
+                                title="Abrir administración global"
                             >
-                                <Shield className="w-4 h-4 text-nutrity-accent group-hover:scale-110 transition-transform" />
+                                <Shield className="w-4 h-4 text-nutrity-route-blue group-hover:scale-110 transition-transform" aria-hidden="true" />
                                 <span className="text-[10px] font-bold uppercase tracking-widest">Panel Nutrity Global</span>
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => {
-                                    // Hidden shortcut to login as admin
-                                    if (confirm("¿Desea cambiar a la cuenta de Administrador Maestro?")) {
-                                        onLogout();
-                                    }
-                                }}
-                                className="opacity-10 hover:opacity-50 transition-opacity p-2"
-                                title="Master Access"
-                            >
-                                <Shield className="w-3.5 h-3.5 text-nutrity-gray-text" />
                             </button>
                         )}
                     </div>
@@ -1628,6 +1665,8 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                         return (
                             <button
                                 key={item.id}
+                                aria-label={item.label}
+                                aria-current={isActive ? "page" : undefined}
                                 onClick={() => {
                                     if (isLogout) {
                                         onLogout();

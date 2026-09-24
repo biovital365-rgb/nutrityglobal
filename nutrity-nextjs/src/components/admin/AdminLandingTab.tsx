@@ -14,21 +14,21 @@ interface AdminLandingTabProps {
 export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: AdminLandingTabProps) {
   const [formData, setFormData] = useState({
     heroTitle: "TU RUTA DE HÁBITOS METABÓLICOS",
-    heroSubtitle: "De la Diabetes Tipo 2",
-    heroDescription: "Recuperando tu salud metabólica con ciencia, no con dietas restrictivas.",
-    ctaText: "Comenzar mi Transformación",
-    primaryColor: "#012a4a",
-    accentColor: "#c19b6c",
+    heroSubtitle: "Un paso claro cada semana",
+    heroDescription: "Educación, registro y acciones semanales para organizar tu bienestar con claridad.",
+    ctaText: "Crear mi Ruta Nutrity",
+    primaryColor: "#17324d",
+    accentColor: "#ffcc00",
     heroImage: "/landing-img-5.jpg",
     scienceImage: "/landing-img-1.jpg",
     missionImage: "/landing-img-3.jpg",
     habitsImage: "/landing-img-2.jpg",
     strategiesImage: "/landing-img-4.jpg",
     tiktokVideos: [
-      { id: 1, title: "¿Por qué no bajas de peso?", img: "https://images.unsplash.com/photo-1494597564530-871f2b93ac55?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7599900359984827656" },
-      { id: 2, title: "El secreto del Yacón", img: "https://images.unsplash.com/photo-1596422846543-74c6fc0e2418?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7600963485182250258" },
-      { id: 3, title: "Sana tu intestino", img: "https://images.unsplash.com/photo-1505253713660-8d4088c18ce8?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7601559572465093906" },
-      { id: 4, title: "Ansiedad y Glucosa", img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7633199556792028423" }
+      { id: 1, title: "Tres formas de organizar tu desayuno", img: "https://images.unsplash.com/photo-1494597564530-871f2b93ac55?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7599900359984827656" },
+      { id: 2, title: "Cómo incluir alimentos andinos", img: "https://images.unsplash.com/photo-1596422846543-74c6fc0e2418?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7600963485182250258" },
+      { id: 3, title: "Rutinas que puedes sostener", img: "https://images.unsplash.com/photo-1505253713660-8d4088c18ce8?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7601559572465093906" },
+      { id: 4, title: "Observa tus hábitos con calma", img: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&q=80", link: "https://www.tiktok.com/@biovital.360/video/7633199556792028423" }
     ]
   });
 
@@ -105,58 +105,26 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
                 value={formData.heroSubtitle}
                 onChange={handleChange}
                 className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent outline-none transition-all"
-                placeholder="Ej. De la Diabetes Tipo 2"
+                placeholder="Ej. Un paso claro cada semana"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-nutrity-gray-text flex items-center gap-2">
-                <LayoutTemplate className="w-4 h-4" />
-                Color Principal (SaaS)
-              </label>
-              <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    name="primaryColor"
-                    value={formData.primaryColor || "#012a4a"}
-                    onChange={handleChange}
-                    className="w-12 h-12 rounded cursor-pointer border border-nutrity-border p-1"
-                  />
-                  <input
-                    type="text"
-                    name="primaryColor"
-                    value={formData.primaryColor || "#012a4a"}
-                    onChange={handleChange}
-                    className="flex-1 bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 outline-none"
-                    placeholder="Ej. #012a4a"
-                  />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-nutrity-gray-text flex items-center gap-2">
-                <LayoutTemplate className="w-4 h-4" />
-                Color de Acento (SaaS)
-              </label>
-              <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    name="accentColor"
-                    value={formData.accentColor || "#c19b6c"}
-                    onChange={handleChange}
-                    className="w-12 h-12 rounded cursor-pointer border border-nutrity-border p-1"
-                  />
-                  <input
-                    type="text"
-                    name="accentColor"
-                    value={formData.accentColor || "#c19b6c"}
-                    onChange={handleChange}
-                    className="flex-1 bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 outline-none"
-                    placeholder="Ej. #c19b6c"
-                  />
-              </div>
+          <div className="rounded-2xl border border-nutrity-border bg-nutrity-bg p-5">
+            <p className="text-sm font-bold text-nutrity-primary">Paleta de marca protegida</p>
+            <p className="mt-1 text-xs leading-5 text-nutrity-gray-text">Los colores principales son comunes a toda la experiencia y no cambian por plan: azul oscuro, amarillo, blanco y azul Ruta Clara.</p>
+            <div className="mt-4 flex flex-wrap gap-3" aria-label="Colores oficiales de Nutrity Global">
+              {[
+                ["Azul Nutrity", "#17324D"],
+                ["Amarillo", "#FFCC00"],
+                ["Blanco", "#FFFFFF"],
+                ["Azul Ruta", "#2F6FED"],
+              ].map(([name, color]) => (
+                <div key={color} className="flex items-center gap-2 rounded-full border border-nutrity-border bg-white px-3 py-2 text-xs font-semibold text-nutrity-gray-text">
+                  <span className="h-5 w-5 rounded-full border border-nutrity-primary/20" style={{ backgroundColor: color }} aria-hidden="true" />
+                  {name} · {color}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -171,7 +139,7 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
               onChange={handleChange}
               rows={3}
               className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent outline-none transition-all resize-none"
-              placeholder="Ej. Recuperando tu salud metabólica con ciencia..."
+              placeholder="Ej. Educación y acciones semanales para organizar tus hábitos."
             />
           </div>
 
@@ -186,7 +154,7 @@ export function AdminLandingTab({ isSaving, onSaveConfig, initialConfig }: Admin
               value={formData.ctaText}
               onChange={handleChange}
               className="w-full md:w-1/2 bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-3.5 text-sm font-medium focus:ring-2 focus:ring-nutrity-accent/20 focus:border-nutrity-accent outline-none transition-all"
-              placeholder="Ej. Comenzar mi Transformación"
+              placeholder="Ej. Crear mi Ruta Nutrity"
             />
           </div>
 

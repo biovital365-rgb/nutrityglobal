@@ -1,6 +1,6 @@
 # Prototipos de marca Nutrity Global
 
-**Estado:** el **Prototipo B — N Ruta Clara** fue aprobado como dirección conceptual el 18 de septiembre de 2026. El Prototipo A queda archivado como control de fidelidad. Ningún archivo de esta carpeta es todavía el logotipo maestro ni debe sustituir automáticamente los activos de producción.
+**Estado:** el **Prototipo B — N Ruta Clara** fue aprobado como dirección conceptual el 18 de septiembre de 2026 y su sistema digital de tres nodos fue aprobado para la beta web el 24 de septiembre de 2026. El Prototipo A queda archivado como control de fidelidad. Los activos de `approved/` son la referencia digital vigente; el master editorial con curvas cerradas en SVG/AI/PDF continúa pendiente como refinamiento posterior.
 
 ## Prototipo A — Conservación óptica
 
@@ -8,7 +8,7 @@ Preserva la variante recibida con la “y” amarilla. El siguiente refinamiento
 
 ## Prototipo B — N Ruta Clara
 
-Explora un isotipo derivado de la N. Tres pausas internas sugieren pasos y el nodo amarillo funciona como llegada o siguiente acción. El gesto es intencionalmente discreto; debe probarse con usuarios para descartar lecturas de gráfica financiera, escalera o señal clínica.
+Explora un isotipo derivado de la N. El prototipo original usaba pausas internas y un nodo amarillo de llegada. La evolución de auditoría del 24 de septiembre de 2026 convierte el gesto en tres hitos amarillo, blanco y azul, conservando la diagonal como recorrido. Debe probarse con usuarios para descartar lecturas de gráfica financiera, escalera o señal clínica.
 
 ## Decisión adoptada
 
