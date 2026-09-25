@@ -89,3 +89,15 @@ No es una clave `service_role`, pero identifica el proyecto y no debe permanecer
 
 **Fase 0 — Contención inmediata: NO APROBADA.**  
 El escaneo está completado, pero la puerta permanece abierta hasta revocar credenciales, retirar datos del árbol y purgar el historial con evidencia verificable.
+
+## Remediación ejecutada · 25 de septiembre de 2026
+
+- Se retiraron del árbol actual `dev.db`, los seis scripts con JWT `anon`, la copia de dashboard en `scratch` y las utilidades de depuración, listado y promoción administrativa inventariadas.
+- Se añadieron reglas preventivas a `.gitignore` para bases SQLite, exportaciones y scripts de prueba retirados.
+- Se reescribieron 196 commits con `git-filter-repo`, eliminando los artefactos actuales e históricos identificados.
+- Se eliminó una referencia interna de captura que aún retenía blobs antiguos; después se expiraron reflogs y se ejecutó la poda local.
+- `main` y `backup-enterprise-v1-stable` fueron sustituidas en GitHub mediante `--force-with-lease` por sus versiones saneadas.
+- Una clonación espejo posterior del remoto confirmó **cero rutas objetivo** y **cero cambios históricos** con los patrones de clave Google o JWT utilizados.
+- Nuevo HEAD saneado inicial: `fcdb06eec104f578ef6f435a8c505aabd80cda22`.
+
+La remediación del repositorio está completada. La Fase 0 continúa abierta únicamente por la rotación/revocación externa, la eventual limpieza de vistas almacenadas por GitHub y el escaneo especializado final.
