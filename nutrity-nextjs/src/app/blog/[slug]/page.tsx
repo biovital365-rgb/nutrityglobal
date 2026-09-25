@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         openGraph: {
             title: post.title,
             description: post.excerpt || post.content.substring(0, 155),
-            images: post.thumbnail ? [{ url: post.thumbnail }] : [{ url: "/og-image.jpg" }],
+            images: post.thumbnail ? [{ url: post.thumbnail }] : [{ url: "/og-image.png" }],
             type: "article",
             publishedTime: new Date(post.createdAt).toISOString(),
             authors: [post.author],
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
             card: "summary_large_image",
             title: post.title,
             description: post.excerpt || post.content.substring(0, 155),
-            images: post.thumbnail ? [post.thumbnail] : ["/og-image.jpg"],
+            images: post.thumbnail ? [post.thumbnail] : ["/og-image.png"],
         }
     };
 }
@@ -77,7 +77,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     const readingTime = Math.max(1, Math.ceil(post.content.split(" ").length / 200));
     const teaserContent = post.content;
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nutrity.global';
+    const baseUrl = 'https://nutrityglobal-tau.vercel.app';
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'BlogPosting',
@@ -87,7 +87,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         },
         headline: post.title,
         description: post.excerpt || post.content.substring(0, 155),
-        image: post.thumbnail ? [post.thumbnail] : [`${baseUrl}/og-image.jpg`],
+        image: post.thumbnail ? [post.thumbnail] : [`${baseUrl}/og-image.png`],
         datePublished: new Date(post.createdAt).toISOString(),
         dateModified: new Date(post.updatedAt || post.createdAt).toISOString(),
         author: {

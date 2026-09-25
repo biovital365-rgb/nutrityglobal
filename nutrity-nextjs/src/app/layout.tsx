@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AnalyticsConsent } from "@/components/AnalyticsConsent";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://nutrity.global';
+const baseUrl = 'https://nutrityglobal-tau.vercel.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
