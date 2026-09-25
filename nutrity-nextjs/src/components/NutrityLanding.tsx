@@ -350,7 +350,11 @@ export function NutrityLanding({ user, onStart, onAuthClick }: NutrityLandingPro
                                 <Link href={`/blog/${post.slug}`} key={post.id} className="group flex flex-col bg-[var(--landing-bg)] rounded-[2rem] overflow-hidden hover:scale-[1.02] transition-transform duration-300">
                                     {post.thumbnail ? (
                                         <div className="h-48 overflow-hidden relative">
-                                            <img src={post.thumbnail} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                            <img
+                                                src={post.thumbnail}
+                                                alt={educationalLandingCopy(post.title, "Imagen de artículo educativo de Nutrity")}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                            />
                                         </div>
                                     ) : (
                                         <div className="h-48 bg-[var(--landing-accent)]/20 flex items-center justify-center">
