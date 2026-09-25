@@ -49,6 +49,7 @@
 
 ### P0 — Seguridad antes de dirigir tráfico
 
+- [x] Ejecutar escaneo inicial del árbol, 195 commits alcanzables y objetos Git no alcanzables. Resultado documentado en `docs/SECURITY-SCAN-2026-09-25.md`; se encontraron una clave Gemini histórica, exportaciones de usuarios recuperables, `dev.db` versionada, seis JWT `anon` incrustados y cinco blobs no alcanzables con señales de información personal.
 - [ ] Rotar credenciales de Gemini, Supabase/PostgreSQL, Stripe, PayPal, Resend y cualquier secreto que haya estado versionado o compartido.
 - [ ] Comprobar que las credenciales antiguas están revocadas y documentar evidencia de la rotación.
 - [ ] Reescribir y purgar el historial Git que contiene secretos o exportaciones antiguas; ejecutar un nuevo escaneo del historial y del árbol vigente.

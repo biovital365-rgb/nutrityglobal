@@ -9,6 +9,16 @@ coverage/
 users.json
 users_nutrity.json
 users_vida.json
+*.db
+*.sqlite
+*.sqlite3
+nutrity-nextjs/test-db.js
+nutrity-nextjs/test-eval-upsert.js
+nutrity-nextjs/test-eval.js
+nutrity-nextjs/test-evaluation-invalid.js
+nutrity-nextjs/test-evaluation.js
+nutrity-nextjs/test-post.js
+nutrity-nextjs/scratch/NutrityDashboard.txt
 test-gemini.ts
 test-gemini-models.ts
 
