@@ -4,6 +4,7 @@ import * as dbService from "@/actions/db-actions";
 import { LessonAssignment } from "../../LessonAssignment";
 import { LessonQuiz } from "../../LessonQuiz";
 import { trackEvent } from "@/lib/analytics";
+import { educationalHealthCopy } from "@/lib/educational-copy";
 
 export interface DashboardAcademyTabProps {
     courses: any[];
@@ -18,17 +19,7 @@ export interface DashboardAcademyTabProps {
     userQuizAttempts: any[];
 }
 
-function educationalCopy(value: unknown) {
-    if (typeof value !== "string") return "";
-    return value
-        .replace(/que salva vidas/gi, "para hábitos sostenibles")
-        .replace(/salva vidas/gi, "apoya hábitos sostenibles")
-        .replace(/estabilizar (?:tu |la )?glucosa/gi, "comprender tus registros de glucosa")
-        .replace(/evitar picos de insulina/gi, "reconocer patrones relacionados con tus comidas")
-        .replace(/prevenir enfermedades crónicas/gi, "apoyar tu bienestar a largo plazo")
-        .replace(/transformar tu salud metabólica/gi, "fortalecer tus hábitos cotidianos")
-        .replace(/éxito metabólico/gi, "progreso de hábitos");
-}
+const educationalCopy = educationalHealthCopy;
 
 export function DashboardAcademyTab({
     courses,
@@ -107,7 +98,7 @@ export function DashboardAcademyTab({
                         
                         // Lógica de Acceso por Plan
                         let isLocked = false;
-                        let lockMessage = 'Bloqueado';
+                        let lockMessage = 'Contenido no incluido';
                         
                         const getCourseNumberLocal = (title: string): number => {
                             const t = title.toLowerCase();
@@ -122,24 +113,31 @@ export function DashboardAcademyTab({
                             return 99;
                         };
                         
-                        if (!isEbook) {
-                            const plan = (user?.profile?.plan || 'FREE').toUpperCase();
-                            const courseNum = getCourseNumberLocal(course.title);
+                        const plan = (user?.profile?.plan || 'FREE').toUpperCase();
+                        const courseNum = getCourseNumberLocal(course.title);
+                        const accessPlanName = courseNum >= 4 || isEbook ? 'Ruta Nutrity 12 semanas' : 'Nutrity Plus';
+
+                        if (isEbook) {
+                            if (plan === 'FREE' || plan === 'BASIC' || plan === 'BÁSICO' || plan === 'BASICO') {
+                                isLocked = true;
+                                lockMessage = 'Incluido desde Ruta Nutrity 12 semanas';
+                            }
+                        } else {
                             
                             if (courseNum === 1) {
                                 // Curso 1 always open, lesson restrictions inside
                                 isLocked = false;
                             } else if (courseNum === 2 || courseNum === 3) {
-                                // Cursos 2 y 3: Requieren Básico, Premium o Elite
+                                // Cursos 2 y 3: incluidos desde Nutrity Plus.
                                 if (plan === 'FREE') {
                                     isLocked = true;
-                                    lockMessage = 'Requiere Plan Básico';
+                                    lockMessage = 'Incluido desde Nutrity Plus';
                                 }
                             } else if (courseNum >= 4) {
-                                // Cursos 4, 5 y 6: Requieren Premium o Elite
+                                // Cursos 4 en adelante: incluidos desde Ruta Nutrity 12 semanas.
                                 if (plan === 'FREE' || plan === 'BASIC' || plan === 'BÁSICO' || plan === 'BASICO') {
                                     isLocked = true;
-                                    lockMessage = 'Requiere Plan Premium';
+                                    lockMessage = 'Incluido desde Ruta Nutrity 12 semanas';
                                 }
                             }
                         }
@@ -150,9 +148,9 @@ export function DashboardAcademyTab({
                                     <div className="max-w-[80%] text-center"><BookOpen className="mx-auto h-10 w-10 text-[#e6d3a8]" /><p className="mt-3 text-xs font-black uppercase tracking-[0.2em]">Unidad educativa Nutrity</p></div>
                                 </div>
                                 <div className="absolute top-4 right-4 flex gap-2">
-                                    {course.price > 0 && !user?.profile?.plan?.includes('ELITE') && (
+                                    {course.price > 0 && (isLocked || (courseNum === 1 && plan === 'FREE')) && (
                                         <div className="bg-amber-500 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-lg">
-                                            <Shield className="w-3 h-3" /> Premium
+                                            <Shield className="w-3 h-3" /> {courseNum === 1 && plan === 'FREE' ? 'Muestra gratuita' : 'Contenido del plan'}
                                         </div>
                                     )}
                                     <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold text-nutrity-accent uppercase tracking-widest flex items-center gap-1.5">
@@ -160,7 +158,7 @@ export function DashboardAcademyTab({
                                         {course.category}
                                     </div>
                                 </div>
-                                {course.price > 0 && !user?.profile?.plan?.includes('ELITE') && (
+                                {course.price > 0 && (isLocked || (courseNum === 1 && plan === 'FREE')) && (
                                     <div className="absolute inset-0 bg-nutrity-primary/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Shield className="w-12 h-12 text-white opacity-50" />
                                     </div>
@@ -181,7 +179,7 @@ export function DashboardAcademyTab({
                                                 {isEbook ? 'Guía Descargable' : `${course.lessons?.length || 6} Lecciones`}
                                             </span>
                                         </div>
-                                        <span className="text-lg font-bold text-nutrity-primary">${course.price} <span className="text-[10px] text-nutrity-gray-text">USD</span></span>
+                                        <span className="text-xs font-bold text-nutrity-primary">{courseNum === 1 && plan === 'FREE' ? `Contenido completo en ${accessPlanName}` : `Incluido en ${accessPlanName}`}</span>
                                     </div>
                                     <div className="flex gap-2">
                                         {isLocked ? (
@@ -194,11 +192,8 @@ export function DashboardAcademyTab({
                                             </button>
                                         ) : (
                                             <button
+                                                type="button"
                                                 onClick={async () => {
-                                                    if (isEbook && (course.price === 0 || user?.profile?.plan?.includes('ELITE'))) {
-                                                        window.open(course.paypalUrl || '#', "_blank");
-                                                        return;
-                                                    }
                                                     const detailed = await dbService.getCourseWithLessons(course.id);
                                                     trackEvent("academy_unit_started", { unitType: isEbook ? "library" : "guided" });
                                                     setSelectedCourse(detailed);
@@ -208,19 +203,7 @@ export function DashboardAcademyTab({
                                                 }}
                                                 className="px-4 py-2.5 bg-nutrity-primary text-white text-[9px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-nutrity-primary/10 hover:bg-nutrity-accent transition-all flex-1 text-center"
                                             >
-                                                {isEbook ? 'Descargar' : 'Iniciar'}
-                                            </button>
-                                        )}
-                                        {course.price > 0 && course.paypalUrl && !isLocked && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    const checkoutUrl = course.paypalUrl || "https://www.paypal.com/ncp/payment/CMG445X32EL2S";
-                                                    window.open(checkoutUrl, "_blank");
-                                                }}
-                                                className="px-4 py-2.5 bg-amber-500 text-white text-[9px] font-bold uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all flex-1 text-center"
-                                            >
-                                                Comprar
+                                                {isEbook ? 'Abrir recurso' : (courseNum === 1 && plan === 'FREE' && course.price > 0 ? 'Ver muestra' : 'Abrir unidad')}
                                             </button>
                                         )}
                                     </div>

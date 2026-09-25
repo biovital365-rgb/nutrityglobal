@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Brain, Trash2, Zap, Send } from "lucide-react";
 import React from "react";
+import { plainEducationalText } from "@/lib/educational-copy";
 
 export interface DashboardCoachTabProps {
     chatMessages: { role: string; text: string }[];
@@ -58,7 +59,7 @@ export function DashboardCoachTab({
                                 ? 'bg-nutrity-accent text-white rounded-br-none shadow-nutrity-accent/10'
                                 : 'bg-white text-nutrity-primary border border-nutrity-border rounded-bl-none'
                                 }`}>
-                                <p className="text-xs md:text-[13px] font-medium leading-relaxed whitespace-pre-line">{msg.text}</p>
+                                <p className="text-xs md:text-[13px] font-medium leading-relaxed whitespace-pre-line">{plainEducationalText(msg.text)}</p>
                                 {msg.role === 'ai' && (
                                     <div className="mt-4 pt-4 border-t border-nutrity-border flex items-center gap-2 text-[8px] font-bold text-nutrity-accent uppercase tracking-[0.2em]">
                                         <Zap className="w-3 h-3" /> Orientación generada con IA
@@ -82,6 +83,10 @@ export function DashboardCoachTab({
                 <div className="p-6 bg-white border-t border-nutrity-border">
                     <div className="flex gap-4">
                         <input
+                            id="coach-question"
+                            name="coachQuestion"
+                            aria-label="Pregunta para Nutrity Coach IA"
+                            autoComplete="off"
                             type="text"
                             value={inputMessage}
                             onChange={(e) => setInputMessage(e.target.value)}
@@ -90,6 +95,8 @@ export function DashboardCoachTab({
                             className="flex-1 bg-nutrity-bg border border-nutrity-border rounded-xl px-5 py-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-nutrity-accent/10 focus:border-nutrity-accent transition-all"
                         />
                         <button
+                            type="button"
+                            aria-label="Enviar pregunta"
                             onClick={handleSendMessage}
                             disabled={!inputMessage.trim() || isTyping}
                             className="bg-nutrity-accent text-white p-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all disabled:opacity-50"

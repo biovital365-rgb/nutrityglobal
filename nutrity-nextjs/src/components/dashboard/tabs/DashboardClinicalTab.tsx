@@ -34,8 +34,8 @@ export function DashboardClinicalTab({
         <motion.div key="measures" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div className="space-y-1">
-                    <h2 className="text-3xl font-display font-bold">Bio-Seguimiento</h2>
-                    <p className="text-nutrity-gray-text text-sm">Historial de marcadores críticos sincronizados en tiempo real.</p>
+                    <h2 className="text-3xl font-display font-bold">Registro de mediciones</h2>
+                    <p className="text-nutrity-gray-text text-sm">Consulta la información que registraste para observar cambios y preparar preguntas para tu profesional.</p>
                 </div>
                 <div className="flex gap-4">
                     <button 
@@ -57,10 +57,10 @@ export function DashboardClinicalTab({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {measurements.slice(0, 3).map((m, i) => (
+                {measurements.slice(0, 3).map((m) => (
                     <div key={m.id} className="nutrity-card p-8 group hover:border-nutrity-accent transition-all relative overflow-hidden">
-                        <div className="relative z-10 flex items-center justify-between mb-4">
-                            <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-transform group-hover:scale-110 ${
+                        <div className="relative z-10 flex items-start justify-between mb-6">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${
                                 m.label === 'Vitalidad' ? 'bg-amber-50 text-amber-500' :
                                 m.label === 'Metabolismo' ? 'bg-nutrity-accent/10 text-nutrity-accent' :
                                 m.label === 'Regeneración' ? 'bg-indigo-50 text-indigo-500' :
@@ -71,31 +71,15 @@ export function DashboardClinicalTab({
                                  m.label === 'Regeneración' ? <Clock className="w-6 h-6" /> :
                                  <Brain className="w-6 h-6" />}
                             </div>
-                            <h4 className="text-2xl font-black text-nutrity-primary">{m.value}%</h4>
-                            <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mt-1">{m.label}</p>
-                            <div className="w-full h-1 bg-nutrity-bg rounded-full mt-4 overflow-hidden">
-                                <motion.div 
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${m.value}%` }}
-                                    transition={{ duration: 1.5, delay: i * 0.1 }}
-                                    className={`h-full ${
-                                        m.label === 'Vitalidad' ? 'bg-amber-500' :
-                                        m.label === 'Metabolismo' ? 'bg-nutrity-accent' :
-                                        m.label === 'Regeneración' ? 'bg-indigo-500' :
-                                        'bg-blue-500'
-                                    }`}
-                                />
-                            </div>
-                            <span className="text-[10px] font-bold text-nutrity-gray-text opacity-40 uppercase tracking-widest">{m.date}</span>
+                            <span className="px-3 py-1 bg-nutrity-success/10 text-nutrity-success rounded-full text-[9px] font-bold uppercase tracking-widest">{m.status || "Registrado"}</span>
                         </div>
                         <div className="relative z-10">
                             <h3 className="text-3xl font-display font-bold text-nutrity-primary">{m.value}</h3>
                             <p className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest mt-2">{m.label}</p>
                         </div>
-                        <div className="mt-6 flex items-center gap-2 relative z-10">
-                            <span className="px-3 py-1 bg-nutrity-success/10 text-nutrity-success rounded-full text-[9px] font-bold uppercase tracking-widest">{m.status}</span>
-                            <Clock className="w-3.5 h-3.5 opacity-20 ml-auto" />
-                            <span className="text-[9px] font-bold opacity-30">{m.time}</span>
+                        <div className="mt-6 flex items-center gap-2 relative z-10 text-nutrity-gray-text">
+                            <Clock className="w-3.5 h-3.5 opacity-50" />
+                            <span className="text-[10px] font-bold">{m.date} · {m.time}</span>
                         </div>
                     </div>
                 ))}
@@ -111,9 +95,9 @@ export function DashboardClinicalTab({
                         <thead>
                             <tr className="bg-slate-50/50 text-[10px] font-bold uppercase tracking-widest text-nutrity-gray-text/60">
                                 <th className="py-5 px-8">Fecha & Hora</th>
-                                <th className="py-5 px-8">Marcador</th>
-                                <th className="py-5 px-8">Valor Obtenido</th>
-                                <th className="py-5 px-8">Evaluación IA</th>
+                                <th className="py-5 px-8">Medición</th>
+                                <th className="py-5 px-8">Valor registrado</th>
+                                <th className="py-5 px-8">Estado del registro</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-nutrity-border">

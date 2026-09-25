@@ -4,6 +4,16 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { organizationScope, requireOrganizationResource, requireRole, requireUserAccess } from "@/lib/authz";
 import type { Prisma } from "@prisma/client";
+import { z } from "zod";
+
+const measurementSchema = z.object({
+    id: z.string().min(20).max(80).optional(),
+    label: z.enum(["Glucosa", "Peso", "A1c"]),
+    value: z.string().trim().min(1).max(40).regex(/^\d+(?:[.,]\d+)?\s(?:mg\/dL|kg|%)$/),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    time: z.string().regex(/^\d{2}:\d{2}$/),
+    status: z.literal("Registrado"),
+}).strict();
 
 export async function saveEvaluation(userId: string, organizationId: string | undefined, data: any, results: any) {
     const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
@@ -84,23 +94,24 @@ export async function getMeasurements(userId: string, organizationId?: string) {
     return data;
 }
 
-export async function saveMeasurement(userId: string, organizationId: string | undefined, measurement: any) {
+export async function saveMeasurement(userId: string, organizationId: string | undefined, measurement: unknown) {
     const { actor, target } = await requireUserAccess(userId, { coachAllowed: true });
     const internalId = target.id;
     organizationId = actor.role === 'ADMIN' ? organizationId : (target.organizationId || undefined);
+    const safeMeasurement = measurementSchema.parse(measurement);
 
-    const id = measurement.id && measurement.id.length > 20 ? measurement.id : crypto.randomUUID();
-    if (measurement.id) {
+    const id = safeMeasurement.id || crypto.randomUUID();
+    if (safeMeasurement.id) {
         const existing = await prisma.measurement.findUnique({ where: { id }, select: { userId: true } });
         if (!existing || existing.userId !== internalId) throw new Error('Forbidden');
     }
     
     const payload = {
-        label: measurement.label,
-        value: measurement.value,
-        date: measurement.date,
-        time: measurement.time,
-        status: measurement.status,
+        label: safeMeasurement.label,
+        value: safeMeasurement.value,
+        date: safeMeasurement.date,
+        time: safeMeasurement.time,
+        status: safeMeasurement.status,
         userId: internalId,
         organizationId: organizationId || null
     };

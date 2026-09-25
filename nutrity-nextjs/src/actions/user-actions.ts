@@ -9,9 +9,15 @@ import { z } from "zod";
 
 const userProfileUpdateSchema = z.object({
     name: z.string().trim().min(1).max(120).optional(),
-    phone: z.string().trim().max(40).nullable().optional(),
+    phone: z.string().trim().max(40).refine(
+        value => value === "" || /^\+?[0-9\s()-]{7,20}$/.test(value),
+        "Invalid phone format"
+    ).nullable().optional(),
     address: z.string().trim().max(240).nullable().optional(),
-    age: z.string().trim().max(3).nullable().optional(),
+    age: z.string().trim().max(3).refine(
+        value => value === "" || (/^\d{1,3}$/.test(value) && Number(value) >= 1 && Number(value) <= 120),
+        "Invalid age"
+    ).nullable().optional(),
     occupation: z.string().trim().max(120).nullable().optional(),
     maritalStatus: z.string().trim().max(60).nullable().optional(),
     socialMedia: z.string().trim().max(240).nullable().optional(),
@@ -54,13 +60,12 @@ export async function updateUserProfile(userId: string, profileData: unknown) {
     ]));
     const requestedAdminData = selectFields(rawData, ['role', 'plan', 'status']);
     const adminData = actor.role === 'ADMIN' ? adminUserUpdateSchema.parse(requestedAdminData) : {};
-    const updated = await prisma.user.update({
+    await prisma.user.update({
         where: { id: internalId },
         data: { ...safeData, ...adminData, updatedAt: new Date() },
-        include: { organization: true }
     });
     revalidatePath('/', 'layout');
-    return updated;
+    return { success: true };
 }
 
 export async function getAllUsers(organizationIdParam?: string, includeDeleted = false) {

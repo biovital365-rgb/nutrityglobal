@@ -44,6 +44,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
     {
       type: 'BASIC',
       name: 'Nutrity Plus',
+      eyebrow: 'Rutina mensual',
       price: '9.99',
       description: 'Convierte tu Ruta Nutrity en una rutina semanal.',
       icon: Zap,
@@ -58,6 +59,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
     {
       type: 'ADVANCED',
       name: 'Ruta Nutrity 12 semanas',
+      eyebrow: 'Programa educativo',
       price: '49.00',
       description: 'Sigue una ruta educativa completa con recursos y revisión de avances.',
       popular: true,
@@ -67,13 +69,14 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
       features: [
         'Planificación semanal con IA sujeta a uso responsable',
         'Reporte educativo de progreso',
-        'Feedback loop (Solicitar Cambios)',
+        'Solicitud de ajustes y revisión de avances',
         'Acceso completo a Cursos y Recetario'
       ],
     },
     {
       type: 'ELITE',
       name: 'Nutrity Profesional',
+      eyebrow: 'Herramientas para profesionales',
       price: '149.00',
       description: 'Espacio de gestión para coaches y profesionales autorizados.',
       icon: Crown,
@@ -118,7 +121,7 @@ export const PricingTable: React.FC<PricingTableProps> = ({ currentPlan = 'FREE'
                   </div>
                   <div>
                     <h3 className="text-xl font-bold">{plan.name}</h3>
-                    <p className="text-[10px] font-bold text-nutrity-gray-text opacity-40 uppercase tracking-widest">{plan.type}</p>
+                    <p className="text-[10px] font-bold text-nutrity-gray-text opacity-60 uppercase tracking-widest">{plan.eyebrow}</p>
                   </div>
                 </div>
                 {isCurrentPlan && (

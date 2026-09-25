@@ -25,6 +25,10 @@ function publicPlanName(plan: unknown) {
     return ({ FREE: "Nutrity Inicio", BASIC: "Nutrity Plus", ADVANCED: "Ruta Nutrity 12 semanas", ELITE: "Nutrity Profesional" } as Record<string, string>)[key] || "Nutrity Inicio";
 }
 
+function measurementUnit(type: string) {
+    return ({ Glucosa: "mg/dL", Peso: "kg", A1c: "%" } as Record<string, string>)[type] || "";
+}
+
 import { z } from "zod";
 import { WeeklyMenuSchema } from "../lib/schemas";
 import * as aiService from "@/actions/ai-actions";
@@ -77,7 +81,8 @@ import {
     Music,
     Crown,
     Lock,
-    FileText
+    FileText,
+    Home
 } from "lucide-react";
 import { PricingTable } from './PricingTable';
 import { BrandLogo } from './BrandLogo';
@@ -107,6 +112,28 @@ interface NutrityDashboardProps {
     onMenuUpdate?: (menu: any) => void;
     userSubmissions?: any[];
     userQuizAttempts?: any[];
+}
+
+function hasCompleteProfile(profile: {
+    name?: unknown;
+    email?: unknown;
+    phone?: unknown;
+    address?: unknown;
+    age?: unknown;
+    occupation?: unknown;
+    maritalStatus?: unknown;
+}) {
+    const text = (value: unknown) => typeof value === "string" ? value.trim() : String(value ?? "").trim();
+    const age = Number(profile.age);
+    return Boolean(
+        text(profile.name) &&
+        text(profile.email) &&
+        /^\+?[0-9\s()-]{7,20}$/.test(text(profile.phone)) &&
+        Number.isFinite(age) && age >= 1 && age <= 120 &&
+        text(profile.address) &&
+        text(profile.occupation) &&
+        text(profile.maritalStatus)
+    );
 }
 
 export function NutrityDashboard({ results, user, userSubmissions = [], userQuizAttempts = [], onViewDetail, onGeneratePDF, onRequireAuth, onLogout, isGeneratingPDF, onMenuUpdate }: NutrityDashboardProps) {
@@ -202,27 +229,14 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
         }
     }, [user?.profile, user?.email]);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
-    const [isProfileComplete, setIsProfileComplete] = useState(false);
+    const isPrivilegedProfile = user?.profile?.role === 'ADMIN' || user?.profile?.role === 'COACH';
+    const isProfileComplete = isPrivilegedProfile || hasCompleteProfile(profileForm);
 
     useEffect(() => {
-        // Solo marcar como completo si tenemos el objeto de perfil y los campos requeridos
-        // Dilan e invitados deben tener estos datos para no ser redirigidos
-        if (user?.profile && user?.email !== 'admin@nutrity.global' && user?.profile?.role !== 'ADMIN' && user?.profile?.role !== 'COACH') {
-            const hasPhone = !!user.profile.phone;
-            
-            // Relajamos la validación para evitar loops infinitos si el usuario prefiere no llenar todo
-            // Pero mantenemos la redirección si no tiene celular (dato mínimo de contacto)
-            const complete = hasPhone || user.profile.status === 'ACTIVE'; 
-            setIsProfileComplete(complete);
-            
-            if (!complete && activeTab !== 'profile') {
-                setActiveTab('profile');
-            }
-        } else {
-            // Mientras carga o si es admin, no forzamos
-            setIsProfileComplete(true); 
+        if ((user?.id || user?.uid) && user?.profile && !isProfileComplete && activeTab !== 'profile' && !isPrivilegedProfile) {
+            setActiveTab('profile');
         }
-    }, [user?.profile, user?.email, activeTab]);
+    }, [isProfileComplete, activeTab, user?.id, user?.uid, user?.profile, isPrivilegedProfile]);
 
     const [useSpecialDiet, setUseSpecialDiet] = useState(false);
     const [dynamicMenu, setDynamicMenu] = useState<any>(null);
@@ -294,7 +308,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
         
         const currentMeal = dynamicMenu[day][slot];
         // We set a temporary loading text
-        const tempMenu = { ...dynamicMenu, [day]: { ...dynamicMenu[day], [slot]: "Analizando biomarcadores para nueva opción..." } };
+        const tempMenu = { ...dynamicMenu, [day]: { ...dynamicMenu[day], [slot]: "Preparando una nueva opción educativa..." } };
         setDynamicMenu(tempMenu);
         
         try {
@@ -432,11 +446,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
         try {
             const updated = await dbService.updateUserProfile(uid, profileForm);
             // Reflect the saved profile back into local user state
-            if (updated) {
-                // We can't call setUser from outside page.tsx, so store in sessionStorage
-                // as a signal for next reload, but mark profile complete immediately
-                setIsProfileComplete(true);
-            }
+            if (!updated) throw new Error("Profile update returned no data");
             setNotification({ type: 'success', message: '¡Perfil actualizado correctamente!' });
             setTimeout(() => setNotification(null), 3500);
             if (activeTab === "profile") setActiveTab("main");
@@ -593,7 +603,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
         try {
             await saveMeasurement({
                 label: newMeasure.type,
-                value: newMeasure.value + (newMeasure.type === "Glucosa" ? " mg/dL" : " kg"),
+                value: `${newMeasure.value} ${measurementUnit(newMeasure.type)}`.trim(),
                 date: newMeasure.date,
                 time: newMeasure.time,
                 status: "Registrado"
@@ -797,7 +807,7 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                             aria-label="Volver al inicio"
                             className="p-2.5 rounded-xl border border-nutrity-border text-nutrity-gray-text hover:bg-slate-50 transition-all lg:hidden"
                         >
-                            <X className="w-4 h-4" />
+                            <Home className="w-4 h-4" />
                         </button>
                         <button
                             onClick={onLogout}
@@ -1314,31 +1324,30 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                         className="fixed inset-0 z-[200] bg-nutrity-primary/60 backdrop-blur-md flex items-center justify-center p-6"
                     >
                         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white w-full max-w-md rounded-2xl p-10 shadow-2xl relative">
-                            <button onClick={() => setShowMeasureModal(false)} className="absolute top-8 right-8 p-2 rounded-full hover:bg-nutrity-bg text-nutrity-gray-text opacity-50"><X className="w-5 h-5" /></button>
-                            <h3 className="text-2xl font-display font-bold mb-1">Registrar Bio-Marcador</h3>
-                            <p className="text-sm text-nutrity-gray-text mb-8 font-medium">Sincroniza tus datos con la IA en tiempo real</p>
-                            <form onSubmit={handleAddMeasurement} className="space-y-6">
+                            <button type="button" aria-label="Cerrar registro de medición" onClick={() => setShowMeasureModal(false)} className="absolute top-8 right-8 p-2 rounded-full hover:bg-nutrity-bg text-nutrity-gray-text opacity-50"><X className="w-5 h-5" /></button>
+                            <h3 className="text-2xl font-display font-bold mb-1">Registrar una medición</h3>
+                            <p className="text-sm text-nutrity-gray-text mb-8 font-medium">Guarda un dato medido por ti. Nutrity no lo interpreta como diagnóstico.</p>
+                            <form onSubmit={handleAddMeasurement} className="space-y-6" aria-label="Nueva medición">
                                 <div className="space-y-1.5 font-medium">
-                                    <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Tipo de Medición</label>
-                                    <select className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold text-sm shadow-sm" value={newMeasure.type} onChange={(e) => setNewMeasure({ ...newMeasure, type: e.target.value })}>
+                                    <label htmlFor="measurement-type" className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Tipo de medición</label>
+                                    <select id="measurement-type" name="measurementType" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold text-sm shadow-sm" value={newMeasure.type} onChange={(e) => setNewMeasure({ ...newMeasure, type: e.target.value })}>
                                         <option>Glucosa</option>
                                         <option>Peso</option>
-                                        <option>Presión Arterial</option>
                                         <option>A1c</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Valor Obtenido</label>
-                                    <input type="number" step="0.1" placeholder={newMeasure.type === "Glucosa" ? "95 mg/dL" : "75 kg"} className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold text-2xl text-nutrity-accent" value={newMeasure.value} onChange={(e) => setNewMeasure({ ...newMeasure, value: e.target.value })} />
+                                    <label htmlFor="measurement-value" className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Valor ({measurementUnit(newMeasure.type)})</label>
+                                    <input id="measurement-value" name="measurementValue" inputMode="decimal" type="number" min="0" step="0.1" required placeholder={newMeasure.type === "Glucosa" ? "95" : newMeasure.type === "Peso" ? "75" : "6.5"} className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 focus:ring-2 focus:ring-nutrity-accent/10 outline-none font-bold text-2xl text-nutrity-accent" value={newMeasure.value} onChange={(e) => setNewMeasure({ ...newMeasure, value: e.target.value })} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Fecha (Manual)</label>
-                                        <input type="date" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 font-bold text-xs" value={newMeasure.date} onChange={(e) => setNewMeasure({ ...newMeasure, date: e.target.value })} />
+                                        <label htmlFor="measurement-date" className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Fecha</label>
+                                        <input id="measurement-date" name="measurementDate" type="date" required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 font-bold text-xs" value={newMeasure.date} onChange={(e) => setNewMeasure({ ...newMeasure, date: e.target.value })} />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Hora (Manual)</label>
-                                        <input type="time" className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 font-bold text-xs" value={newMeasure.time} onChange={(e) => setNewMeasure({ ...newMeasure, time: e.target.value })} />
+                                        <label htmlFor="measurement-time" className="text-[10px] font-bold text-nutrity-gray-text uppercase tracking-widest ml-1">Hora</label>
+                                        <input id="measurement-time" name="measurementTime" type="time" required className="w-full bg-nutrity-bg border border-nutrity-border rounded-xl px-4 py-4 font-bold text-xs" value={newMeasure.time} onChange={(e) => setNewMeasure({ ...newMeasure, time: e.target.value })} />
                                     </div>
                                 </div>
                                 <button type="submit" className="w-full bg-nutrity-primary text-white py-5 rounded-xl font-bold shadow-lg shadow-nutrity-accent/20 active:scale-95 transition-all text-sm uppercase tracking-widest mt-2">Guardar Medición</button>
@@ -1636,8 +1645,9 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
             </AnimatePresence>
 
             {/* Mobile Bottom Navigation */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-nutrity-border z-40 pb-safe box-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory hide-scroll-indicator">
+            <nav aria-label="Navegación móvil del panel" className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-nutrity-border z-40 pb-safe box-border shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-3xl overflow-hidden">
+                <p className="sr-only">Desliza horizontalmente para consultar todas las secciones.</p>
+                <div className="flex items-center gap-2 px-4 py-4 pr-10 overflow-x-auto scrollbar-hide snap-x snap-mandatory hide-scroll-indicator">
                     {(isCoachOrAdmin ? [
                         { id: 'organization', icon: Users, label: user?.profile?.role === 'ADMIN' ? 'Global' : 'Mi Org' },
                         ...(user?.profile?.role === 'ADMIN' ? [{ id: 'admin_catalog', icon: ClipboardCheck, label: 'Catálogo' }] : []),
@@ -1685,13 +1695,14 @@ export function NutrityDashboard({ results, user, userSubmissions = [], userQuiz
                         );
                     })}
                 </div>
+                <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white to-transparent" />
                 {/* CSS to hide scrollbar explicitly for older browsers if needed */}
                 <style dangerouslySetInnerHTML={{
                     __html: `
                     .hide-scroll-indicator::-webkit-scrollbar { display: none; }
                     .hide-scroll-indicator { -ms-overflow-style: none; scrollbar-width: none; }
                 `}} />
-            </div>
+            </nav>
         </div>
     );
 }

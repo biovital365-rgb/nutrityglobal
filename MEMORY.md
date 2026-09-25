@@ -18,6 +18,17 @@
 - **Auditoría:** el guion de pruebas reales está en `docs/CHECKLIST-AUDITORIA-FASE-3.md`. La publicación y la ejecución con cuentas reales son el siguiente control operativo.
 - **Skill de marca:** `nutrity-brand-strategist` validado e instalado en Codex; su fuente versionable está en `skills/nutrity-brand-strategist`.
 
+## Cierre PMV posterior a prueba de usuario — 25 sep 2026
+
+- **Perfil obligatorio coherente:** un usuario `ACTIVE` ya no evita la ficha obligatoria. Nombre, correo, celular válido, edad, dirección, ocupación y estado civil deben estar completos antes de habilitar el resto del panel.
+- **Perfil accesible:** campos con `id`, `name`, etiquetas asociadas, autocompletado, límites, ayuda visible y botón de guardado deshabilitado mientras falten datos válidos.
+- **Academia segura:** filtro defensivo ampliado para retirar de títulos, descripciones, lecciones e instrucciones las promesas de cura, reversión, control de glucosa, prevención y resultados clínicos absolutos provenientes del contenido heredado.
+- **Oferta única:** Academia usa exclusivamente los nombres Nutrity Plus, Ruta Nutrity 12 semanas y Nutrity Profesional. Se retiraron la compra individual y las referencias públicas a PayPal; el checkout beta visible continúa únicamente mediante los planes de Stripe.
+- **Mediciones:** renombradas como registro personal; se retiraron “marcadores críticos” y “Evaluación IA”. Glucosa, peso y A1c tienen unidades explícitas y validación cliente/servidor; presión arterial queda fuera hasta contar con un formulario sistólica/diastólica adecuado.
+- **IA Coach:** mantiene el alcance educativo, elimina Markdown literal y añade etiquetas accesibles al campo y al botón de envío.
+- **Móvil:** el acceso a inicio usa un icono de hogar y la navegación inferior comunica que contiene más secciones mediante desplazamiento horizontal.
+- **Validación técnica:** `git diff --check`, ESLint, TypeScript y build de producción de 20 rutas aprobados. El build local requiere variables públicas de Supabase; la validación se ejecutó con valores efímeros de compilación, sin guardar secretos.
+
 ## Tareas pendientes priorizadas
 
 ### Hallazgos de la primera prueba real (18 sep 2026)
@@ -31,6 +42,10 @@
 - [x] Retirar de la interfaz activa promesas clínicas o absolutas del contenido académico y aplicar un filtro defensivo al contenido heredado de la base de datos. La revisión clínica externa sigue pendiente.
 - [x] Crear el Manual de Marca 1.0 beta de Nutrity Global y el sistema de convivencia con BioVital.360.
 - [x] Reemplazar el logotipo remoto por activos SVG locales/versionados y definir variantes positiva, negativa, monocroma y micro.
+- [x] Corregir la validación y accesibilidad del perfil nuevo, evitando que el estado `ACTIVE` omita los datos obligatorios.
+- [x] Unificar Academia con la oferta beta y retirar compras individuales/PayPal de la interfaz activa.
+- [x] Reforzar el filtro de lenguaje clínico heredado en Academia, IA Coach y Mediciones.
+- [ ] Repetir la prueba real del perfil nuevo completando un celular válido y verificando guardado, desbloqueo del panel y persistencia tras recargar.
 
 ### P0 — Seguridad antes de dirigir tráfico
 
